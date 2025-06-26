@@ -69,11 +69,11 @@ class _RoleSelectionPageState extends State<RoleSelectionPage> {
             const SizedBox(height: 30),
             ElevatedButton(
               onPressed: selectedRole.isEmpty ? null :navigateToRolePage,
-              child: const Text('Join'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green[400],
                 minimumSize: const Size(double.infinity, 50),
-              )
+              ),
+              child: const Text('Join')
             )
           ],
         )
