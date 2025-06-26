@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class CreateSupermarketPage extends StatefulWidget {
   const CreateSupermarketPage({super.key});
@@ -221,6 +222,42 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
                   Text(
                     "Or sign in with",
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w300),
+                  ),
+
+                  SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      IconButton(
+                        icon: Icon(Icons.facebook, color: Colors.blue),
+                        onPressed: () {},
+                      ),
+                      SizedBox(width: 16),
+
+                      IconButton(
+                        icon: FaIcon(
+                          FontAwesomeIcons.google,
+                          color: Colors.yellow,
+                        ),
+                        onPressed: () {},
+                      ),
+
+                      SizedBox(width: 16),
+                      IconButton(
+                        icon: Icon(Icons.apple, color: Colors.black),
+                        onPressed: () {},
+                      ),
+                    ],
+                  ),
+
+                  SizedBox(height: 16),
+                  Text(
+                    "Already have an account? Sign in",
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: const Color.fromARGB(255, 17, 111, 189),
+                      fontWeight: FontWeight.w400,
+                    ),
                   ),
                 ],
               ),

@@ -14,12 +14,12 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'FreshTally',
-      //home: CreateSupermarketPage(),
+      home: CreateSupermarketPage(),
       initialRoute: '/',
       routes: {
         //'/': (context) => HomePage(), // maybe your login page
-        '/create_supermarket': (context) => CreateSupermarketPage(),
-        '/role_selection': (context) => const RoleSelectionPage(),
+        //'/create_supermarket': (context) => CreateSupermarketPage(),
+        //'/role_selection': (context) => const RoleSelectionPage(),
         //'/cashier': (context) => const CashierPage(),
         //'/shelf_staff': (context) => const ShelfStaffPage(),
       },
