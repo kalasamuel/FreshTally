@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 class CreateSupermarketPage extends StatefulWidget {
+  const CreateSupermarketPage({super.key});
+
   @override
   _CreateSupermarketPageState createState() => _CreateSupermarketPageState();
 }
