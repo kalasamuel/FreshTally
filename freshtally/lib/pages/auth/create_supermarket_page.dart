@@ -9,7 +9,8 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _supermarketNameController =
       TextEditingController();
-  final TextEditingController _managerNameController = TextEditingController();
+  final TextEditingController _firstNameController = TextEditingController();
+  final TextEditingController _secondNameController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -59,13 +60,114 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
                     },
                   ),
                   SizedBox(height: 16),
-                  Text("Manager details"),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      "Manager details",
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
 
                   SizedBox(height: 16),
                   TextFormField(
-                    controller: _managerNameController,
+                    controller: _firstNameController,
                     decoration: InputDecoration(
-                      labelText: 'Manager Name',
+                      labelText: 'First Name',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(
+                          color: const Color.fromARGB(255, 29, 124, 32),
+                          width: 1.0,
+                        ),
+                      ),
+                      filled: true,
+                      fillColor: Colors.green[50],
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter the manager\'s name';
+                      }
+                      return null;
+                    },
+                  ),
+
+                  SizedBox(height: 16),
+                  TextFormField(
+                    controller: _secondNameController,
+                    decoration: InputDecoration(
+                      labelText: 'Second Name',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(
+                          color: const Color.fromARGB(255, 29, 124, 32),
+                          width: 1.0,
+                        ),
+                      ),
+                      filled: true,
+                      fillColor: Colors.green[50],
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter the manager\'s name';
+                      }
+                      return null;
+                    },
+                  ),
+
+                  SizedBox(height: 16),
+                  TextFormField(
+                    controller: _secondNameController,
+                    decoration: InputDecoration(
+                      labelText: 'Second Name',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(
+                          color: const Color.fromARGB(255, 29, 124, 32),
+                          width: 1.0,
+                        ),
+                      ),
+                      filled: true,
+                      fillColor: Colors.green[50],
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter the manager\'s name';
+                      }
+                      return null;
+                    },
+                  ),
+
+                  SizedBox(height: 16),
+                  TextFormField(
+                    controller: _secondNameController,
+                    decoration: InputDecoration(
+                      labelText: 'Second Name',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide(
+                          color: const Color.fromARGB(255, 29, 124, 32),
+                          width: 1.0,
+                        ),
+                      ),
+                      filled: true,
+                      fillColor: Colors.green[50],
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter the manager\'s name';
+                      }
+                      return null;
+                    },
+                  ),
+
+                  SizedBox(height: 16),
+                  TextFormField(
+                    controller: _secondNameController,
+                    decoration: InputDecoration(
+                      labelText: 'Second Name',
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                         borderSide: BorderSide(
