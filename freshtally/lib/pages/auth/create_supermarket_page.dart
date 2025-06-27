@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:freshtally/pages/auth/login_page.dart';
 
 class CreateSupermarketPage extends StatefulWidget {
   const CreateSupermarketPage({super.key});
@@ -10,258 +10,189 @@ class CreateSupermarketPage extends StatefulWidget {
 
 class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
   final _formKey = GlobalKey<FormState>();
+
   final TextEditingController _supermarketNameController =
       TextEditingController();
   final TextEditingController _firstNameController = TextEditingController();
-  final TextEditingController _secondNameController = TextEditingController();
+  final TextEditingController _lastNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmpasswordController =
+  final TextEditingController _confirmPasswordController =
       TextEditingController();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: SingleChildScrollView(
-          child: Container(
-            margin: EdgeInsets.symmetric(horizontal: 24),
-            padding: EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 8)],
-            ),
-
-            child: Form(
-              key: _formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        foregroundColor: Colors.black,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+        title: const Text(
+          'Create Supermarket',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+          ),
+        ),
+        centerTitle: true,
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(24.0),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // Center(
+              //   child: Text(
+              //     "Welcome to FreshTally!",
+              //     style: TextStyle(
+              //       fontSize: 24,
+              //       fontWeight: FontWeight.bold,
+              //       color: Colors.green[700],
+              //     ),
+              //   ),
+              // ),
+              const SizedBox(height: 40.0),
+              const Center(
+                child: Text(
+                  "Create an account for your supermarket",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.normal,
+                    color: Colors.black87,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 30.0),
+              IconTextField(
+                hintText: 'Supermarket Name',
+                icon: Icons.store,
+                controller: _supermarketNameController,
+              ),
+              const SizedBox(height: 24.0),
+              const Text(
+                'Manager details:',
+                style: TextStyle(
+                  fontSize: 16.0,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 16.0),
+              IconTextField(
+                hintText: 'First Name',
+                icon: Icons.person,
+                controller: _firstNameController,
+              ),
+              const SizedBox(height: 16.0),
+              IconTextField(
+                hintText: 'Last Name',
+                icon: Icons.person_outline,
+                controller: _lastNameController,
+              ),
+              const SizedBox(height: 16.0),
+              IconTextField(
+                hintText: 'Email',
+                icon: Icons.email,
+                controller: _emailController,
+              ),
+              const SizedBox(height: 16.0),
+              IconTextField(
+                hintText: 'Password',
+                icon: Icons.lock,
+                isPassword: true,
+                controller: _passwordController,
+              ),
+              const SizedBox(height: 16.0),
+              IconTextField(
+                hintText: 'Confirm Password',
+                icon: Icons.lock_outline,
+                isPassword: true,
+                controller: _confirmPasswordController,
+              ),
+              const SizedBox(height: 32.0),
+              ElevatedButton(
+                onPressed: () {
+                  if (_formKey.currentState!.validate()) {
+                    // Process data
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green[600],
+                  padding: const EdgeInsets.symmetric(vertical: 16.0),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10.0),
+                  ),
+                ),
+                child: const Text(
+                  'Create Account',
+                  style: TextStyle(
+                    fontSize: 18.0,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20.0),
+              const Center(
+                child: Text(
+                  "Or Sign In with:",
+                  style: TextStyle(color: Colors.grey),
+                ),
+              ),
+              const SizedBox(height: 15.0),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Text(
-                    'Create Supermarket',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(height: 24),
-
-                  TextFormField(
-                    controller: _supermarketNameController,
-                    decoration: InputDecoration(
-                      labelText: 'Supermarket Name',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(
-                          color: const Color.fromARGB(255, 29, 124, 32),
-
-                          width: 1.0,
-                        ),
-                      ),
-                      filled: true,
-                      fillColor: Colors.green[50],
+                  IconButton(
+                    icon: const Icon(
+                      Icons.facebook,
+                      size: 40,
+                      color: Colors.blue,
                     ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter a supermarket name';
-                      }
-                      return null;
-                    },
+                    onPressed: () {},
                   ),
-                  SizedBox(height: 16),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      "Manager details",
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
+                  const SizedBox(width: 20),
+                  IconButton(
+                    icon: Image.asset(
+                      'assets/icons/google_icon.png',
+                      height: 35,
                     ),
+                    onPressed: () {},
                   ),
-
-                  SizedBox(height: 16),
-                  TextFormField(
-                    controller: _firstNameController,
-                    decoration: InputDecoration(
-                      labelText: 'First Name',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(
-                          color: const Color.fromARGB(255, 29, 124, 32),
-                          width: 1.0,
-                        ),
-                      ),
-                      filled: true,
-                      fillColor: Colors.green[50],
+                  const SizedBox(width: 20),
+                  IconButton(
+                    icon: const Icon(
+                      Icons.apple,
+                      size: 40,
+                      color: Colors.black,
                     ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter the manager\'s name';
-                      }
-                      return null;
-                    },
-                  ),
-
-                  SizedBox(height: 16),
-                  TextFormField(
-                    controller: _secondNameController,
-                    decoration: InputDecoration(
-                      labelText: 'Second Name',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(
-                          color: const Color.fromARGB(255, 29, 124, 32),
-                          width: 1.0,
-                        ),
-                      ),
-                      filled: true,
-                      fillColor: Colors.green[50],
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter the manager\'s name';
-                      }
-                      return null;
-                    },
-                  ),
-
-                  SizedBox(height: 16),
-                  TextFormField(
-                    controller: _emailController,
-                    decoration: InputDecoration(
-                      labelText: 'Email',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(
-                          color: const Color.fromARGB(255, 29, 124, 32),
-                          width: 1.0,
-                        ),
-                      ),
-                      filled: true,
-                      fillColor: Colors.green[50],
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter the manager\'s name';
-                      }
-                      return null;
-                    },
-                  ),
-
-                  SizedBox(height: 16),
-                  TextFormField(
-                    controller: _passwordController,
-                    decoration: InputDecoration(
-                      labelText: 'Password',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(
-                          color: const Color.fromARGB(255, 29, 124, 32),
-                          width: 1.0,
-                        ),
-                      ),
-                      filled: true,
-                      fillColor: Colors.green[50],
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter the manager\'s name';
-                      }
-                      return null;
-                    },
-                  ),
-
-                  SizedBox(height: 16),
-                  TextFormField(
-                    controller: _confirmpasswordController,
-                    decoration: InputDecoration(
-                      labelText: 'Confirm Password',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(
-                          color: const Color.fromARGB(255, 29, 124, 32),
-                          width: 1.0,
-                        ),
-                      ),
-                      filled: true,
-                      fillColor: Colors.green[50],
-                    ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter the manager\'s name';
-                      }
-                      return null;
-                    },
-                  ),
-
-                  SizedBox(height: 20),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      onPressed: () {
-                        if (_formKey.currentState!.validate()) {
-                          // Process data
-                        }
-                      },
-                      child: Text(
-                        'Create Supermarket',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  SizedBox(height: 16),
-                  Text(
-                    "Or sign in with",
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w300),
-                  ),
-
-                  SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      IconButton(
-                        icon: Icon(Icons.facebook, color: Colors.blue),
-                        onPressed: () {},
-                      ),
-                      SizedBox(width: 16),
-
-                      IconButton(
-                        icon: Icon(
-                          FontAwesomeIcons.google,
-                          color: Colors.yellow,
-                        ),
-                        onPressed: () {},
-                      ),
-
-                      SizedBox(width: 16),
-                      IconButton(
-                        icon: Icon(Icons.apple, color: Colors.black),
-                        onPressed: () {},
-                      ),
-                    ],
-                  ),
-
-                  SizedBox(height: 16),
-                  Text(
-                    "Already have an account? Sign in",
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: const Color.fromARGB(255, 17, 111, 189),
-                      fontWeight: FontWeight.w400,
-                    ),
+                    onPressed: () {},
                   ),
                 ],
               ),
-            ),
+              const SizedBox(height: 30.0),
+              TextButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const LoginPage()),
+                  );
+                },
+                child: const Text(
+                  'Already have an account? Sign In',
+                  style: TextStyle(color: Colors.green),
+                ),
+              ),
+            ],
           ),
         ),
       ),
