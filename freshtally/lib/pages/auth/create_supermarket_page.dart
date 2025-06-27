@@ -235,7 +235,7 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
                       SizedBox(width: 16),
 
                       IconButton(
-                        icon: FaIcon(
+                        icon: Icon(
                           FontAwesomeIcons.google,
                           color: Colors.yellow,
                         ),
