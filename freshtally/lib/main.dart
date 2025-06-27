@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:freshtally/pages/auth/role_selection_page.dart';
-import 'package:freshtally/pages/auth/create_supermarket_page.dart';
+
 
 void main() {
-  runApp(MyApp());
+  runApp(const MyApp()); // Added const for better performance
 }
 
 class MyApp extends StatelessWidget {
@@ -14,15 +14,14 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'FreshTally',
-      //home: CreateSupermarketPage(),
       initialRoute: '/',
       routes: {
-        //'/': (context) => HomePage(), // maybe your login page
-        '/create_supermarket': (context) => CreateSupermarketPage(),
-        '/role_selection': (context) => const RoleSelectionPage(),
-        //'/cashier': (context) => const CashierPage(),
-        //'/shelf_staff': (context) => const ShelfStaffPage(),
+        // '/': (context) => HomePage(), // maybe your login page
+         '/role_selection': (context) => const RoleSelectionPage(),
+        // '/cashier': (context) => const CashierPage(),
+        // '/shelf_staff': (context) => const ShelfStaffPage(),
       },
     );
   }
 }
+
