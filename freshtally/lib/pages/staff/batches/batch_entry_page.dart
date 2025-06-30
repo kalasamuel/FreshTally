@@ -60,20 +60,20 @@ class _BatchDetailsEntryState extends State<BatchDetailsEntry> {
     );
   }
 
-//   Widget _buildInputField(String hint, TextEditingController controller) {
-//     return Padding(
-//       padding: const EdgeInsets.symmetric(vertical: 8),
-//       child: TextField(
-//         controller: controller,
-//         decoration: InputDecoration(
-//           hintText: hint,
-//           fillColor: Colors.grey[200],
-//           border: OutlineInputBorder(
-//             borderRadius: BorderRadius.circular(10),
-//             borderSide: BorderSide.none,
-//           ),
-//         ),
-//       ),
-//     );
-//   }
+  Widget _buildInputField(String hint, TextEditingController controller) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: TextField(
+        controller: controller,
+        decoration: InputDecoration(
+          hintText: hint,
+          fillColor: Colors.grey[200],
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide.none,
+          ),
+        ),
+      ),
+    );
+  }
 }
