@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:freshtally/pages/staff/batches/batch_entry_page.dart';
 // import 'package:freshtally/pages/auth/role_selection_page.dart';
-import 'package:freshtally/pages/auth/login_page.dart';
+//import 'package:freshtally/pages/auth/login_page.dart';
 
 // void main() {
 //   runApp(const MyApp()); // Added const for better performance
@@ -26,19 +27,22 @@ import 'package:freshtally/pages/auth/login_page.dart';
 // }
 
 void main() {
-  runApp(const MyApp());
+  runApp(MaterialApp(
+    debugShowCheckedModeBanner: false,
+    home: BatchDetailsEntry(),
+  ));
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+// class MyApp extends StatelessWidget {
+//   const MyApp({super.key});
 
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'FreshTally',
-      theme: ThemeData(primarySwatch: Colors.green),
-      home: const LoginPage(),
-      debugShowCheckedModeBanner: false,
-    );
-  }
-}
+//   @override
+//   Widget build(BuildContext context) {
+//     return MaterialApp(
+//       title: 'FreshTally',
+//       theme: ThemeData(primarySwatch: Colors.green),
+//       home: const LoginPage(),
+//       debugShowCheckedModeBanner: false,
+//     );
+//   }
+// }
