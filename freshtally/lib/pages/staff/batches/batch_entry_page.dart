@@ -31,6 +31,7 @@ class _BatchDetailsEntryState extends State<BatchDetailsEntry> {
       isFormComplete =
           supplierController.text.isNotEmpty &&
           deliveryController.text.isNotEmpty &&
+          expiryController.text.isNotEmpty &&
           quantityController.text.isNotEmpty;
     });
   }
@@ -96,7 +97,7 @@ class _BatchDetailsEntryState extends State<BatchDetailsEntry> {
   }
 
   Widget _buildInputField(String label, TextEditingController controller) {
-    bool isDateField = label.toLowerCase().contains("expiry");
+    bool isDateField = label.toLowerCase().contains("expiry") || label.toLowerCase().contains("delivery");
 
     return Card(
       color: Colors.grey[200],
