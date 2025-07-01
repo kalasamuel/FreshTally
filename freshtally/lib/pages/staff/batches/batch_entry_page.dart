@@ -14,7 +14,35 @@ class _BatchDetailsEntryState extends State<BatchDetailsEntry> {
   final TextEditingController expiryController = TextEditingController();
   final TextEditingController quantityController = TextEditingController();
 
-  bool isFormValid = false;
+  bool isFormComplete = false;
+
+  @override
+  void initState() {
+    super.initState();
+    //Listens to all changes from all fields
+    supplierController.addListener(_checkFormCompletion);
+    deliveryController.addListener(_checkFormCompletion);
+    expiryController.addListener(_checkFormCompletion);
+    quantityController.addListener(_checkFormCompletion);
+  }
+
+  void _checkFormCompletion() {
+    setState(() {
+      isFormComplete =
+          supplierController.text.isNotEmpty &&
+          deliveryController.text.isNotEmpty &&
+          quantityController.text.isNotEmpty;
+    });
+  }
+
+  @override
+  void dispose() {
+    supplierController.dispose();
+    deliveryController.dispose();
+    expiryController.dispose();
+    quantityController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +69,9 @@ class _BatchDetailsEntryState extends State<BatchDetailsEntry> {
             _buildInputField("Quantity", quantityController),
             const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: () {},
+              onPressed: isFormComplete ? () {
+                //to add logic for pressing the save product button
+              } : null,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green[400],
                 minimumSize: const Size(double.infinity, 50),
@@ -49,6 +79,8 @@ class _BatchDetailsEntryState extends State<BatchDetailsEntry> {
               child: const Text('Save Product'),
             ),
             const Spacer(),
+
+            //I do not yet know what this button is really for on this page.
             ElevatedButton(
               onPressed: () {},
               style: ElevatedButton.styleFrom(
@@ -94,7 +126,9 @@ class _BatchDetailsEntryState extends State<BatchDetailsEntry> {
                     lastDate: DateTime(2100),
                   );
                   if (pickedDate != null) {
-                    String formattedDate = DateFormat('d MMMM yyyy').format(pickedDate);
+                    String formattedDate = DateFormat(
+                      'd MMMM yyyy',
+                    ).format(pickedDate);
                     setState(() {
                       controller.text = formattedDate;
                     });
