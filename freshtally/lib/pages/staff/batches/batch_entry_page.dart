@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class BatchDetailsEntry extends StatefulWidget {
   const BatchDetailsEntry({super.key});
@@ -12,6 +13,8 @@ class _BatchDetailsEntryState extends State<BatchDetailsEntry> {
   final TextEditingController deliveryController = TextEditingController();
   final TextEditingController expiryController = TextEditingController();
   final TextEditingController quantityController = TextEditingController();
+
+  bool isFormValid = false;
 
   @override
   Widget build(BuildContext context) {
@@ -60,7 +63,9 @@ class _BatchDetailsEntryState extends State<BatchDetailsEntry> {
     );
   }
 
-  Widget _buildInputField(String hint, TextEditingController controller) {
+  Widget _buildInputField(String label, TextEditingController controller) {
+    bool isDateField = label.toLowerCase().contains("expiry");
+
     return Card(
       color: Colors.grey[200],
       elevation: 3,
@@ -70,8 +75,9 @@ class _BatchDetailsEntryState extends State<BatchDetailsEntry> {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         child: TextField(
           controller: controller,
+          readOnly: isDateField,
           decoration: InputDecoration(
-            hintText: hint,
+            hintText: label,
             filled: true,
             fillColor: Colors.grey[200],
             border: OutlineInputBorder(
@@ -79,6 +85,22 @@ class _BatchDetailsEntryState extends State<BatchDetailsEntry> {
               borderSide: BorderSide.none,
             ),
           ),
+          onTap: isDateField
+              ? () async {
+                  DateTime? pickedDate = await showDatePicker(
+                    context: context,
+                    initialDate: DateTime.now(),
+                    firstDate: DateTime(2000),
+                    lastDate: DateTime(2100),
+                  );
+                  if (pickedDate != null) {
+                    String formattedDate = DateFormat('d MMMM yyyy').format(pickedDate);
+                    setState(() {
+                      controller.text = formattedDate;
+                    });
+                  }
+                }
+              : null,
         ),
       ),
     );
