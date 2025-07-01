@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:freshtally/pages/staff/batches/batch_entry_page.dart';
-// import 'package:freshtally/pages/auth/role_selection_page.dart';
+ import 'package:freshtally/pages/auth/role_selection_page.dart';
 //import 'package:freshtally/pages/auth/login_page.dart';
 
 // void main() {
@@ -29,7 +29,7 @@ import 'package:freshtally/pages/staff/batches/batch_entry_page.dart';
 void main() {
   runApp(MaterialApp(
     debugShowCheckedModeBanner: false,
-    home: BatchDetailsEntry(),
+    home: RoleSelectionPage(),
   ));
 }
 

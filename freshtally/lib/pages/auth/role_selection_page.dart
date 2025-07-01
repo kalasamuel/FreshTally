@@ -18,7 +18,7 @@ class _RoleSelectionPageState extends State<RoleSelectionPage> {
     }
   }
 
-  Widget buildRoleCard(String role, IconData icon) {
+  Widget buildRoleCard(String role, Widget iconWidget) {
     final isSelected = selectedRole == role;
 
     return GestureDetector(
@@ -40,9 +40,9 @@ class _RoleSelectionPageState extends State<RoleSelectionPage> {
         ),
         child: Row(
           children: [
-            Icon(icon, size: 40),
+            iconWidget,
             SizedBox(width: 16),
-            Text(role, style: TextStyle(fontSize: 18)),
+            Text(role, style: TextStyle(fontSize: 50, fontWeight: FontWeight.bold)),
           ],
         ),
       ),
@@ -64,11 +64,11 @@ class _RoleSelectionPageState extends State<RoleSelectionPage> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            buildRoleCard('Cashier', Icons.point_of_sale),
-            buildRoleCard('Shelf Staff',Icons.shopping_cart),
+            buildRoleCard('Cashier', Image.asset('assets/cashier.png', width: 150)),
+            buildRoleCard('Shelf Staff', Image.asset('assets/shelf-attendant.png', width: 150)),
             const SizedBox(height: 30),
             ElevatedButton(
-              onPressed: selectedRole.isEmpty ? null :navigateToRolePage,
+              onPressed: selectedRole.isEmpty ? null : navigateToRolePage,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green[400],
                 minimumSize: const Size(double.infinity, 50),

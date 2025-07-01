@@ -79,7 +79,7 @@ class _BatchDetailsEntryState extends State<BatchDetailsEntry> {
               ),
               child: const Text('Save Product'),
             ),
-            const Spacer(),
+            const SizedBox(height: 50),
 
             //I do not yet know what this button is really for on this page.
             ElevatedButton(
@@ -135,7 +135,7 @@ class _BatchDetailsEntryState extends State<BatchDetailsEntry> {
                     });
                   }
                 }
-              : null,
+              : null,//Only allow date picker for delivery and expiry fields 
         ),
       ),
     );
