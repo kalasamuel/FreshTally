@@ -34,7 +34,7 @@ class _CreateCustomerPageState extends State<CreateCustomerPage> {
           },
         ),
         title: const Text(
-          'Create Supermarket',
+          'Create Your Shopper Account',
           style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
@@ -63,7 +63,7 @@ class _CreateCustomerPageState extends State<CreateCustomerPage> {
               const SizedBox(height: 40.0),
               const Center(
                 child: Text(
-                  "Create an account for your supermarket",
+                  "Join and explore discounts and shelf locations instantly!",
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.normal,
