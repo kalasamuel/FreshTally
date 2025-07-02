@@ -86,14 +86,26 @@ class _ProductEntryPageState extends State<ProductEntryPage> {
         child: Form(
           key: _formKey,
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Column(crossAxisAlignment: CrossAxisAlignment.start),
               Padding(
                 padding: const EdgeInsets.only(right: 16.0),
-                child: Image.asset(
-                  'assets/images/barcode.jpg', // <-- your barcode image path
-                  height: 32,
-                  width: 23,
+                child: Row(
+                  children: [
+                    Image.asset(
+                      'assets/images/barcode.jpg', // <-- your barcode image path
+                      height: 80,
+                      width: 80,
+                    ),
+                    const SizedBox(width: 16.0),
+                    const Text(
+                      'Scan Barcode',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 16.0),
@@ -186,6 +198,29 @@ class _ProductEntryPageState extends State<ProductEntryPage> {
                   ),
                 ),
                 child: const Text('Add Product'),
+              ),
+              const Divider(thickness: 1.5),
+              const SizedBox(height: 16),
+              OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  side: BorderSide.none,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                onPressed: () {
+                  // Assign shelf logic here
+                },
+                child: const Text(
+                  "Need to assign shelf?",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
               ),
             ],
           ),
