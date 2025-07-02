@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 //import 'package:freshtally/pages/staff/batches/batch_entry_page.dart';
 // import 'package:freshtally/pages/auth/role_selection_page.dart';
 //import 'package:freshtally/pages/auth/login_page.dart';
-import 'package:freshtally/pages/staff/products/product_entry_page.dart';
+import 'package:freshtally/pages/staff/products/edit_product_page.dart';
 
 // void main() {
 //   runApp(const MyApp()); // Added const for better performance
@@ -29,7 +29,7 @@ import 'package:freshtally/pages/staff/products/product_entry_page.dart';
 
 void main() {
   runApp(
-    MaterialApp(debugShowCheckedModeBanner: false, home: ProductEntryPage()),
+    MaterialApp(debugShowCheckedModeBanner: false, home: EditProductPage()),
   );
 }
 
