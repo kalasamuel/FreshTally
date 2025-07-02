@@ -13,7 +13,8 @@ class ManagerDashboard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      //I will add an appbar to show a back button and the supermarket name and location and the settings action later.
+      //I did body at once because I wanted to make the top part customized. 
+      //I have not even used an appbar for that reason.
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Padding(
@@ -40,12 +41,57 @@ class ManagerDashboard extends StatelessWidget {
                     },
                   ),
                 ),
-                const SizedBox(height: 10),
               ],
-            )
-            ],
+            ),
 
+            const SizedBox(height: 20),
+            
+            //The Cards for the different functions.
+            Expanded(
+              child: GridView.count(
+                crossAxisCount: 2,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+                children: [
+                  dashboardCard(Icons.bar_chart, 'Analytics', Colors.grey[200]),
+                  dashboardCard(Icons.calendar_month, 'Expiry date Tracker', Colors.pink[200]),
+                  dashboardCard(Icons.people, 'User Role Management', Colors.green[100]),
+                  dashboardCard(Icons.notifications, 'Notifications', Colors.yellow[300]),
+                  dashboardCard(Icons.map, 'Shelf Mapping', Colors.teal[200]),
+                  dashboardCard(Icons.inventory, 'Inventory List', Colors.green[200]),
+                  dashboardCard(Icons.lightbulb, 'Smart Suggestions', Colors.orange[200]),
+                  dashboardCard(Icons.sync, 'Sync Status', Colors.grey[300]),
+                  dashboardCard(Icons.qr_code_2, 'Product Entry', Colors.green[100]),
+                ],
+              )
+            ),
+            ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget dashboardCard(IconData icon, String title, Color? bgColor) {
+    return InkWell(
+      onTap: () {},
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 40, color: Colors.black54),
+            const SizedBox(height: 10),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ],
         ),
       ),
     );
