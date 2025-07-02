@@ -44,6 +44,7 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
     });
   }
 
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -65,6 +66,16 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
           ),
         ),
         centerTitle: true,
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16.0),
+            child: Image.asset(
+              'assets/images/barcode.jpg', // <-- your barcode image path
+              height: 32,
+              width: 32,
+            ),
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
@@ -73,16 +84,7 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Center(
-              //   child: Text(
-              //     "Welcome to FreshTally!",
-              //     style: TextStyle(
-              //       fontSize: 24,
-              //       fontWeight: FontWeight.bold,
-              //       color: Colors.green[700],
-              //     ),
-              //   ),
-              // ),
+              const Divider(thickness: 23.0),
               const SizedBox(height: 40.0),
               const Center(
                 child: Text(
