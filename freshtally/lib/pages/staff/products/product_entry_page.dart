@@ -7,7 +7,7 @@ class FormTextField extends StatelessWidget {
   final TextEditingController? controller;
   final String? Function(String?)? validator;
 
-  const FormTextField({
+  FormTextField({
     super.key,
     required this.hintText,
     required this.keyboardType,
@@ -51,6 +51,21 @@ class _ProductEntryPageState extends State<ProductEntryPage> {
   final _formKey = GlobalKey<FormState>();
   final bool _isFormValid = false;
 
+  final List<String> _categories = [
+    'Beverages',
+    'Snacks',
+    'Dairy',
+    'Produce',
+    'Statinary',
+    'toiletries',
+    'technology',
+    'Household',
+    'Frozen Foods',
+    'Bakery',
+    'Other',
+  ];
+  String? _selectedCategory;
+
   final TextEditingController _productNameController = TextEditingController();
   final TextEditingController _productPriceController = TextEditingController();
   final TextEditingController _productQuantityController =
@@ -64,23 +79,12 @@ class _ProductEntryPageState extends State<ProductEntryPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        foregroundColor: Colors.black,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        ),
-
         title: const Text(
           'Product Entry Details',
           style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
       ),
-
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -139,6 +143,27 @@ class _ProductEntryPageState extends State<ProductEntryPage> {
                 },
               ),
               const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                value: _selectedCategory,
+                decoration: InputDecoration(
+                  labelText: "Category",
+                  filled: true,
+                  fillColor: Colors.grey[300],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+                items: _categories
+                    .map(
+                      (cat) => DropdownMenuItem(value: cat, child: Text(cat)),
+                    )
+                    .toList(),
+                onChanged: (val) => setState(() => _selectedCategory = val),
+                validator: (value) =>
+                    value == null ? "Select a category" : null,
+              ),
+              const SizedBox(height: 16),
               FormTextField(
                 controller: _productSuplierController,
                 hintText: 'Supplier',
@@ -191,7 +216,6 @@ class _ProductEntryPageState extends State<ProductEntryPage> {
                     : null,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green[600],
-
                   padding: const EdgeInsets.symmetric(vertical: 16.0),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10.0),

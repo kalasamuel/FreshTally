@@ -12,6 +12,21 @@ class _EditProductPageState extends State<EditProductPage> {
   final _formKey = GlobalKey<FormState>();
   final bool _isFormValid = false;
 
+  final List<String> _categories = [
+    'Beverages',
+    'Snacks',
+    'Dairy',
+    'Produce',
+    'Statinary',
+    'toiletries',
+    'technology',
+    'Household',
+    'Frozen Foods',
+    'Bakery',
+    'Other',
+  ];
+  String? _selectedCategory;
+
   final TextEditingController _productNameController = TextEditingController();
   final TextEditingController _productPriceController = TextEditingController();
   final TextEditingController _productQuantityController =
@@ -99,6 +114,27 @@ class _EditProductPageState extends State<EditProductPage> {
                   }
                   return null;
                 },
+              ),
+              const SizedBox(height: 16),
+              DropdownButtonFormField<String>(
+                value: _selectedCategory,
+                decoration: InputDecoration(
+                  labelText: "Category",
+                  filled: true,
+                  fillColor: Colors.grey[300],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+                items: _categories
+                    .map(
+                      (cat) => DropdownMenuItem(value: cat, child: Text(cat)),
+                    )
+                    .toList(),
+                onChanged: (val) => setState(() => _selectedCategory = val),
+                validator: (value) =>
+                    value == null ? "Select a category" : null,
               ),
               const SizedBox(height: 16),
               FormTextField(
