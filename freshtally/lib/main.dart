@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 //import 'package:freshtally/pages/auth/login_page.dart';
 import 'package:freshtally/pages/staff/products/edit_product_page.dart';
 
+
 // void main() {
 //   runApp(const MyApp()); // Added const for better performance
 // }
