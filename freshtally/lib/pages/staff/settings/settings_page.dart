@@ -16,8 +16,8 @@ class SettingsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Dummy user
-    const userName = 'John Doe';
-    const userEmail = 'john@example.com';
+    const userName = 'Kala Samuel';
+    const userEmail = 'kalasamuel79@gmail.com';
 
     return Scaffold(
       appBar: AppBar(title: const Text('Settings')),
