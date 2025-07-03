@@ -146,7 +146,7 @@ class LoginPage extends StatelessWidget {
                 ),
                 const SizedBox(width: 20),
                 IconButton(
-                  icon: Image.asset('assets/icons/google_icon.png', height: 35),
+                  icon: Image.asset('assets/icons/google.png', height: 35),
                   onPressed: () {},
                 ),
                 const SizedBox(width: 20),
@@ -159,7 +159,7 @@ class LoginPage extends StatelessWidget {
             const SizedBox(height: 30.0),
             Column(
               children: [
-                TextButton(
+                OutlinedButton(
                   onPressed: () {
                     Navigator.push(
                       context,
@@ -168,28 +168,46 @@ class LoginPage extends StatelessWidget {
                       ),
                     );
                   },
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Colors.green),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
                   child: const Text(
                     "New Supermarket?",
                     style: TextStyle(color: Colors.green),
                   ),
                 ),
-                TextButton(
+                OutlinedButton(
                   onPressed: () {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Joining Staff? pressed!')),
                     );
                   },
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Colors.orange),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
                   child: const Text(
                     "Joining Staff?",
                     style: TextStyle(color: Colors.orange),
                   ),
                 ),
-                TextButton(
+                OutlinedButton(
                   onPressed: () {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('I am Customer pressed!')),
                     );
                   },
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: Colors.blue.shade700),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
                   child: Text(
                     "I am Customer",
                     style: TextStyle(color: Colors.blue[700]),
