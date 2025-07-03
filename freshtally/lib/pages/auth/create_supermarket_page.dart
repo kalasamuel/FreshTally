@@ -10,6 +10,7 @@ class CreateSupermarketPage extends StatefulWidget {
 
 class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
   final _formKey = GlobalKey<FormState>();
+  bool _isFormValid = false;
 
   final TextEditingController _supermarketNameController =
       TextEditingController();
@@ -19,6 +20,29 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
       TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _supermarketNameController.addListener(_validateForm);
+    _firstNameController.addListener(_validateForm);
+    _lastNameController.addListener(_validateForm);
+    _emailController.addListener(_validateForm);
+    _passwordController.addListener(_validateForm);
+    _confirmPasswordController.addListener(_validateForm);
+  }
+
+  void _validateForm() {
+    setState(() {
+      _isFormValid =
+          _supermarketNameController.text.trim().isNotEmpty &&
+          _firstNameController.text.trim().isNotEmpty &&
+          _lastNameController.text.trim().isNotEmpty &&
+          _emailController.text.trim().isNotEmpty &&
+          _passwordController.text.isNotEmpty &&
+          _confirmPasswordController.text.isNotEmpty;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,16 +74,6 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Center(
-              //   child: Text(
-              //     "Welcome to FreshTally!",
-              //     style: TextStyle(
-              //       fontSize: 24,
-              //       fontWeight: FontWeight.bold,
-              //       color: Colors.green[700],
-              //     ),
-              //   ),
-              // ),
               const SizedBox(height: 40.0),
               const Center(
                 child: Text(
@@ -76,6 +90,12 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
                 hintText: 'Supermarket Name',
                 icon: Icons.store,
                 controller: _supermarketNameController,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Supermarket name is required';
+                  }
+                  return null;
+                },
               ),
               const SizedBox(height: 24.0),
               const Text(
@@ -91,18 +111,40 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
                 hintText: 'First Name',
                 icon: Icons.person,
                 controller: _firstNameController,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'First name is required';
+                  }
+                  return null;
+                },
               ),
               const SizedBox(height: 16.0),
               IconTextField(
                 hintText: 'Last Name',
                 icon: Icons.person_outline,
                 controller: _lastNameController,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Last name is required';
+                  }
+                  return null;
+                },
               ),
               const SizedBox(height: 16.0),
               IconTextField(
                 hintText: 'Email',
                 icon: Icons.email,
                 controller: _emailController,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Email is required';
+                  }
+                  // Simple email validation
+                  if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
+                    return 'Enter a valid email';
+                  }
+                  return null;
+                },
               ),
               const SizedBox(height: 16.0),
               IconTextField(
@@ -110,6 +152,15 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
                 icon: Icons.lock,
                 isPassword: true,
                 controller: _passwordController,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Password is required';
+                  }
+                  if (value.length < 6) {
+                    return 'Password must be at least 6 characters';
+                  }
+                  return null;
+                },
               ),
               const SizedBox(height: 16.0),
               IconTextField(
@@ -117,14 +168,30 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
                 icon: Icons.lock_outline,
                 isPassword: true,
                 controller: _confirmPasswordController,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Confirm password is required';
+                  }
+                  if (value != _passwordController.text) {
+                    return 'Passwords do not match';
+                  }
+                  return null;
+                },
               ),
               const SizedBox(height: 32.0),
               ElevatedButton(
-                onPressed: () {
-                  if (_formKey.currentState!.validate()) {
-                    // Process data
-                  }
-                },
+                onPressed: _isFormValid
+                    ? () {
+                        if (_formKey.currentState?.validate() ?? false) {
+                          // Handle account creation logic here
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Account created successfully!'),
+                            ),
+                          );
+                        }
+                      }
+                    : null,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green[600],
                   padding: const EdgeInsets.symmetric(vertical: 16.0),
