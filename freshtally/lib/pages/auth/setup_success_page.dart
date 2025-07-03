@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // For Clipboard
+import 'package:freshtally/pages/staff/home/manager_home_screen.dart';
 
 class OrganizationSetupSuccessPage extends StatelessWidget {
   const OrganizationSetupSuccessPage({Key? key}) : super(key: key);
@@ -35,33 +35,16 @@ class OrganizationSetupSuccessPage extends StatelessWidget {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 32.0),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      // Handle copy to clipboard
-                      Clipboard.setData(
-                        const ClipboardData(text: 'Your Organization ID'),
-                      ); // Replace with actual ID
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Organization ID copied to clipboard'),
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.copy),
-                    label: const Text('Copy ID'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.grey[300],
-                      foregroundColor: Colors.black,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 32.0),
               ElevatedButton(
                 onPressed: () {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) {
+                        return ManagerDashboardPage();
+                      },
+                    ),
+                  );
                   // Navigate to dashboard
                 },
                 style: ElevatedButton.styleFrom(
