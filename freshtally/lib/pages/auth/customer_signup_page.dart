@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:freshtally/pages/auth/login_page.dart';
 
-class CreateCustomerPage extends StatefulWidget {
-  const CreateCustomerPage({super.key});
+class CustomerSignupPage extends StatefulWidget {
+  const CustomerSignupPage({super.key});
 
   @override
-  _CreateCustomerPageState createState() => _CreateCustomerPageState();
+  _CustomerSignupPageState createState() => _CustomerSignupPageState();
 }
 
-class _CreateCustomerPageState extends State<CreateCustomerPage> {
+class _CustomerSignupPageState extends State<CustomerSignupPage> {
   final _formKey = GlobalKey<FormState>();
 
   bool _isFormValid = false;
