@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:freshtally/pages/auth/login_page.dart';
+import 'package:freshtally/pages/auth/setup_success_page.dart';
 
 class CreateSupermarketPage extends StatefulWidget {
   const CreateSupermarketPage({super.key});
@@ -184,9 +185,12 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
                     ? () {
                         if (_formKey.currentState?.validate() ?? false) {
                           // Handle account creation logic here
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Account created successfully!'),
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) {
+                                return const OrganizationSetupSuccessPage();
+                              },
                             ),
                           );
                         }
@@ -229,10 +233,7 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
                   ),
                   const SizedBox(width: 20),
                   IconButton(
-                    icon: Image.asset(
-                      'assets/icons/google_icon.png',
-                      height: 35,
-                    ),
+                    icon: Image.asset('assets/icons/google.png', height: 35),
                     onPressed: () {},
                   ),
                   const SizedBox(width: 20),
