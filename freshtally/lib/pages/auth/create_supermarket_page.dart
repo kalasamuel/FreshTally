@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:freshtally/pages/auth/login_page.dart';
+import 'package:freshtally/pages/auth/setup_success_page.dart';
 
 class CreateSupermarketPage extends StatefulWidget {
   const CreateSupermarketPage({super.key});
@@ -44,6 +45,7 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
     });
   }
 
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -73,16 +75,6 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Center(
-              //   child: Text(
-              //     "Welcome to FreshTally!",
-              //     style: TextStyle(
-              //       fontSize: 24,
-              //       fontWeight: FontWeight.bold,
-              //       color: Colors.green[700],
-              //     ),
-              //   ),
-              // ),
               const SizedBox(height: 40.0),
               const Center(
                 child: Text(
@@ -193,9 +185,12 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
                     ? () {
                         if (_formKey.currentState?.validate() ?? false) {
                           // Handle account creation logic here
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Account created successfully!'),
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) {
+                                return const OrganizationSetupSuccessPage();
+                              },
                             ),
                           );
                         }
@@ -238,10 +233,7 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
                   ),
                   const SizedBox(width: 20),
                   IconButton(
-                    icon: Image.asset(
-                      'assets/icons/google_icon.png',
-                      height: 35,
-                    ),
+                    icon: Image.asset('assets/icons/google.png', height: 35),
                     onPressed: () {},
                   ),
                   const SizedBox(width: 20),
