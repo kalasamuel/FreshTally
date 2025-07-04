@@ -109,7 +109,7 @@ dev_dependencies:
 flutter:
   assets:
     - assets/icons/
-    - assets/lottie/
+    #- assets/lottie/
     - assets/images/
 
   # The following line ensures that the Material Icons font is
