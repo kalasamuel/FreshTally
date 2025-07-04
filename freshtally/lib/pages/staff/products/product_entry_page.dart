@@ -207,9 +207,7 @@ class _ProductEntryPageState extends State<ProductEntryPage> {
                     ? () {
                         if (_formKey.currentState?.validate() ?? false) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Account created successfully!'),
-                            ),
+                            const SnackBar(content: Text('Product added!')),
                           );
                         }
                       }
