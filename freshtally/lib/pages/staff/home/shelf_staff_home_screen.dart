@@ -1,5 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:freshtally/pages/staff/settings/settings_page.dart';
+import 'package:freshtally/pages/staff/expiry/expiry_tracking_page.dart';
+import 'package:freshtally/pages/staff/notifications/notification_center_page.dart';
+import 'package:freshtally/pages/staff/shelves/shelf_mapping_page.dart';
+import 'package:freshtally/pages/staff/shelves/smart_suggestions_page.dart';
+import 'package:freshtally/pages/staff/sync/sync_status_page.dart';
+// import 'package:freshtally/pages/staff/products/edit_product_page.dart';
+import 'package:freshtally/pages/staff/products/product_entry_page.dart';
 
 class ShelfStaffDashboardPage extends StatelessWidget {
   const ShelfStaffDashboardPage({super.key});
@@ -85,36 +92,94 @@ class ShelfStaffDashboardPage extends StatelessWidget {
                       title: 'Shelf Mapping',
                       icon: Icons.location_on,
                       color: const Color(0xFFD1F2EB),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ShelfMappingPage(),
+                          ),
+                        );
+                      },
                     ),
                     _buildDashboardTile(
                       title: 'Expiry Tracker',
                       icon: Icons.calendar_today,
                       color: const Color(0xFFFDECEB),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ExpiryTrackingPage(),
+                          ),
+                        );
+                      },
                     ),
                     _buildDashboardTile(
                       title: 'Product Entry',
                       icon: Icons.qr_code_scanner,
                       color: const Color(0xFFE0F2F1),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ProductEntryPage(),
+                          ),
+                        );
+                      },
                     ),
                     _buildDashboardTile(
                       title: 'Sync Status',
                       icon: Icons.sync,
                       color: const Color(0xFFE8E8E8),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const SyncStatusPage(),
+                          ),
+                        );
+                      },
                     ),
                     _buildDashboardTile(
                       title: 'Smart Suggestions',
                       icon: Icons.lightbulb_outline,
                       color: const Color(0xFFE8E8E8),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                const SmartShelfSuggestionsPage(),
+                          ),
+                        );
+                      },
                     ),
-                    _buildDashboardTile(
-                      title: 'Edit Products',
-                      icon: Icons.edit_square,
-                      color: const Color(0xFFE0F2F1),
-                    ),
+                    // _buildDashboardTile(
+                    //   title: 'Edit Products',
+                    //   icon: Icons.edit_square,
+                    //   color: const Color(0xFFE0F2F1),
+                    //   onTap: () {
+                    //     Navigator.push(
+                    //       context,
+                    //       MaterialPageRoute(
+                    //         builder: (context) => const EditProductPage(),
+                    //       ),
+                    //     );
+                    //   },
+                    // ),
                     _buildDashboardTile(
                       title: 'Notifications',
                       icon: Icons.notifications,
                       color: const Color(0xFFFFF3E0),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                const NotificationCenterPage(),
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -187,20 +252,22 @@ class ShelfStaffDashboardPage extends StatelessWidget {
   }
 }
 
-/// A helper widget to build a single dashboard tile.
 Widget _buildDashboardTile({
   required String title,
   required IconData icon,
   required Color color,
+  VoidCallback? onTap,
 }) {
   return Card(
     elevation: 0.1,
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
     color: color,
     child: InkWell(
-      onTap: () {
-        debugPrint('$title tile tapped!');
-      },
+      onTap:
+          onTap ??
+          () {
+            debugPrint('$title tile tapped!');
+          },
       borderRadius: BorderRadius.circular(16),
       child: Padding(
         padding: const EdgeInsets.all(16.0),

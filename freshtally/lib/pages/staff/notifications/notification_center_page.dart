@@ -15,49 +15,33 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.green,
         fontFamily: 'Inter', // Assuming Inter font for a modern look
       ),
-      home: const NotificationsPage(),
+      home: const NotificationCenterPage(),
       debugShowCheckedModeBanner: false, // Hide the debug banner
     );
   }
 }
 
-class NotificationsPage extends StatefulWidget {
-  const NotificationsPage({super.key});
+class NotificationCenterPage extends StatefulWidget {
+  const NotificationCenterPage({super.key});
 
   @override
-  State<NotificationsPage> createState() => _NotificationsPageState();
+  State<NotificationCenterPage> createState() => _NotificationCenterPageState();
 }
 
-class _NotificationsPageState extends State<NotificationsPage> {
+class _NotificationCenterPageState extends State<NotificationCenterPage> {
   // Currently selected filter chip
   String _selectedFilter = 'All';
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFD9F7D9), // Light green background
+      backgroundColor: const Color(0xFFFFFFFF), // Light green background
       body: SafeArea(
         child: Center(
           child: Container(
             margin: const EdgeInsets.all(
               20.0,
             ), // Margin around the main content area
-            decoration: BoxDecoration(
-              color: Colors.white, // White background for the main card
-              borderRadius: BorderRadius.circular(
-                20.0,
-              ), // Rounded corners for the main card
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(
-                    0.1,
-                  ), // Subtle shadow for depth
-                  spreadRadius: 2,
-                  blurRadius: 5,
-                  offset: const Offset(0, 3),
-                ),
-              ],
-            ),
             child: Column(
               crossAxisAlignment:
                   CrossAxisAlignment.start, // Align content to the start
@@ -94,7 +78,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                 // Filter Chips
                 Padding(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 16.0,
+                    horizontal: 1.0,
                     vertical: 8.0,
                   ),
                   child: SingleChildScrollView(

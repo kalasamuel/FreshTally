@@ -24,35 +24,65 @@ class MyApp extends StatelessWidget {
 class SyncStatusPage extends StatelessWidget {
   const SyncStatusPage({super.key});
 
+  void _showSyncResultSnackbar(
+    BuildContext context, {
+    required bool success,
+    int failedCount = 0,
+  }) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: Colors.grey[90],
+        content: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Text(
+                success
+                    ? 'All items synced successfully!'
+                    : '$failedCount item${failedCount > 1 ? 's' : ''} failed to sync.',
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+            if (!success)
+              TextButton(
+                onPressed: () {
+                  // Retry logic here
+                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                  print('RETRY pressed!');
+                },
+                child: const Text(
+                  'RETRY',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.green,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+          ],
+        ),
+        duration: const Duration(seconds: 4),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: const EdgeInsets.all(10),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFD9F7D9), // Light green background
+      backgroundColor: const Color(0xFFFFFFFF),
       body: SafeArea(
         child: Center(
           child: Container(
-            margin: const EdgeInsets.all(
-              20.0,
-            ), // Margin around the main content area
-            decoration: BoxDecoration(
-              color: Colors.white, // White background for the main card
-              borderRadius: BorderRadius.circular(
-                20.0,
-              ), // Rounded corners for the main card
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(
-                    0.1,
-                  ), // Subtle shadow for depth
-                  spreadRadius: 2,
-                  blurRadius: 5,
-                  offset: const Offset(0, 3),
-                ),
-              ],
-            ),
+            margin: const EdgeInsets.all(20.0),
             child: Column(
-              crossAxisAlignment:
-                  CrossAxisAlignment.start, // Align content to the start
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // App Bar Section
                 Padding(
@@ -152,12 +182,18 @@ class SyncStatusPage extends StatelessWidget {
                             // Sync Now Button
                             ElevatedButton(
                               onPressed: () {
-                                print('Sync Now pressed!');
+                                // Simulate sync result
+                                bool syncSuccess =
+                                    false; // Change to true to test success
+                                int failedCount = 3;
+                                _showSyncResultSnackbar(
+                                  context,
+                                  success: syncSuccess,
+                                  failedCount: failedCount,
+                                );
                               },
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(
-                                  0xFF4CAF50,
-                                ), // Green
+                                backgroundColor: const Color(0xFF4CAF50),
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 12,
                                   vertical: 6,
@@ -166,10 +202,8 @@ class SyncStatusPage extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(8.0),
                                 ),
                                 elevation: 1,
-                                minimumSize: Size
-                                    .zero, // Remove minimum size constraints
-                                tapTargetSize: MaterialTapTargetSize
-                                    .shrinkWrap, // Shrink tap target
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                               ),
                               child: const Text(
                                 'Sync Now',
@@ -227,89 +261,6 @@ class SyncStatusPage extends StatelessWidget {
                 ),
                 const Spacer(), // Pushes the status buttons to the bottom
                 // Bottom Status Buttons
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    children: [
-                      // All items synced successfully! button
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 16.0,
-                          horizontal: 16.0,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.grey[600], // Dark grey background
-                          borderRadius: BorderRadius.circular(10.0),
-                        ),
-                        child: const Text(
-                          'All items synced successfully!',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 10), // Space between buttons
-                      // 3 items failed to sync. RETRY button
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 16.0,
-                          horizontal: 16.0,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.grey[600], // Dark grey background
-                          borderRadius: BorderRadius.circular(10.0),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text(
-                              '3 items failed to sync.',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                            // RETRY button
-                            ElevatedButton(
-                              onPressed: () {
-                                print('RETRY pressed!');
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(
-                                  0xFF4CAF50,
-                                ), // Green
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 8,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8.0),
-                                ),
-                                elevation: 1,
-                                minimumSize: Size.zero,
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              ),
-                              child: const Text(
-                                'RETRY',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
               ],
             ),
           ),

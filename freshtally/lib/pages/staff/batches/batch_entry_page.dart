@@ -70,9 +70,11 @@ class _BatchDetailsEntryState extends State<BatchDetailsEntry> {
             _buildInputField("Quantity", quantityController),
             const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: isFormComplete ? () {
-                //to add logic for pressing the save product button
-              } : null,
+              onPressed: isFormComplete
+                  ? () {
+                      //to add logic for pressing the save product button
+                    }
+                  : null,
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green[400],
                 minimumSize: const Size(double.infinity, 50),
@@ -97,11 +99,13 @@ class _BatchDetailsEntryState extends State<BatchDetailsEntry> {
   }
 
   Widget _buildInputField(String label, TextEditingController controller) {
-    bool isDateField = label.toLowerCase().contains("expiry") || label.toLowerCase().contains("delivery");
+    bool isDateField =
+        label.toLowerCase().contains("expiry") ||
+        label.toLowerCase().contains("delivery");
 
     return Card(
       color: Colors.grey[200],
-      elevation: 3,
+      elevation: 1,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       child: Padding(
@@ -135,7 +139,7 @@ class _BatchDetailsEntryState extends State<BatchDetailsEntry> {
                     });
                   }
                 }
-              : null,//Only allow date picker for delivery and expiry fields 
+              : null, //Only allow date picker for delivery and expiry fields
         ),
       ),
     );

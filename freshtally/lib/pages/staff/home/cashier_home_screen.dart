@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:freshtally/pages/staff/notifications/notification_center_page.dart';
 import 'package:freshtally/pages/staff/settings/settings_page.dart';
+import 'package:freshtally/pages/staff/sync/sync_status_page.dart';
 
 class CashierDashboardPage extends StatelessWidget {
   const CashierDashboardPage({super.key});
@@ -82,24 +84,47 @@ class CashierDashboardPage extends StatelessWidget {
                   childAspectRatio: 1.5,
                   children: [
                     _buildDashboardTile(
-                      title: 'Product Entry',
-                      icon: Icons.qr_code_scanner,
+                      title: 'Sales',
+                      icon: Icons.point_of_sale,
                       color: const Color(0xFFE0F2F1),
+                      onTap: () {
+                        // TODO: Add navigation to Product Entry page if available
+                      },
                     ),
                     _buildDashboardTile(
                       title: 'Product Lookup',
                       icon: Icons.search,
                       color: const Color(0xFFE0F7FA),
+                      onTap: () {
+                        // TODO: Add navigation to Product Lookup page if available
+                      },
                     ),
                     _buildDashboardTile(
                       title: 'Sync Status',
                       icon: Icons.sync,
                       color: const Color(0xFFECEFF1),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const SyncStatusPage(),
+                          ),
+                        );
+                      },
                     ),
                     _buildDashboardTile(
                       title: 'Notifications',
                       icon: Icons.notifications,
                       color: const Color(0xFFFFF3E0),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                const NotificationCenterPage(),
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -172,20 +197,22 @@ class CashierDashboardPage extends StatelessWidget {
   }
 }
 
-/// A helper widget to build a single dashboard tile.
 Widget _buildDashboardTile({
   required String title,
   required IconData icon,
   required Color color,
+  VoidCallback? onTap,
 }) {
   return Card(
     elevation: 0.1,
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
     color: color,
     child: InkWell(
-      onTap: () {
-        debugPrint('$title tile tapped!');
-      },
+      onTap:
+          onTap ??
+          () {
+            debugPrint('$title tile tapped!');
+          },
       borderRadius: BorderRadius.circular(16),
       child: Padding(
         padding: const EdgeInsets.all(16.0),

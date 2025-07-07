@@ -118,7 +118,7 @@ class ManagerDashboardPage extends StatelessWidget {
                           context,
                           MaterialPageRoute(
                             builder: (context) {
-                              return NotificationsPage();
+                              return NotificationCenterPage();
                             },
                           ),
                         );
@@ -235,9 +235,11 @@ Widget _buildDashboardTile({
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
     color: color,
     child: InkWell(
-      onTap: () {
-        debugPrint('$title tile tapped!');
-      },
+      onTap:
+          onTap ??
+          () {
+            debugPrint('$title tile tapped!');
+          },
       borderRadius: BorderRadius.circular(16),
       child: Padding(
         padding: const EdgeInsets.all(16.0),

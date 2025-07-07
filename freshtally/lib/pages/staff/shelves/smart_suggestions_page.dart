@@ -10,7 +10,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Smart Shelf Suggestions UI',
+      title: 'Smart Shelf Suggestions',
       theme: ThemeData(
         primarySwatch: Colors.green,
         fontFamily: 'Inter', // Assuming Inter font for a modern look
@@ -27,7 +27,7 @@ class SmartShelfSuggestionsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFD9F7D9), // Light green background
+      backgroundColor: const Color(0xFFFFFFFF), // Light green background
       body: SafeArea(
         child: Center(
           child: Container(
@@ -35,22 +35,6 @@ class SmartShelfSuggestionsPage extends StatelessWidget {
               20.0,
             ), // Margin around the main content area
             padding: const EdgeInsets.all(16.0), // Padding inside the main card
-            decoration: BoxDecoration(
-              color: Colors.white, // White background for the main card
-              borderRadius: BorderRadius.circular(
-                20.0,
-              ), // Rounded corners for the main card
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(
-                    0.1,
-                  ), // Subtle shadow for depth
-                  spreadRadius: 2,
-                  blurRadius: 5,
-                  offset: const Offset(0, 3),
-                ),
-              ],
-            ),
             child: Column(
               crossAxisAlignment:
                   CrossAxisAlignment.start, // Align content to the start
@@ -58,7 +42,7 @@ class SmartShelfSuggestionsPage extends StatelessWidget {
                 // App Bar Section
                 Padding(
                   padding: const EdgeInsets.only(
-                    bottom: 24.0,
+                    bottom: 20.0,
                   ), // More space below app bar
                   child: Row(
                     children: [
@@ -215,7 +199,7 @@ class SmartShelfSuggestionsPage extends StatelessWidget {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10.0),
                           ),
-                          elevation: 3,
+                          elevation: 1,
                         ),
                         child: const Text(
                           'Accept',
@@ -242,7 +226,7 @@ class SmartShelfSuggestionsPage extends StatelessWidget {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10.0),
                           ),
-                          elevation: 3,
+                          elevation: 1,
                         ),
                         child: const Text(
                           'Override',
@@ -267,7 +251,7 @@ class SmartShelfSuggestionsPage extends StatelessWidget {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10.0),
                           ),
-                          elevation: 3,
+                          elevation: 1,
                         ),
                         child: const Text(
                           'Ignore',

@@ -228,7 +228,7 @@ class _NewSalePageState extends State<NewSalePage> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10.0),
                         ),
-                        elevation: 3,
+                        elevation: 1,
                       ),
                       child: const Text(
                         'Sync Now',
