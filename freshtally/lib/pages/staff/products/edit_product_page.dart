@@ -176,31 +176,35 @@ class _EditProductPageState extends State<EditProductPage> {
               ),
               const SizedBox(height: 34),
               ElevatedButton(
-                onPressed: _isFormValid
-                    ? () {
-                        if (_formKey.currentState?.validate() ?? false) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Account created successfully!'),
-                            ),
-                          );
-                        }
-                      }
-                    : null,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green[600],
-
-                  padding: const EdgeInsets.symmetric(vertical: 16.0),
-
+                  padding: const EdgeInsets.symmetric(vertical: 24.0),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10.0),
                   ),
                 ),
-                child: const Text('Add Product'),
+                onPressed: () {
+                  if (_formKey.currentState?.validate() ?? false) {
+                    // Add product logic here
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Product details updated successfully!'),
+                      ),
+                    );
+                  }
+                },
+                child: const Text(
+                  'Add Product',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
               ),
-
+              const SizedBox(height: 24),
               const Divider(thickness: 1.5),
-              const SizedBox(height: 16),
+              const SizedBox(height: 24),
               // Need to assign shelf? Button
               OutlinedButton(
                 style: OutlinedButton.styleFrom(
