@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:freshtally/pages/customer/discounts/discounts_page.dart';
+import 'package:freshtally/pages/customer/feedback/customer_feedback_page.dart';
+import 'package:freshtally/pages/customer/list/shopping_list_page.dart';
+// import 'package:freshtally/pages/customer/product/products_details_page.dart';
+import 'package:freshtally/pages/customer/search/product_search_page.dart';
 
 class CustomerHomePage extends StatelessWidget {
   const CustomerHomePage({super.key});
@@ -48,22 +53,22 @@ class CustomerHomePage extends StatelessWidget {
 
           // Hot Discounts
           const Text(
-            '🔥 Hot Discounts',
+            'Hot Discounts',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 10),
-          DiscountCard(title: '50% OFF Chocolate 🍫'),
-          DiscountCard(title: 'Buy 1 Get 1 Free – Milk 🥛'),
+          DiscountCard(title: '50% OFF Chocolate'),
+          DiscountCard(title: 'Buy 1 Get 1 Free – Milk'),
           const SizedBox(height: 20),
 
           // Suggested Combos
           const Text(
-            '🧺 Suggested Combos',
+            'Suggested Combos',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 10),
-          DiscountCard(title: 'Rice + Beans Combo 🍚 + 🫘'),
-          DiscountCard(title: 'Tea + Sugar + Biscuits ☕️'),
+          DiscountCard(title: 'Rice + Beans Combo'),
+          DiscountCard(title: 'Tea + Sugar + Biscuits'),
         ],
       ),
 
@@ -77,7 +82,41 @@ class CustomerHomePage extends StatelessWidget {
         ],
         selectedIndex: 0,
         onDestinationSelected: (index) {
-          // TODO: Navigate to appropriate screen
+          switch (index) {
+            case 0:
+              // Already on Home, do nothing or maybe scroll to top
+              break;
+            case 1:
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ProductSearchPage(),
+                ),
+              );
+              break;
+            case 2:
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ShoppingListPage(),
+                ),
+              );
+              break;
+            case 3:
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const DiscountsPage()),
+              );
+              break;
+            case 4:
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const CustomerFeedbackPage(),
+                ),
+              );
+              break;
+          }
         },
       ),
     );
