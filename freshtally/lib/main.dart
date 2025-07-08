@@ -239,4 +239,3 @@ class FreshTallyApp extends StatelessWidget {
     );
   }
 }
-gh
