@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart'; // Import the generated file
 import 'package:freshtally/pages/customer/discounts/discounts_page.dart';
 import 'package:freshtally/pages/customer/feedback/customer_feedback_page.dart';
 import 'package:freshtally/pages/customer/home/customer_home_page.dart';
@@ -28,9 +30,14 @@ import 'pages/auth/customer_signup_page.dart';
 
 // import 'pages/staff/home_screen.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(const FreshTallyApp());
 }
+
 
 class FreshTallyApp extends StatelessWidget {
   const FreshTallyApp({super.key});
