@@ -1,6 +1,9 @@
+import 'package:firebase_core/firebase_core.dart';
+import 'utils/firestore_seeder.dart';
+
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart'; 
+import 'firebase_options.dart';
 import 'package:freshtally/pages/customer/discounts/discounts_page.dart';
 import 'package:freshtally/pages/customer/feedback/customer_feedback_page.dart';
 import 'package:freshtally/pages/customer/home/customer_home_page.dart';
@@ -29,15 +32,12 @@ import 'pages/auth/staff_signup_page.dart';
 import 'pages/auth/customer_signup_page.dart';
 
 // import 'pages/staff/home_screen.dart';
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp();
+  await uploadProductsToFirestore();
   runApp(const FreshTallyApp());
 }
-
 
 class FreshTallyApp extends StatelessWidget {
   const FreshTallyApp({super.key});

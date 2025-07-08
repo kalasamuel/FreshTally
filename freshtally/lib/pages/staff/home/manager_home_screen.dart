@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:freshtally/pages/staff/analytics/analytics_dashbaord_page.dart';
+import 'package:freshtally/pages/staff/analytics/expired_product_details_page.dart';
 import 'package:freshtally/pages/staff/expiry/expiry_tracking_page.dart';
 import 'package:freshtally/pages/staff/notifications/notification_center_page.dart';
 import 'package:freshtally/pages/staff/settings/settings_page.dart';
 import 'package:freshtally/pages/staff/shelves/shelf_mapping_page.dart';
 import 'package:freshtally/pages/staff/shelves/smart_suggestions_page.dart';
 import 'package:freshtally/pages/staff/sync/sync_status_page.dart';
+import 'package:freshtally/pages/staff/analytics/restocking_trends_page.dart';
+import 'package:freshtally/pages/staff/analytics/inventory_breakdown_page.dart';
 
 class ManagerDashboardPage extends StatelessWidget {
   const ManagerDashboardPage({super.key});
@@ -93,6 +97,16 @@ class ManagerDashboardPage extends StatelessWidget {
                       title: 'Analytics Dashboard',
                       icon: Icons.bar_chart,
                       color: const Color(0xFFE8E8E8), // Grey color from image
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) {
+                              return const ExpiredProductDetailsPage();
+                            },
+                          ),
+                        );
+                      },
                     ),
                     _buildDashboardTile(
                       title: 'Expiry Tracker',
