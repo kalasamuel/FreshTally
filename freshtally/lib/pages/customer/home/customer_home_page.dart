@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:freshtally/pages/customer/discounts/discounts_page.dart';
-import 'package:freshtally/pages/customer/feedback/customer_feedback_page.dart';
 import 'package:freshtally/pages/customer/list/shopping_list_page.dart';
 // import 'package:freshtally/pages/customer/product/products_details_page.dart';
 import 'package:freshtally/pages/customer/search/product_search_page.dart';
@@ -78,7 +77,6 @@ class CustomerHomePage extends StatelessWidget {
           NavigationDestination(icon: Icon(Icons.search), label: 'Search'),
           NavigationDestination(icon: Icon(Icons.list), label: 'List'),
           NavigationDestination(icon: Icon(Icons.local_offer), label: 'Offers'),
-          NavigationDestination(icon: Icon(Icons.feedback), label: 'Feedback'),
         ],
         selectedIndex: 0,
         onDestinationSelected: (index) {
@@ -106,14 +104,6 @@ class CustomerHomePage extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const DiscountsPage()),
-              );
-              break;
-            case 4:
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const CustomerFeedbackPage(),
-                ),
               );
               break;
           }

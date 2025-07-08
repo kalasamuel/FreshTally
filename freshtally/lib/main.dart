@@ -5,23 +5,21 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:freshtally/pages/customer/discounts/discounts_page.dart';
-import 'package:freshtally/pages/customer/feedback/customer_feedback_page.dart';
 import 'package:freshtally/pages/customer/home/customer_home_page.dart';
 import 'package:freshtally/pages/customer/list/shopping_list_page.dart';
 import 'package:freshtally/pages/customer/product/products_details_page.dart';
 import 'package:freshtally/pages/customer/search/product_search_page.dart';
-import 'package:freshtally/pages/staff/expiry/expiry_tracking_page.dart';
-import 'package:freshtally/pages/staff/home/cashier_home_screen.dart';
-import 'package:freshtally/pages/staff/home/manager_home_screen.dart';
-import 'package:freshtally/pages/staff/home/shelf_staff_home_screen.dart';
-import 'package:freshtally/pages/staff/notifications/notification_center_page.dart';
-import 'package:freshtally/pages/staff/products/edit_product_page.dart';
-import 'package:freshtally/pages/staff/products/product_entry_page.dart';
-import 'package:freshtally/pages/staff/products/product_list_page.dart';
-import 'package:freshtally/pages/staff/settings/settings_page.dart';
-import 'package:freshtally/pages/staff/shelves/shelf_mapping_page.dart';
-import 'package:freshtally/pages/staff/shelves/smart_suggestions_page.dart';
-import 'package:freshtally/pages/staff/sync/sync_status_page.dart';
+import 'package:freshtally/pages/shelfStaff/expiry/expiry_tracking_page.dart';
+import 'package:freshtally/pages/manager/home/manager_home_screen.dart';
+import 'package:freshtally/pages/shelfStaff/home/shelf_staff_home_screen.dart';
+import 'package:freshtally/pages/shelfStaff/notifications/notification_center_page.dart';
+import 'package:freshtally/pages/shelfStaff/products/edit_product_page.dart';
+import 'package:freshtally/pages/shelfStaff/products/product_entry_page.dart';
+import 'package:freshtally/pages/shelfStaff/products/product_list_page.dart';
+import 'package:freshtally/pages/shelfStaff/settings/settings_page.dart';
+import 'package:freshtally/pages/shelfStaff/shelves/shelf_mapping_page.dart';
+import 'package:freshtally/pages/shelfStaff/shelves/smart_suggestions_page.dart';
+import 'package:freshtally/pages/shelfStaff/sync/sync_status_page.dart';
 
 // import your page files here
 import 'pages/auth/login_page.dart';
@@ -102,12 +100,6 @@ class FreshTallyApp extends StatelessWidget {
             );
           // case '/staff/home':
           //   return MaterialPageRoute(builder: (_) { return const HomeScreen(); });
-          case '/staff/cashierHome':
-            return MaterialPageRoute(
-              builder: (_) {
-                return const CashierDashboardPage();
-              },
-            );
           case '/staff/shelfStaffHome':
             return MaterialPageRoute(
               builder: (_) {
@@ -217,12 +209,6 @@ class FreshTallyApp extends StatelessWidget {
             return MaterialPageRoute(
               builder: (_) {
                 return const DiscountsPage();
-              },
-            );
-          case '/customer/feedback':
-            return MaterialPageRoute(
-              builder: (_) {
-                return const CustomerFeedbackPage();
               },
             );
 

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+// Store Manager
+
 class BatchDetailsEntry extends StatefulWidget {
   const BatchDetailsEntry({super.key});
 

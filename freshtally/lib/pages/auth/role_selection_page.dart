@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:freshtally/pages/staff/home/cashier_home_screen.dart';
-import 'package:freshtally/pages/staff/home/shelf_staff_home_screen.dart';
+import 'package:freshtally/pages/shelfStaff/home/shelf_staff_home_screen.dart';
+import 'package:freshtally/pages/storeManager/home/home_screen.dart';
 
 class RoleSelectionPage extends StatefulWidget {
   const RoleSelectionPage({super.key, required String role});
@@ -114,7 +114,7 @@ class _RoleSelectionPageState extends State<RoleSelectionPage> {
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) =>
-                                        const CashierDashboardPage(),
+                                        const StoreManagerDashboardPage(),
                                   ),
                                 );
                               } else if (selectedRole == 'Shelf Staff') {
