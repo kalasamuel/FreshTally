@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart'; // Import the generated file
+import 'firebase_options.dart'; 
 import 'package:freshtally/pages/customer/discounts/discounts_page.dart';
 import 'package:freshtally/pages/customer/feedback/customer_feedback_page.dart';
 import 'package:freshtally/pages/customer/home/customer_home_page.dart';
