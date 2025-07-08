@@ -22,7 +22,3 @@ import '../pages/staff/expiry/expired_details_page.dart';
 import '../pages/staff/notifications/notification_center_page.dart';
 import '../pages/staff/sync/sync_status_page.dart';
 import '../pages/staff/sales/sales_page.dart';
-import '../pages/staff/analytics/dashboard_page.dart';
-import '../pages/staff/analytics/inventory_breakdown_page.dart';
-import '../pages/staff/analytics/restocking_trends_page.dart';
-import '../pages/staff/settings/user_role_page.dart';
