@@ -26,4 +26,3 @@ import '../pages/staff/analytics/dashboard_page.dart';
 import '../pages/staff/analytics/inventory_breakdown_page.dart';
 import '../pages/staff/analytics/restocking_trends_page.dart';
 import '../pages/staff/settings/user_role_page.dart';
-import '../pages/staff/settings/settings_page.dart';
