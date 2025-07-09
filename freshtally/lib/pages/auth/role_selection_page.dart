@@ -109,12 +109,12 @@ class _RoleSelectionPageState extends State<RoleSelectionPage> {
                       onPressed: selectedRole.isEmpty
                           ? null
                           : () {
-                              if (selectedRole == 'Cashier') {
+                              if (selectedRole == 'Store Manager') {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) =>
-                                        const StoreManagerDashboardPage(),
+                                        const StoreManagerDashboard(),
                                   ),
                                 );
                               } else if (selectedRole == 'Shelf Staff') {

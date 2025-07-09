@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:freshtally/pages/shelfStaff/settings/settings_page.dart';
-import 'package:freshtally/pages/shelfStaff/expiry/expiry_tracking_page.dart';
-import 'package:freshtally/pages/shelfStaff/notifications/notifications_shelfstaff.dart';
-import 'package:freshtally/pages/shelfStaff/shelves/shelf_mapping_page.dart';
-import 'package:freshtally/pages/shelfStaff/shelves/smart_suggestions_page.dart';
-import 'package:freshtally/pages/shelfStaff/sync/sync_status_page.dart';
-// import 'package:freshtally/pages/staff/products/edit_product_page.dart';
-import 'package:freshtally/pages/shelfStaff/products/product_entry_page.dart';
+import 'package:freshtally/pages/storeManager/batches/batch_entry_page.dart';
+import 'package:freshtally/pages/storeManager/batches/supplier_entry_page.dart';
+import 'package:freshtally/pages/storeManager/notifications/notification_center_page.dart';
+import 'package:freshtally/pages/storeManager/products/product_entry_page.dart';
+import 'package:freshtally/pages/storeManager/sync/sync_status_page.dart';
 
-class StoreManagerDashboardPage extends StatelessWidget {
-  const StoreManagerDashboardPage({super.key});
+class StoreManagerDashboard extends StatelessWidget {
+  const StoreManagerDashboard({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -36,9 +34,9 @@ class StoreManagerDashboardPage extends StatelessWidget {
                       ), // Placeholder image
                     ),
                     const SizedBox(width: 12),
-                    // Supermarket Name
+                    // Store Name
                     const Text(
-                      'Mega Supermarket - Kampala',
+                      'Mega Supermarket - Manager',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -46,7 +44,20 @@ class StoreManagerDashboardPage extends StatelessWidget {
                       ),
                     ),
                     const Spacer(),
-                    // Settings Icon
+                    IconButton(
+                      icon: const Icon(Icons.notifications, size: 30),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) {
+                              return NotificationsPage();
+                            },
+                          ),
+                        );
+                      },
+                    ),
+                    // Settings Icon (can be linked to a settings page)
                     IconButton(
                       icon: const Icon(Icons.settings, size: 30),
                       onPressed: () {
@@ -56,8 +67,6 @@ class StoreManagerDashboardPage extends StatelessWidget {
                             builder: (context) => const SettingsPage(),
                           ),
                         );
-                        // Han
-                        // Handle settings tap
                       },
                     ),
                   ],
@@ -68,7 +77,7 @@ class StoreManagerDashboardPage extends StatelessWidget {
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
                 child: Text(
-                  'Shelf Staff Dashboard',
+                  'Store Manager Dashboard',
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
@@ -89,35 +98,9 @@ class StoreManagerDashboardPage extends StatelessWidget {
                   childAspectRatio: 1.5,
                   children: [
                     _buildDashboardTile(
-                      title: 'Shelf Mapping',
-                      icon: Icons.location_on,
+                      title: 'Products',
+                      icon: Icons.inventory,
                       color: const Color(0xFFD1F2EB),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const ShelfMappingPage(),
-                          ),
-                        );
-                      },
-                    ),
-                    _buildDashboardTile(
-                      title: 'Expiry Tracker',
-                      icon: Icons.calendar_today,
-                      color: const Color(0xFFFDECEB),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const ExpiryTrackingPage(),
-                          ),
-                        );
-                      },
-                    ),
-                    _buildDashboardTile(
-                      title: 'Product Entry',
-                      icon: Icons.qr_code_scanner,
-                      color: const Color(0xFFE0F2F1),
                       onTap: () {
                         Navigator.push(
                           context,
@@ -128,9 +111,35 @@ class StoreManagerDashboardPage extends StatelessWidget {
                       },
                     ),
                     _buildDashboardTile(
+                      title: 'Batches',
+                      icon: Icons.archive,
+                      color: const Color(0xFFFDECEB),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const BatchEntryPage(),
+                          ),
+                        );
+                      },
+                    ),
+                    _buildDashboardTile(
+                      title: 'Suppliers',
+                      icon: Icons.local_shipping,
+                      color: const Color(0xFFE0F2F1),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const SupplierEntryPage(),
+                          ),
+                        );
+                      },
+                    ),
+                    _buildDashboardTile(
                       title: 'Sync Status',
                       icon: Icons.sync,
-                      color: const Color(0xFFE8E8E8),
+                      color: const Color(0xFFF1F8E9),
                       onTap: () {
                         Navigator.push(
                           context,
@@ -140,106 +149,7 @@ class StoreManagerDashboardPage extends StatelessWidget {
                         );
                       },
                     ),
-                    _buildDashboardTile(
-                      title: 'Smart Suggestions',
-                      icon: Icons.lightbulb_outline,
-                      color: const Color(0xFFE8E8E8),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                const SmartShelfSuggestionsPage(),
-                          ),
-                        );
-                      },
-                    ),
-                    // _buildDashboardTile(
-                    //   title: 'Edit Products',
-                    //   icon: Icons.edit_square,
-                    //   color: const Color(0xFFE0F2F1),
-                    //   onTap: () {
-                    //     Navigator.push(
-                    //       context,
-                    //       MaterialPageRoute(
-                    //         builder: (context) => const EditProductPage(),
-                    //       ),
-                    //     );
-                    //   },
-                    // ),
-                    _buildDashboardTile(
-                      title: 'Notifications',
-                      icon: Icons.notifications,
-                      color: const Color(0xFFFFF3E0),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                const NotificationCenterPage(),
-                          ),
-                        );
-                      },
-                    ),
                   ],
-                ),
-              ),
-
-              const SizedBox(height: 32),
-
-              // Bottom Buttons
-              Center(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () {
-                            // Handle Quick Scan
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFC8E6C9),
-                            minimumSize: const Size(double.infinity, 60),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            elevation: 0.1,
-                          ),
-                          child: const Text(
-                            'Quick Scan',
-                            style: TextStyle(
-                              fontSize: 18,
-                              color: Colors.black87,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () {
-                            // Handle Sync Now
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFE0E0E0),
-                            minimumSize: const Size(double.infinity, 60),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            elevation: 0.1,
-                          ),
-                          child: const Text(
-                            'Sync Now',
-                            style: TextStyle(
-                              fontSize: 18,
-                              color: Colors.black87,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
                 ),
               ),
 
