@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:freshtally/pages/staff/home/manager_home_screen.dart';
+import 'package:freshtally/pages/manager/home/manager_home_screen.dart';
 
 class OrganizationSetupSuccessPage extends StatelessWidget {
-  const OrganizationSetupSuccessPage({Key? key}) : super(key: key);
+  const OrganizationSetupSuccessPage({super.key});
 
   @override
   Widget build(BuildContext context) {

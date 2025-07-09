@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:freshtally/pages/auth/create_supermarket_page.dart';
+import 'package:freshtally/pages/auth/join_supermarket_page.dart';
+import 'package:freshtally/pages/customer/home/customer_home_page.dart';
 
 class IconTextField extends StatelessWidget {
   final String hintText;
@@ -183,8 +185,13 @@ class LoginPage extends StatelessWidget {
                 ),
                 OutlinedButton(
                   onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Joining Staff? pressed!')),
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) {
+                          return JoinSupermarketPage();
+                        },
+                      ),
                     );
                   },
                   style: OutlinedButton.styleFrom(
@@ -200,8 +207,11 @@ class LoginPage extends StatelessWidget {
                 ),
                 OutlinedButton(
                   onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('I am Customer pressed!')),
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const CustomerHomePage(),
+                      ),
                     );
                   },
                   style: OutlinedButton.styleFrom(

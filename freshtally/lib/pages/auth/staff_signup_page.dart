@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:freshtally/pages/auth/role_selection_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -15,20 +16,20 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.green,
         fontFamily: 'Inter', // Assuming Inter font for a modern look
       ),
-      home: const CreateStaffAccountPage(),
+      home: const StaffSignupPage(role: ''),
       debugShowCheckedModeBanner: false, // Hide the debug banner
     );
   }
 }
 
-class CreateStaffAccountPage extends StatefulWidget {
-  const CreateStaffAccountPage({super.key});
+class StaffSignupPage extends StatefulWidget {
+  const StaffSignupPage({super.key, required String role});
 
   @override
-  State<CreateStaffAccountPage> createState() => _CreateStaffAccountPageState();
+  State<StaffSignupPage> createState() => _StaffSignupPageState();
 }
 
-class _CreateStaffAccountPageState extends State<CreateStaffAccountPage> {
+class _StaffSignupPageState extends State<StaffSignupPage> {
   // Text editing controllers for each input field
   final TextEditingController _firstNameController = TextEditingController();
   final TextEditingController _lastNameController = TextEditingController();
@@ -53,7 +54,17 @@ class _CreateStaffAccountPageState extends State<CreateStaffAccountPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFD9F7D9), // Light green background
+      backgroundColor: const Color(0xFFFFFFFF), // Light green background
+      appBar: AppBar(
+        title: Text(
+          'Create Your Staff Account',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
+          ),
+        ),
+      ),
       body: SafeArea(
         child: Center(
           child: Container(
@@ -61,22 +72,6 @@ class _CreateStaffAccountPageState extends State<CreateStaffAccountPage> {
               20.0,
             ), // Margin around the main content area
             padding: const EdgeInsets.all(16.0), // Padding inside the main card
-            decoration: BoxDecoration(
-              color: Colors.white, // White background for the main card
-              borderRadius: BorderRadius.circular(
-                20.0,
-              ), // Rounded corners for the main card
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(
-                    0.1,
-                  ), // Subtle shadow for depth
-                  spreadRadius: 2,
-                  blurRadius: 5,
-                  offset: const Offset(0, 3),
-                ),
-              ],
-            ),
             child: SingleChildScrollView(
               // Make content scrollable if keyboard appears
               child: Column(
@@ -87,31 +82,11 @@ class _CreateStaffAccountPageState extends State<CreateStaffAccountPage> {
                   // App Bar Section
                   Padding(
                     padding: const EdgeInsets.only(
-                      bottom: 24.0,
+                      bottom: 20.0,
                     ), // More space below app bar
                     child: Row(
                       children: [
-                        // Back arrow icon
-                        IconButton(
-                          icon: const Icon(
-                            Icons.arrow_back_ios,
-                            color: Colors.black,
-                          ),
-                          onPressed: () {
-                            // Handle back button press
-                            Navigator.pop(context);
-                          },
-                        ),
                         const SizedBox(width: 8), // Spacer
-                        // "Create Your Staff Account" title
-                        const Text(
-                          'Create Your Staff Account',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black,
-                          ),
-                        ),
                       ],
                     ),
                   ),
@@ -144,6 +119,15 @@ class _CreateStaffAccountPageState extends State<CreateStaffAccountPage> {
                     width: double.infinity, // Button takes full width
                     child: ElevatedButton(
                       onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) {
+                              return RoleSelectionPage(role: '');
+                            },
+                          ),
+                        );
+
                         // Handle create account button press
                         print('Create Account pressed!');
                         print('First Name: ${_firstNameController.text}');
@@ -165,7 +149,7 @@ class _CreateStaffAccountPageState extends State<CreateStaffAccountPage> {
                             10.0,
                           ), // Rounded corners
                         ),
-                        elevation: 3, // Add a subtle shadow
+                        elevation: 1, // Add a subtle shadow
                       ),
                       child: const Text(
                         'Create Account',
@@ -181,31 +165,38 @@ class _CreateStaffAccountPageState extends State<CreateStaffAccountPage> {
                   // Or Sign In with:
                   Center(
                     child: Text(
-                      'Or Sign In with:',
-                      style: TextStyle(color: Colors.grey[600], fontSize: 15),
+                      "Or Sign In with:",
+                      style: TextStyle(color: Colors.grey),
                     ),
                   ),
-                  const SizedBox(height: 16), // Space below text
-                  // Social Media Icons
+                  const SizedBox(height: 15.0),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      _buildSocialIcon(
-                        Icons.facebook,
-                        Colors.blue[800]!,
-                        () => print('Facebook Sign In'),
+                      IconButton(
+                        icon: const Icon(
+                          Icons.facebook,
+                          size: 40,
+                          color: Colors.blue,
+                        ),
+                        onPressed: () {},
                       ),
                       const SizedBox(width: 20),
-                      _buildSocialIcon(
-                        Icons.g_mobiledata,
-                        Colors.red[700]!,
-                        () => print('Google Sign In'),
-                      ), // Using g_mobiledata for Google
+                      IconButton(
+                        icon: Image.asset(
+                          'assets/icons/google.png',
+                          height: 35,
+                        ),
+                        onPressed: () {},
+                      ),
                       const SizedBox(width: 20),
-                      _buildSocialIcon(
-                        Icons.apple,
-                        Colors.black,
-                        () => print('Apple Sign In'),
+                      IconButton(
+                        icon: const Icon(
+                          Icons.apple,
+                          size: 40,
+                          color: Colors.black,
+                        ),
+                        onPressed: () {},
                       ),
                     ],
                   ),
