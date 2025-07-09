@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 class BatchEntryPage extends StatefulWidget {
   const BatchEntryPage({super.key});
@@ -17,51 +16,156 @@ class _BatchEntryPageState extends State<BatchEntryPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Add Batch')),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            TextField(
-              controller: productIdController,
-              decoration: const InputDecoration(labelText: 'Product ID'),
+      backgroundColor: const Color(0xFFFFFFFF),
+      appBar: AppBar(
+        title: const Text(
+          'Add Batch',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+          ),
+        ),
+        backgroundColor: Colors.white,
+        elevation: 0.5,
+        iconTheme: const IconThemeData(color: Colors.black87),
+        centerTitle: true,
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 24.0,
+              vertical: 24.0,
             ),
-            TextField(
-              controller: supplierIdController,
-              decoration: const InputDecoration(labelText: 'Supplier ID'),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Section Title
+                const Text(
+                  'Batch Details',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Product ID Field
+                TextField(
+                  controller: productIdController,
+                  decoration: InputDecoration(
+                    labelText: 'Product ID',
+                    labelStyle: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+                    filled: true,
+                    fillColor: const Color(0xFFF5F6FA),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                  style: const TextStyle(fontSize: 16, color: Colors.black87),
+                ),
+                const SizedBox(height: 16),
+
+                // Supplier ID Field
+                TextField(
+                  controller: supplierIdController,
+                  decoration: InputDecoration(
+                    labelText: 'Supplier ID',
+                    labelStyle: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+                    filled: true,
+                    fillColor: const Color(0xFFF5F6FA),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                  style: const TextStyle(fontSize: 16, color: Colors.black87),
+                ),
+                const SizedBox(height: 16),
+
+                // Quantity Field
+                TextField(
+                  controller: quantityController,
+                  decoration: InputDecoration(
+                    labelText: 'Quantity',
+                    labelStyle: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+                    filled: true,
+                    fillColor: const Color(0xFFF5F6FA),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                  keyboardType: TextInputType.number,
+                  style: const TextStyle(fontSize: 16, color: Colors.black87),
+                ),
+                const SizedBox(height: 16),
+
+                // Expiry Date Field
+                TextField(
+                  controller: expiryDateController,
+                  decoration: InputDecoration(
+                    labelText: 'Expiry Date (YYYY-MM-DD)',
+                    labelStyle: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+                    filled: true,
+                    fillColor: const Color(0xFFF5F6FA),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                  style: const TextStyle(fontSize: 16, color: Colors.black87),
+                ),
+                const SizedBox(height: 32),
+
+                // Save Button
+                SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: ElevatedButton(
+                    onPressed: _saveBatch,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFC8E6C9),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 0.1,
+                    ),
+                    child: const Text(
+                      'Save Batch',
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: Colors.black87,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
-            TextField(
-              controller: quantityController,
-              decoration: const InputDecoration(labelText: 'Quantity'),
-              keyboardType: TextInputType.number,
-            ),
-            TextField(
-              controller: expiryDateController,
-              decoration: const InputDecoration(
-                labelText: 'Expiry Date (YYYY-MM-DD)',
-              ),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _saveBatch,
-              child: const Text('Save Batch'),
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
 
   void _saveBatch() {
-    FirebaseFirestore.instance.collection('batches').add({
-      'product_id': productIdController.text,
-      'supplier_id': supplierIdController.text,
-      'quantity': int.tryParse(quantityController.text) ?? 0,
-      'expiry_date': Timestamp.fromDate(
-        DateTime.parse(expiryDateController.text),
-      ),
-      'delivery_date': Timestamp.now(),
-    });
+    // Simulate saving (remove Firestore for static UI preview)
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(const SnackBar(content: Text('Batch added')));

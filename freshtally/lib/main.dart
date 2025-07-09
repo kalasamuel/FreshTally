@@ -104,7 +104,7 @@ class FreshTallyApp extends StatelessWidget {
           case '/staff/shelfStaffHome':
             return MaterialPageRoute(
               builder: (_) {
-                return const ShelfStaffDashboardPage();
+                return const ShelfStaffDashboard();
               },
             );
           case '/staff/managerHome':

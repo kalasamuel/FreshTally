@@ -1,29 +1,10 @@
 import 'package:flutter/material.dart';
-
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Sync Status UI',
-      theme: ThemeData(
-        primarySwatch: Colors.green,
-        fontFamily: 'Inter', // Assuming Inter font for a modern look
-      ),
-      home: const SyncStatusPage(),
-      debugShowCheckedModeBanner: false, // Hide the debug banner
-    );
-  }
-}
+import 'package:freshtally/pages/shelfStaff/settings/settings_page.dart'; // Assuming settings page is shared or similar
 
 class SyncStatusPage extends StatelessWidget {
   const SyncStatusPage({super.key});
 
+  // Helper method to show a snackbar with sync results.
   void _showSyncResultSnackbar(
     BuildContext context, {
     required bool success,
@@ -31,7 +12,7 @@ class SyncStatusPage extends StatelessWidget {
   }) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        backgroundColor: Colors.grey[90],
+        backgroundColor: Colors.grey[900], // Dark background for contrast.
         content: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -43,32 +24,37 @@ class SyncStatusPage extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: Colors.white, // White text for readability.
                 ),
               ),
             ),
-            if (!success)
+            if (!success) // Show retry button only if sync failed.
               TextButton(
                 onPressed: () {
-                  // Retry logic here
                   ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                  print('RETRY pressed!');
+                  // Implement retry logic here.
+                  debugPrint('RETRY pressed!');
                 },
                 child: const Text(
                   'RETRY',
                   style: TextStyle(
                     fontSize: 14,
-                    color: Colors.green,
+                    color: Color(0xFF4CAF50), // Green color for retry button.
                     fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
           ],
         ),
-        duration: const Duration(seconds: 4),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        margin: const EdgeInsets.all(10),
+        duration: const Duration(seconds: 4), // Snackbar visible duration.
+        behavior: SnackBarBehavior
+            .floating, // Makes the snackbar float above content.
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ), // Rounded corners for snackbar.
+        margin: const EdgeInsets.all(
+          10,
+        ), // Margin around the floating snackbar.
       ),
     );
   }
@@ -76,88 +62,78 @@ class SyncStatusPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFFFFFF),
+      backgroundColor: const Color(
+        0xFFFFFFFF,
+      ), // Sets the background color of the scaffold to white.
+      appBar: AppBar(
+        backgroundColor: const Color(
+          0xFFFFFFFF,
+        ), // AppBar background color matches the body.
+        elevation: 0.0, // Removes the shadow under the app bar for a flat look.
+        title: const Text(
+          'Sync Status',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+          ),
+        ),
+        centerTitle: true, // Centers the title in the app bar.
+      ),
       body: SafeArea(
-        child: Center(
-          child: Container(
-            margin: const EdgeInsets.all(20.0),
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 24.0, // Horizontal padding for the content.
+              vertical: 24.0, // Vertical padding for the content.
+            ),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment
+                  .start, // Aligns children to the start (left).
               children: [
-                // App Bar Section
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      // Back arrow icon
-                      IconButton(
-                        icon: const Icon(
-                          Icons.arrow_back_ios,
-                          color: Colors.black,
-                        ),
-                        onPressed: () {
-                          // Handle back button press
-                          Navigator.pop(context);
-                        },
-                      ),
-                      // "Sync Status" title
-                      const Text(
-                        'Sync Status',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                        ),
-                      ),
-                      // Refresh icon
-                      IconButton(
-                        icon: const Icon(Icons.refresh, color: Colors.black),
-                        onPressed: () {
-                          // Handle refresh button press
-                          print('Refresh sync status!');
-                        },
-                      ),
-                    ],
+                // Section Title for "Sync Overview".
+                const Text(
+                  'Sync Overview',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
                   ),
                 ),
+                const SizedBox(height: 24), // Space below the section title.
                 // Last Synced Status Card
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16.0,
-                    vertical: 8.0,
-                  ),
-                  child: Container(
-                    padding: const EdgeInsets.all(16.0),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[100], // Light grey background
-                      borderRadius: BorderRadius.circular(
-                        10.0,
-                      ), // Rounded corners
-                      border: Border.all(
-                        color: Colors.grey[300]!,
-                      ), // Light border
-                    ),
+                Card(
+                  elevation: 0.1, // Subtle elevation.
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ), // Rounded corners.
+                  color: const Color(
+                    0xFFF1F8E9,
+                  ), // Light green background, matching dashboard tiles.
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0), // Internal padding.
                     child: Row(
                       children: [
                         const Icon(
                           Icons.cloud_queue,
-                          color: Colors.grey,
+                          color: Colors.black87, // Icon color.
                           size: 30,
-                        ), // Cloud icon
-                        const SizedBox(width: 12),
+                        ), // Cloud icon.
+                        const SizedBox(
+                          width: 12,
+                        ), // Space between icon and text.
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               'Last Synced:',
                               style: TextStyle(
-                                color: Colors.grey[700],
+                                color: Colors.black54, // Slightly lighter text.
                                 fontSize: 15,
                               ),
                             ),
                             const Text(
-                              'Today at 10:42 AM',
+                              'Today at 10:42 AM', // Placeholder for last sync time.
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
@@ -166,51 +142,64 @@ class SyncStatusPage extends StatelessWidget {
                             ),
                           ],
                         ),
-                        const Spacer(), // Pushes "Online" and "Sync Now" to the right
+                        const Spacer(), // Pushes "Online" and "Sync Now" to the right.
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
                             const Text(
-                              'Online',
+                              'Online', // Placeholder for connection status.
                               style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w600,
-                                color: Colors.green,
+                                color: Color(
+                                  0xFF4CAF50,
+                                ), // Green for online status.
                               ),
                             ),
-                            const SizedBox(height: 4),
+                            const SizedBox(height: 4), // Small space.
                             // Sync Now Button
-                            ElevatedButton(
-                              onPressed: () {
-                                // Simulate sync result
-                                bool syncSuccess =
-                                    false; // Change to true to test success
-                                int failedCount = 3;
-                                _showSyncResultSnackbar(
-                                  context,
-                                  success: syncSuccess,
-                                  failedCount: failedCount,
-                                );
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF4CAF50),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 6,
+                            SizedBox(
+                              height:
+                                  36, // Adjusted height for a smaller button.
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  // Simulate sync result.
+                                  bool syncSuccess =
+                                      false; // Change to true to test success.
+                                  int failedCount = 3;
+                                  _showSyncResultSnackbar(
+                                    context,
+                                    success: syncSuccess,
+                                    failedCount: failedCount,
+                                  );
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(
+                                    0xFFC8E6C9,
+                                  ), // Background color matching other buttons.
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 6,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(
+                                      12,
+                                    ), // Rounded corners.
+                                  ),
+                                  elevation: 0.1, // Subtle elevation.
+                                  minimumSize: Size
+                                      .zero, // Allows button to shrink to fit padding.
+                                  tapTargetSize: MaterialTapTargetSize
+                                      .shrinkWrap, // Reduces tap target size.
                                 ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8.0),
-                                ),
-                                elevation: 1,
-                                minimumSize: Size.zero,
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              ),
-                              child: const Text(
-                                'Sync Now',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
+                                child: const Text(
+                                  'Sync Now',
+                                  style: TextStyle(
+                                    fontSize:
+                                        14, // Slightly smaller font for this button.
+                                    color: Colors.black87, // Dark text.
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
                             ),
@@ -220,18 +209,16 @@ class SyncStatusPage extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(height: 20), // Space below sync status card
+                const SizedBox(height: 20), // Space below sync status card.
                 // Unsynced Entries Section
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(16.0),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[100], // Light grey background
-                      borderRadius: BorderRadius.circular(10.0),
-                      border: Border.all(color: Colors.grey[300]!),
-                    ),
+                Card(
+                  elevation: 0.1, // Subtle elevation.
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ), // Rounded corners.
+                  color: const Color(0xFFF5F6FA), // Light background.
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0), // Internal padding.
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -243,8 +230,8 @@ class SyncStatusPage extends StatelessWidget {
                             color: Colors.black87,
                           ),
                         ),
-                        const SizedBox(height: 12),
-                        // List of unsynced items
+                        const SizedBox(height: 12), // Space below title.
+                        // List of unsynced items.
                         _buildUnsyncedItem(
                           'Product: "Rice (12kg)" → Not yet uploaded',
                         ),
@@ -259,8 +246,7 @@ class SyncStatusPage extends StatelessWidget {
                     ),
                   ),
                 ),
-                const Spacer(), // Pushes the status buttons to the bottom
-                // Bottom Status Buttons
+                // No Spacer needed here as there are no elements below the last card.
               ],
             ),
           ),
@@ -269,23 +255,29 @@ class SyncStatusPage extends StatelessWidget {
     );
   }
 
-  // Helper method to build an unsynced item with a red info icon
+  // Helper method to build an unsynced item with an info icon.
   Widget _buildUnsyncedItem(String text) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      padding: const EdgeInsets.symmetric(
+        vertical: 4.0,
+      ), // Vertical padding for each item.
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Icon(
             Icons.info_outline,
-            color: Colors.red,
+            color: Colors.red, // Red info icon for unsynced items.
             size: 18,
-          ), // Red info icon
-          const SizedBox(width: 8),
+          ),
+          const SizedBox(width: 8), // Space between icon and text.
           Expanded(
+            // Ensures text wraps if it's too long.
             child: Text(
               text,
-              style: TextStyle(color: Colors.grey[800], fontSize: 15),
+              style: TextStyle(
+                color: Colors.black87,
+                fontSize: 15,
+              ), // Darker text for readability.
             ),
           ),
         ],
