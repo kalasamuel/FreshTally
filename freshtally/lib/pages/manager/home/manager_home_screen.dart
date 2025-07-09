@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:freshtally/pages/manager/analytics/analytics_dashbaord_page.dart';
 import 'package:freshtally/pages/manager/analytics/expired_product_details_page.dart';
-import 'package:freshtally/pages/staff/expiry/expiry_tracking_page.dart';
-import 'package:freshtally/pages/staff/notifications/notification_center_page.dart';
-import 'package:freshtally/pages/staff/settings/settings_page.dart';
-import 'package:freshtally/pages/staff/shelves/shelf_mapping_page.dart';
-import 'package:freshtally/pages/staff/shelves/smart_suggestions_page.dart';
-import 'package:freshtally/pages/staff/sync/sync_status_page.dart';
+import 'package:freshtally/pages/shelfStaff/expiry/expiry_tracking_page.dart';
+import 'package:freshtally/pages/shelfStaff/notifications/notifications_shelfstaff.dart';
+import 'package:freshtally/pages/shelfStaff/settings/settings_page.dart';
+import 'package:freshtally/pages/shelfStaff/shelves/shelf_mapping_page.dart';
+import 'package:freshtally/pages/shelfStaff/shelves/smart_suggestions_page.dart';
+import 'package:freshtally/pages/shelfStaff/sync/sync_status_page.dart';
 import 'package:freshtally/pages/manager/analytics/inventory_breakdown_page.dart';
 
 class ManagerDashboardPage extends StatelessWidget {

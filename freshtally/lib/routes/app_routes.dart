@@ -24,5 +24,5 @@ import '../pages/shelfStaff/sync/sync_status_page.dart';
 import '../pages/customer/home/customer_home_page.dart';
 import '../pages/customer/search/product_search_page.dart';
 import '../pages/customer/list/shopping_list_page.dart';
-import '../pages/customer/discounts/discounts_page.dart';
+import '../pages/customer/discounts/discounts_and_promotions.dart';
 //import '../pages/customer/product/product_details_page.dart';

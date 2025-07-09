@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:freshtally/pages/shelfStaff/settings/settings_page.dart';
 import 'package:freshtally/pages/shelfStaff/expiry/expiry_tracking_page.dart';
-import 'package:freshtally/pages/shelfStaff/notifications/notification_center_page.dart';
+import 'package:freshtally/pages/shelfStaff/notifications/notifications_shelfstaff.dart';
 import 'package:freshtally/pages/shelfStaff/shelves/shelf_mapping_page.dart';
 import 'package:freshtally/pages/shelfStaff/shelves/smart_suggestions_page.dart';
 import 'package:freshtally/pages/shelfStaff/sync/sync_status_page.dart';

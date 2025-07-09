@@ -1,10 +1,9 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'utils/firestore_seeder.dart';
+import 'firebase_options.dart';
 
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
-import 'package:freshtally/pages/customer/discounts/discounts_page.dart';
+import 'package:freshtally/pages/customer/discounts/discounts_and_promotions.dart';
 import 'package:freshtally/pages/customer/home/customer_home_page.dart';
 import 'package:freshtally/pages/customer/list/shopping_list_page.dart';
 import 'package:freshtally/pages/customer/product/products_details_page.dart';
@@ -12,7 +11,7 @@ import 'package:freshtally/pages/customer/search/product_search_page.dart';
 import 'package:freshtally/pages/shelfStaff/expiry/expiry_tracking_page.dart';
 import 'package:freshtally/pages/manager/home/manager_home_screen.dart';
 import 'package:freshtally/pages/shelfStaff/home/shelf_staff_home_screen.dart';
-import 'package:freshtally/pages/shelfStaff/notifications/notification_center_page.dart';
+import 'package:freshtally/pages/shelfStaff/notifications/notifications_shelfstaff.dart';
 import 'package:freshtally/pages/shelfStaff/products/edit_product_page.dart';
 import 'package:freshtally/pages/shelfStaff/products/product_entry_page.dart';
 import 'package:freshtally/pages/shelfStaff/products/product_list_page.dart';
@@ -31,9 +30,9 @@ import 'pages/auth/customer_signup_page.dart';
 
 // import 'pages/staff/home_screen.dart';
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
-  await uploadProductsToFirestore();
+  // WidgetsFlutterBinding.ensureInitialized();
+  // await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  // await uploadProductsToFirestore();
   runApp(const FreshTallyApp());
 }
 
@@ -180,23 +179,10 @@ class FreshTallyApp extends StatelessWidget {
                 return const SettingsPage();
               },
             );
-
-          case '/customer/home':
-            return MaterialPageRoute(
-              builder: (_) {
-                return const CustomerHomePage();
-              },
-            );
           case '/customer/search':
             return MaterialPageRoute(
               builder: (_) {
                 return const ProductSearchPage();
-              },
-            );
-          case '/customer/productDetails':
-            return MaterialPageRoute(
-              builder: (_) {
-                return const ProductDetailsPage();
               },
             );
           case '/customer/shoppingList':
@@ -208,7 +194,7 @@ class FreshTallyApp extends StatelessWidget {
           case '/customer/discounts':
             return MaterialPageRoute(
               builder: (_) {
-                return const DiscountsPage();
+                return const DiscountsAndPromotionsPage();
               },
             );
 

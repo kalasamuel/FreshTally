@@ -95,7 +95,7 @@ class _RoleSelectionPageState extends State<RoleSelectionPage> {
               child: Column(
                 children: [
                   buildRoleCard(
-                    'Cashier',
+                    'Store Manager',
                     Image.asset('assets/icons/cashier.png', width: 100),
                   ),
                   buildRoleCard(

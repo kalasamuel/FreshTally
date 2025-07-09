@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:freshtally/pages/staff/settings/settings_page.dart';
-import 'package:freshtally/pages/staff/expiry/expiry_tracking_page.dart';
-import 'package:freshtally/pages/staff/notifications/notification_center_page.dart';
-import 'package:freshtally/pages/staff/shelves/shelf_mapping_page.dart';
-import 'package:freshtally/pages/staff/shelves/smart_suggestions_page.dart';
-import 'package:freshtally/pages/staff/sync/sync_status_page.dart';
+import 'package:freshtally/pages/shelfStaff/settings/settings_page.dart';
+import 'package:freshtally/pages/shelfStaff/expiry/expiry_tracking_page.dart';
+import 'package:freshtally/pages/shelfStaff/notifications/notifications_shelfstaff.dart';
+import 'package:freshtally/pages/shelfStaff/shelves/shelf_mapping_page.dart';
+import 'package:freshtally/pages/shelfStaff/shelves/smart_suggestions_page.dart';
+import 'package:freshtally/pages/shelfStaff/sync/sync_status_page.dart';
 // import 'package:freshtally/pages/staff/products/edit_product_page.dart';
-import 'package:freshtally/pages/staff/products/product_entry_page.dart';
+import 'package:freshtally/pages/shelfStaff/products/product_entry_page.dart';
 
 class ShelfStaffDashboardPage extends StatelessWidget {
   const ShelfStaffDashboardPage({super.key});

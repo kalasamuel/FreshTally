@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+// Connect it to the Store manager
 class FormTextField extends StatelessWidget {
   final String hintText;
   final TextInputType keyboardType;
