@@ -1,203 +1,307 @@
 import 'package:flutter/material.dart';
+import 'package:freshtally/pages/shelfStaff/settings/settings_page.dart';
 
-void main() {
-  runApp(
-    MaterialApp(debugShowCheckedModeBanner: false, home: NotificationsScreen()),
-  );
+class NotificationCenterPage extends StatefulWidget {
+  const NotificationCenterPage({super.key});
+
+  @override
+  State<NotificationCenterPage> createState() => _NotificationCenterPageState();
 }
 
-class NotificationsScreen extends StatelessWidget {
+class _NotificationCenterPageState extends State<NotificationCenterPage> {
+  String _selectedFilter = 'All';
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFFFFFFF),
       appBar: AppBar(
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () {},
+        backgroundColor: const Color(0xFFFFFFFF),
+        elevation: 0.0,
+        title: const Text(
+          'Notifications',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+          ),
         ),
-        title: Text('Notifications', style: TextStyle(color: Colors.black)),
-        backgroundColor: Colors.white,
-        elevation: 0,
+        centerTitle: true,
       ),
-      body: Padding(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 24.0,
+              vertical: 24.0,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Notifications',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 0.0,
+                    vertical: 8.0,
+                  ),
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        _buildFilterChip('All'),
+                        _buildFilterChip('Expiry'),
+                        _buildFilterChip('Restock'),
+                        _buildFilterChip('Sync'),
+                        _buildFilterChip('Suggestions'),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _buildNotificationCard(
+                  context,
+                  title: 'Fresh Milk 500ml',
+                  icon: Icons.error_outline,
+                  iconColor: Colors.red,
+                  details: [
+                    'Expires in 1 day. Qty: 15 units',
+                    'Recovery: UGX 25,000',
+                  ],
+                  actionButtons: [
+                    _buildActionButton(
+                      'Snooze',
+                      const Color(0xFFE0E0E0),
+                      Colors.black87,
+                      () => debugPrint('Snooze pressed'),
+                    ),
+                    _buildActionButton(
+                      'Mark Done',
+                      const Color(0xFFFFCC80),
+                      Colors.black87,
+                      () => debugPrint('Mark Done pressed'),
+                    ),
+                    _buildActionButton(
+                      'Dismiss',
+                      const Color(0xFFC8E6C9),
+                      Colors.black87,
+                      () => debugPrint('Dismiss pressed'),
+                    ),
+                  ],
+                  time: 'Today, 8:30 AM',
+                  cardColor: const Color(0xFFFFF0F0),
+                  borderColor: const Color(0xFFFFCCCC),
+                ),
+                const SizedBox(height: 16),
+                _buildNotificationCard(
+                  context,
+                  title: 'Sync Reminder',
+                  icon: Icons.sync,
+                  iconColor: Colors.black87,
+                  details: ['3 items pending sync'],
+                  actionButtons: [
+                    _buildActionButton(
+                      'Sync Now',
+                      const Color(0xFFC8E6C9),
+                      Colors.black87,
+                      () => debugPrint('Sync Now pressed'),
+                    ),
+                    _buildActionButton(
+                      'Snooze',
+                      const Color(0xFFE0E0E0),
+                      Colors.black87,
+                      () => debugPrint('Snooze pressed'),
+                    ),
+                    _buildActionButton(
+                      'Dismiss',
+                      const Color(0xFFFFCC80),
+                      Colors.black87,
+                      () => debugPrint('Dismiss pressed'),
+                    ),
+                  ],
+                  time: 'Today, 7:45 AM',
+                  cardColor: const Color(0xFFF5F6FA),
+                  borderColor: Colors.transparent,
+                ),
+                const SizedBox(height: 16),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilterChip(String text) {
+    final bool isSelected = _selectedFilter == text;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4.0),
+      child: ChoiceChip(
+        label: Text(
+          text,
+          style: TextStyle(
+            color: isSelected ? Colors.white : Colors.black87,
+            fontWeight: FontWeight.w600,
+            fontSize: 15,
+          ),
+        ),
+        selected: isSelected,
+        selectedColor: const Color(0xFF4CAF50),
+        backgroundColor: const Color(0xFFF5F6FA),
+        onSelected: (bool selected) {
+          setState(() {
+            _selectedFilter = text;
+          });
+        },
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12.0),
+          side: BorderSide(
+            color: isSelected ? const Color(0xFF4CAF50) : Colors.transparent,
+          ),
+        ),
+        labelPadding: const EdgeInsets.symmetric(
+          horizontal: 12.0,
+          vertical: 4.0,
+        ),
+        avatar: isSelected
+            ? const Icon(Icons.check_circle, color: Colors.white, size: 18)
+            : null,
+        elevation: 0.1,
+      ),
+    );
+  }
+
+  Widget _buildNotificationCard(
+    BuildContext context, {
+    required String title,
+    required IconData icon,
+    required Color iconColor,
+    required List<String> details,
+    required List<Widget> actionButtons,
+    required String time,
+    required Color cardColor,
+    required Color borderColor,
+  }) {
+    return Card(
+      elevation: 0.1,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: borderColor),
+      ),
+      color: cardColor,
+      child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            FilterChips(),
-            SizedBox(height: 16),
-            Expanded(
-              child: ListView(
-                children: [
-                  NotificationCard(
-                    title: 'Fresh Milk 500ml',
-                    description:
-                        'Expires in 1 day. Qty: 15 units\nRecovery: UGX 25,000',
-                    time: 'Today, 8:30 AM',
-                    color: Colors.red[50],
-                    icon: Icons.error_outline,
-                    iconColor: Colors.red,
-                    buttons: [
-                      ActionButton(label: 'Snooze', color: Colors.grey[300]!),
-                      ActionButton(
-                        label: 'Mark Done',
-                        color: Colors.yellow[200]!,
+            Row(
+              children: [
+                Icon(icon, color: iconColor, size: 24),
+                const SizedBox(width: 8),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: details
+                  .map(
+                    (detail) => Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 2.0),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(Icons.info_outline, color: Colors.red, size: 18),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              detail,
+                              style: const TextStyle(
+                                color: Colors.black87,
+                                fontSize: 15,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                      ActionButton(label: 'Dismiss', color: Colors.green[100]!),
-                    ],
+                    ),
+                  )
+                  .toList(),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: actionButtons
+                          .map(
+                            (button) => Padding(
+                              padding: const EdgeInsets.only(right: 8.0),
+                              child: button,
+                            ),
+                          )
+                          .toList(),
+                    ),
                   ),
-                  SizedBox(height: 12),
-                  NotificationCard(
-                    title: 'Sync Reminder',
-                    description: '3 items pending sync',
-                    time: 'Today, 7:45 AM',
-                    color: Colors.green[50],
-                    icon: Icons.sync,
-                    iconColor: Colors.green,
-                    buttons: [
-                      ActionButton(label: 'Sync Now', color: Colors.blue[100]!),
-                      ActionButton(label: 'Snooze', color: Colors.grey[300]!),
-                      ActionButton(label: 'Dismiss', color: Colors.green[100]!),
-                    ],
-                  ),
-                  SizedBox(height: 12),
-                  NotificationCard(
-                    title: 'Rice 10kg',
-                    description:
-                        'Low stock: Only 2 left\nEstimated loss: UGX 18,000',
-                    time: 'Yesterday, 10:15 PM',
-                    color: Colors.green[50],
-                    icon: Icons.info_outline,
-                    iconColor: Colors.orange,
-                    buttons: [
-                      ActionButton(
-                        label: 'Mark Done',
-                        color: Colors.blue[100]!,
-                      ),
-                      ActionButton(label: 'Dismiss', color: Colors.green[100]!),
-                    ],
-                  ),
-                ],
-              ),
+                ),
+                Text(
+                  time,
+                  style: const TextStyle(color: Colors.grey, fontSize: 13),
+                ),
+              ],
             ),
           ],
         ),
       ),
     );
   }
-}
 
-class FilterChips extends StatelessWidget {
-  final filters = ['All', 'Expiry', 'Restock', 'Sync', 'Suggestions'];
-
-  @override
-  Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 8.0,
-      children: filters.map((filter) {
-        final isSelected = filter == 'Suggestions';
-        return ChoiceChip(
-          label: Text(filter),
-          selected: isSelected,
-          selectedColor: Colors.green,
-          backgroundColor: Colors.grey[200],
-          labelStyle: TextStyle(
-            color: isSelected ? Colors.white : Colors.black,
+  Widget _buildActionButton(
+    String text,
+    Color backgroundColor,
+    Color textColor,
+    VoidCallback onPressed,
+  ) {
+    return SizedBox(
+      height: 36,
+      child: ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: backgroundColor,
+          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12.0),
           ),
-          onSelected: (_) {},
-        );
-      }).toList(),
-    );
-  }
-}
-
-class NotificationCard extends StatelessWidget {
-  final String title;
-  final String description;
-  final String time;
-  final Color? color;
-  final IconData icon;
-  final Color iconColor;
-  final List<ActionButton> buttons;
-
-  NotificationCard({
-    required this.title,
-    required this.description,
-    required this.time,
-    this.color,
-    required this.icon,
-    required this.iconColor,
-    required this.buttons,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: color ?? Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey[300]!),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, color: iconColor),
-              SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  title,
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ],
+          elevation: 0.1,
+          minimumSize: Size.zero,
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        ),
+        child: Text(
+          text,
+          style: TextStyle(
+            fontSize: 14,
+            color: textColor,
+            fontWeight: FontWeight.w600,
           ),
-          SizedBox(height: 8),
-          Text(description),
-          SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Row(
-                children: buttons.map((btn) {
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 6.0),
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: btn.color,
-                        foregroundColor: Colors.black,
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
-                        ),
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      onPressed: () {},
-                      child: Text(btn.label),
-                    ),
-                  );
-                }).toList(),
-              ),
-              Text(
-                time,
-                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-              ),
-            ],
-          ),
-        ],
+        ),
       ),
     );
   }
-}
-
-class ActionButton {
-  final String label;
-  final Color color;
-
-  ActionButton({required this.label, required this.color});
 }

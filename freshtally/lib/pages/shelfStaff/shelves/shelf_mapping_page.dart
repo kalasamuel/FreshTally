@@ -1,26 +1,5 @@
 import 'package:flutter/material.dart';
 
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Shelf Mapping UI',
-      theme: ThemeData(
-        primarySwatch: Colors.green,
-        fontFamily: 'Inter', // Assuming Inter font for a modern look
-      ),
-      home: const ShelfMappingPage(),
-      debugShowCheckedModeBanner: false, // Hide the debug banner
-    );
-  }
-}
-
 enum ShelfPosition { top, middle, bottom }
 
 class ShelfMappingPage extends StatefulWidget {
@@ -31,85 +10,73 @@ class ShelfMappingPage extends StatefulWidget {
 }
 
 class _ShelfMappingPageState extends State<ShelfMappingPage> {
-  // Currently selected floor for the dropdown
   String? _selectedFloor;
-  // Currently selected shelf number for the dropdown
   String? _selectedShelfNumber;
-  // Currently selected shelf position for the radio buttons
-  ShelfPosition? _shelfPosition = ShelfPosition.top; // Default to Top
+  ShelfPosition? _shelfPosition = ShelfPosition.top;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFFFFFF), // Light green background
+      backgroundColor: const Color(0xFFFFFFFF),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFFFFFFFF),
+        elevation: 0.0,
+        title: const Text(
+          'Shelf Mapping',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+          ),
+        ),
+        centerTitle: true,
+      ),
       body: SafeArea(
-        child: Center(
-          child: Container(
-            margin: const EdgeInsets.all(
-              20.0,
-            ), // Margin around the main content area
-            padding: const EdgeInsets.all(16.0), // Padding inside the main card
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 24.0,
+              vertical: 24.0,
+            ),
             child: Column(
-              crossAxisAlignment:
-                  CrossAxisAlignment.start, // Align content to the start
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // App Bar Section
-                Padding(
-                  padding: const EdgeInsets.only(
-                    bottom: 20.0,
-                  ), // More space below app bar
-                  child: Row(
-                    children: [
-                      // Back arrow icon
-                      IconButton(
-                        icon: const Icon(
-                          Icons.arrow_back_ios,
-                          color: Colors.black,
-                        ),
-                        onPressed: () {
-                          // Handle back button press
-                          Navigator.pop(context);
-                        },
-                      ),
-                      const SizedBox(width: 8), // Spacer
-                      // "Shelf Mapping" title
-                      const Text(
-                        'Shelf Mapping',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                        ),
-                      ),
-                    ],
+                const Text(
+                  'Shelf Details',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
                   ),
                 ),
-                // Floor Dropdown
+                const SizedBox(height: 24),
                 Container(
                   margin: const EdgeInsets.only(bottom: 16.0),
                   padding: const EdgeInsets.symmetric(horizontal: 12.0),
                   decoration: BoxDecoration(
-                    color: Colors.grey[200], // Light grey background
-                    borderRadius: BorderRadius.circular(
-                      10.0,
-                    ), // Rounded corners
-                    border: Border.all(
-                      color: Colors.grey[300]!,
-                    ), // Light border
+                    color: const Color(0xFFF5F6FA),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.transparent),
                   ),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
-                      isExpanded: true, // Make dropdown take full width
+                      isExpanded: true,
                       value: _selectedFloor,
                       hint: const Text(
-                        'Floor',
-                        style: TextStyle(color: Colors.grey),
+                        'Select Floor',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87,
+                        ),
                       ),
                       icon: const Icon(
                         Icons.keyboard_arrow_down,
-                        color: Colors.grey,
+                        color: Colors.black87,
                       ),
-                      style: TextStyle(color: Colors.grey[800], fontSize: 16),
+                      style: const TextStyle(
+                        fontSize: 16,
+                        color: Colors.black87,
+                      ),
                       onChanged: (String? newValue) {
                         setState(() {
                           _selectedFloor = newValue;
@@ -130,30 +97,33 @@ class _ShelfMappingPageState extends State<ShelfMappingPage> {
                     ),
                   ),
                 ),
-                // Shelf Number Dropdown
                 Container(
-                  margin: const EdgeInsets.only(
-                    bottom: 24.0,
-                  ), // More space below this dropdown
+                  margin: const EdgeInsets.only(bottom: 24.0),
                   padding: const EdgeInsets.symmetric(horizontal: 12.0),
                   decoration: BoxDecoration(
-                    color: Colors.grey[200],
-                    borderRadius: BorderRadius.circular(10.0),
-                    border: Border.all(color: Colors.grey[300]!),
+                    color: const Color(0xFFF5F6FA),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.transparent),
                   ),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
                       isExpanded: true,
                       value: _selectedShelfNumber,
                       hint: const Text(
-                        'Shelf Number',
-                        style: TextStyle(color: Colors.grey),
+                        'Select Shelf Number',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87,
+                        ),
                       ),
                       icon: const Icon(
                         Icons.keyboard_arrow_down,
-                        color: Colors.grey,
+                        color: Colors.black87,
                       ),
-                      style: TextStyle(color: Colors.grey[800], fontSize: 16),
+                      style: const TextStyle(
+                        fontSize: 16,
+                        color: Colors.black87,
+                      ),
                       onChanged: (String? newValue) {
                         setState(() {
                           _selectedShelfNumber = newValue;
@@ -175,7 +145,6 @@ class _ShelfMappingPageState extends State<ShelfMappingPage> {
                     ),
                   ),
                 ),
-                // Shelf Position Label
                 const Text(
                   'Shelf Position:',
                   style: TextStyle(
@@ -184,12 +153,13 @@ class _ShelfMappingPageState extends State<ShelfMappingPage> {
                     color: Colors.black87,
                   ),
                 ),
-                // Shelf Position Radio Buttons
                 Column(
                   children: <Widget>[
-                    // Top position radio button
                     RadioListTile<ShelfPosition>(
-                      title: const Text('Top'),
+                      title: const Text(
+                        'Top',
+                        style: TextStyle(fontSize: 16, color: Colors.black87),
+                      ),
                       value: ShelfPosition.top,
                       groupValue: _shelfPosition,
                       onChanged: (ShelfPosition? value) {
@@ -197,13 +167,14 @@ class _ShelfMappingPageState extends State<ShelfMappingPage> {
                           _shelfPosition = value;
                         });
                       },
-                      activeColor: Colors.green, // Green dot when selected
-                      controlAffinity: ListTileControlAffinity
-                          .leading, // Radio button on the left
+                      activeColor: const Color(0xFF4CAF50),
+                      controlAffinity: ListTileControlAffinity.leading,
                     ),
-                    // Middle position radio button
                     RadioListTile<ShelfPosition>(
-                      title: const Text('Middle'),
+                      title: const Text(
+                        'Middle',
+                        style: TextStyle(fontSize: 16, color: Colors.black87),
+                      ),
                       value: ShelfPosition.middle,
                       groupValue: _shelfPosition,
                       onChanged: (ShelfPosition? value) {
@@ -211,12 +182,14 @@ class _ShelfMappingPageState extends State<ShelfMappingPage> {
                           _shelfPosition = value;
                         });
                       },
-                      activeColor: Colors.green,
+                      activeColor: const Color(0xFF4CAF50),
                       controlAffinity: ListTileControlAffinity.leading,
                     ),
-                    // Bottom position radio button
                     RadioListTile<ShelfPosition>(
-                      title: const Text('Bottom'),
+                      title: const Text(
+                        'Bottom',
+                        style: TextStyle(fontSize: 16, color: Colors.black87),
+                      ),
                       value: ShelfPosition.bottom,
                       groupValue: _shelfPosition,
                       onChanged: (ShelfPosition? value) {
@@ -224,41 +197,40 @@ class _ShelfMappingPageState extends State<ShelfMappingPage> {
                           _shelfPosition = value;
                         });
                       },
-                      activeColor: Colors.green,
+                      activeColor: const Color(0xFF4CAF50),
                       controlAffinity: ListTileControlAffinity.leading,
                     ),
                   ],
                 ),
-                const Spacer(), // Pushes the button to the bottom
-                // Assign to Product Button
+                const SizedBox(height: 32),
                 SizedBox(
-                  width: double.infinity, // Button takes full width
+                  width: double.infinity,
+                  height: 56,
                   child: ElevatedButton(
                     onPressed: () {
-                      // Handle button press
-                      print('Assign to Product pressed!');
-                      print('Selected Floor: $_selectedFloor');
-                      print('Selected Shelf Number: $_selectedShelfNumber');
-                      print('Selected Shelf Position: $_shelfPosition');
+                      debugPrint('Selected Floor: $_selectedFloor');
+                      debugPrint(
+                        'Selected Shelf Number: $_selectedShelfNumber',
+                      );
+                      debugPrint('Selected Shelf Position: $_shelfPosition');
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Shelf mapping saved!')),
+                      );
+                      Navigator.pop(context);
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(
-                        0xFF4CAF50,
-                      ), // Green button color
-                      padding: const EdgeInsets.symmetric(vertical: 16.0),
+                      backgroundColor: const Color(0xFFC8E6C9),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(
-                          10.0,
-                        ), // Rounded corners
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      elevation: 1, // Add a subtle shadow
+                      elevation: 0.1,
                     ),
                     child: const Text(
                       'Assign to Product',
                       style: TextStyle(
                         fontSize: 18,
+                        color: Colors.black87,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
                       ),
                     ),
                   ),

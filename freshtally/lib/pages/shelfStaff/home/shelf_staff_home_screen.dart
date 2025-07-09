@@ -1,74 +1,88 @@
 import 'package:flutter/material.dart';
-import 'package:freshtally/pages/shelfStaff/settings/settings_page.dart';
-import 'package:freshtally/pages/shelfStaff/expiry/expiry_tracking_page.dart';
 import 'package:freshtally/pages/shelfStaff/notifications/notifications_shelfstaff.dart';
+import 'package:freshtally/pages/shelfStaff/settings/settings_page.dart';
+import 'package:freshtally/pages/shelfStaff/products/price_entry.dart';
 import 'package:freshtally/pages/shelfStaff/shelves/shelf_mapping_page.dart';
 import 'package:freshtally/pages/shelfStaff/shelves/smart_suggestions_page.dart';
 import 'package:freshtally/pages/shelfStaff/sync/sync_status_page.dart';
-// import 'package:freshtally/pages/staff/products/edit_product_page.dart';
-import 'package:freshtally/pages/shelfStaff/products/product_entry_page.dart';
 
-class ShelfStaffDashboardPage extends StatelessWidget {
-  const ShelfStaffDashboardPage({super.key});
+class ShelfStaffDashboard extends StatelessWidget {
+  const ShelfStaffDashboard({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFFFFFF),
+      appBar: AppBar(
+        automaticallyImplyLeading:
+            false, // Ensures no default back button is added.
+        backgroundColor: const Color(
+          0xFFFFFFFF,
+        ), // AppBar background color matches the body for a clean UI.
+        elevation: 0.0, // Removes the shadow under the app bar for a flat look.
+        // Adjust leadingWidth to accommodate the avatar and desired padding.
+        // (28 radius * 2 diameter) + 16 (for 8px padding on each side) = 56 + 16 = 72
+        leadingWidth: 72,
+        leading: Padding(
+          padding: const EdgeInsets.only(
+            left: 16.0,
+          ), // Add left padding to the avatar.
+          child: CircleAvatar(
+            radius: 28, // Increased radius for a slightly larger circular icon.
+            backgroundImage: NetworkImage(
+              'https://i.pravatar.cc/150?img=60',
+            ), // Placeholder image.
+          ),
+        ),
+        title: const Text(
+          'Mega Supermarket',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+          ),
+        ),
+        centerTitle: true, // Centers the title in the app bar.
+        actions: [
+          IconButton(
+            icon: const Icon(
+              Icons.notifications,
+              size: 30,
+              color: Colors.black87,
+            ), // Added color for consistency.
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const NotificationCenterPage(),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(
+              Icons.settings,
+              size: 30,
+              color: Colors.black87,
+            ), // Added color for consistency.
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SettingsPage()),
+              );
+            },
+          ),
+        ],
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Top Header with Profile and Settings
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24.0,
-                  vertical: 16.0,
-                ),
-                child: Row(
-                  children: [
-                    // Profile Image
-                    const CircleAvatar(
-                      radius: 24,
-                      backgroundImage: NetworkImage(
-                        'https://i.pravatar.cc/150?img=52',
-                      ), // Placeholder image
-                    ),
-                    const SizedBox(width: 12),
-                    // Supermarket Name
-                    const Text(
-                      'Mega Supermarket - Kampala',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    const Spacer(),
-                    // Settings Icon
-                    IconButton(
-                      icon: const Icon(Icons.settings, size: 30),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const SettingsPage(),
-                          ),
-                        );
-                        // Han
-                        // Handle settings tap
-                      },
-                    ),
-                  ],
-                ),
-              ),
-
-              // Dashboard Title
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
                 child: Text(
-                  'Shelf Staff Dashboard',
+                  'Shelf Attendant Dashboard',
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
@@ -76,8 +90,6 @@ class ShelfStaffDashboardPage extends StatelessWidget {
                   ),
                 ),
               ),
-
-              // Dashboard Tiles Grid
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24.0),
                 child: GridView.count(
@@ -90,7 +102,7 @@ class ShelfStaffDashboardPage extends StatelessWidget {
                   children: [
                     _buildDashboardTile(
                       title: 'Shelf Mapping',
-                      icon: Icons.location_on,
+                      icon: Icons.map,
                       color: const Color(0xFFD1F2EB),
                       onTap: () {
                         Navigator.push(
@@ -102,27 +114,14 @@ class ShelfStaffDashboardPage extends StatelessWidget {
                       },
                     ),
                     _buildDashboardTile(
-                      title: 'Expiry Tracker',
-                      icon: Icons.calendar_today,
+                      title: 'Price Entry',
+                      icon: Icons.price_change,
                       color: const Color(0xFFFDECEB),
                       onTap: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const ExpiryTrackingPage(),
-                          ),
-                        );
-                      },
-                    ),
-                    _buildDashboardTile(
-                      title: 'Product Entry',
-                      icon: Icons.qr_code_scanner,
-                      color: const Color(0xFFE0F2F1),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const ProductEntryPage(),
+                            builder: (context) => const PriceEntryPage(),
                           ),
                         );
                       },
@@ -130,7 +129,7 @@ class ShelfStaffDashboardPage extends StatelessWidget {
                     _buildDashboardTile(
                       title: 'Sync Status',
                       icon: Icons.sync,
-                      color: const Color(0xFFE8E8E8),
+                      color: const Color(0xFFE0F2F1),
                       onTap: () {
                         Navigator.push(
                           context,
@@ -142,8 +141,8 @@ class ShelfStaffDashboardPage extends StatelessWidget {
                     ),
                     _buildDashboardTile(
                       title: 'Smart Suggestions',
-                      icon: Icons.lightbulb_outline,
-                      color: const Color(0xFFE8E8E8),
+                      icon: Icons.lightbulb,
+                      color: const Color(0xFFF1F8E9),
                       onTap: () {
                         Navigator.push(
                           context,
@@ -154,95 +153,9 @@ class ShelfStaffDashboardPage extends StatelessWidget {
                         );
                       },
                     ),
-                    // _buildDashboardTile(
-                    //   title: 'Edit Products',
-                    //   icon: Icons.edit_square,
-                    //   color: const Color(0xFFE0F2F1),
-                    //   onTap: () {
-                    //     Navigator.push(
-                    //       context,
-                    //       MaterialPageRoute(
-                    //         builder: (context) => const EditProductPage(),
-                    //       ),
-                    //     );
-                    //   },
-                    // ),
-                    _buildDashboardTile(
-                      title: 'Notifications',
-                      icon: Icons.notifications,
-                      color: const Color(0xFFFFF3E0),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                const NotificationCenterPage(),
-                          ),
-                        );
-                      },
-                    ),
                   ],
                 ),
               ),
-
-              const SizedBox(height: 32),
-
-              // Bottom Buttons
-              Center(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () {
-                            // Handle Quick Scan
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFC8E6C9),
-                            minimumSize: const Size(double.infinity, 60),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            elevation: 0.1,
-                          ),
-                          child: const Text(
-                            'Quick Scan',
-                            style: TextStyle(
-                              fontSize: 18,
-                              color: Colors.black87,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () {
-                            // Handle Sync Now
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFE0E0E0),
-                            minimumSize: const Size(double.infinity, 60),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            elevation: 0.1,
-                          ),
-                          child: const Text(
-                            'Sync Now',
-                            style: TextStyle(
-                              fontSize: 18,
-                              color: Colors.black87,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
               const SizedBox(height: 32),
             ],
           ),
@@ -250,45 +163,45 @@ class ShelfStaffDashboardPage extends StatelessWidget {
       ),
     );
   }
-}
 
-Widget _buildDashboardTile({
-  required String title,
-  required IconData icon,
-  required Color color,
-  VoidCallback? onTap,
-}) {
-  return Card(
-    elevation: 0.1,
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-    color: color,
-    child: InkWell(
-      onTap:
-          onTap ??
-          () {
-            debugPrint('$title tile tapped!');
-          },
-      borderRadius: BorderRadius.circular(16),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Icon(icon, size: 60, color: Colors.black87),
-            const SizedBox(height: 8),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Colors.black87,
+  Widget _buildDashboardTile({
+    required String title,
+    required IconData icon,
+    required Color color,
+    VoidCallback? onTap,
+  }) {
+    return Card(
+      elevation: 0.1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      color: color,
+      child: InkWell(
+        onTap:
+            onTap ??
+            () {
+              debugPrint('$title tile tapped!');
+            },
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Icon(icon, size: 60, color: Colors.black87),
+              const SizedBox(height: 8),
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }

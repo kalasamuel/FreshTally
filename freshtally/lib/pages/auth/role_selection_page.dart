@@ -122,7 +122,7 @@ class _RoleSelectionPageState extends State<RoleSelectionPage> {
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) =>
-                                        const ShelfStaffDashboardPage(),
+                                        const ShelfStaffDashboard(),
                                   ),
                                 );
                               }
