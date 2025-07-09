@@ -10,7 +10,6 @@ class EditProductPage extends StatefulWidget {
 
 class _EditProductPageState extends State<EditProductPage> {
   final _formKey = GlobalKey<FormState>();
-  final bool _isFormValid = false;
 
   final List<String> _categories = [
     'Beverages',
