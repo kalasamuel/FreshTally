@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:freshtally/pages/manager/analytics/analytics_dashbaord_page.dart';
-import 'package:freshtally/pages/manager/analytics/expired_product_details_page.dart';
-import 'package:freshtally/pages/shelfStaff/expiry/expiry_tracking_page.dart';
 import 'package:freshtally/pages/shelfStaff/notifications/notifications_shelfstaff.dart';
 import 'package:freshtally/pages/shelfStaff/settings/settings_page.dart';
 import 'package:freshtally/pages/shelfStaff/shelves/shelf_mapping_page.dart';
-import 'package:freshtally/pages/shelfStaff/shelves/smart_suggestions_page.dart';
+import 'package:freshtally/pages/manager/promotions/smart_promotions_suggestions.dart';
 import 'package:freshtally/pages/shelfStaff/sync/sync_status_page.dart';
-import 'package:freshtally/pages/manager/analytics/inventory_breakdown_page.dart';
+import 'package:freshtally/pages/manager/promotions/promotions.dart';
 
 class ManagerDashboardPage extends StatelessWidget {
   const ManagerDashboardPage({super.key});
@@ -101,22 +99,22 @@ class ManagerDashboardPage extends StatelessWidget {
                           context,
                           MaterialPageRoute(
                             builder: (context) {
-                              return const ExpiredProductDetailsPage();
+                              return const AnalyticsDashboardPage();
                             },
                           ),
                         );
                       },
                     ),
                     _buildDashboardTile(
-                      title: 'Expiry Tracker',
-                      icon: Icons.calendar_today, // Closest matching icon
+                      title: 'Promotions page',
+                      icon: Icons.card_giftcard, // Closest matching icon
                       color: const Color(0xFFFDECEB), // Pink color
                       onTap: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (context) {
-                              return ExpiryTrackingPage();
+                              return PromotionsPage();
                             },
                           ),
                         );
@@ -137,20 +135,26 @@ class ManagerDashboardPage extends StatelessWidget {
                         );
                       },
                     ),
+
                     _buildDashboardTile(
-                      title: 'User Role Management',
-                      icon: Icons.group,
-                      color: const Color(0xFFE0F2F1), // Light green color
+                      title: 'Smart promotions',
+                      icon: Icons.lightbulb,
+                      color: const Color(0xFFE8E8E8), // Grey color
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) {
+                              return SmartPromotionsSuggestionsPage();
+                            },
+                          ),
+                        );
+                      },
                     ),
                     _buildDashboardTile(
-                      title: 'Inventory List',
-                      icon: Icons.inventory_2, // Closest matching icon
-                      color: const Color(0xFFFFF3E0), // Beige/Yellow color
-                    ),
-                    _buildDashboardTile(
-                      title: 'Shelf Mapping',
-                      icon: Icons.location_on,
-                      color: const Color(0xFFE0F2F1), // Light green color
+                      title: 'product allocation',
+                      icon: Icons.assignment,
+                      color: const Color(0xFFFFF3E0),
                       onTap: () {
                         Navigator.push(
                           context,
@@ -165,7 +169,7 @@ class ManagerDashboardPage extends StatelessWidget {
                     _buildDashboardTile(
                       title: 'Sync Status',
                       icon: Icons.sync,
-                      color: const Color(0xFFE8E8E8), // Grey color
+                      color: const Color(0xFFE0F2F1), // Light green color
                       onTap: () {
                         Navigator.push(
                           context,
@@ -176,26 +180,6 @@ class ManagerDashboardPage extends StatelessWidget {
                           ),
                         );
                       },
-                    ),
-                    _buildDashboardTile(
-                      title: 'Smart Suggestions',
-                      icon: Icons.lightbulb_outline,
-                      color: const Color(0xFFFFF3E0),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) {
-                              return SmartShelfSuggestionsPage();
-                            },
-                          ),
-                        );
-                      },
-                    ),
-                    _buildDashboardTile(
-                      title: 'Product Entry',
-                      icon: Icons.qr_code_scanner, // Barcode icon
-                      color: const Color(0xFFE0F2F1), // Light green color
                     ),
                   ],
                 ),

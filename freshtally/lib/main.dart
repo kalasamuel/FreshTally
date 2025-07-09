@@ -43,7 +43,8 @@ class FreshTallyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'FreshTally',
-      theme: ThemeData(
+      home: ManagerDashboardPage(),
+      /*theme: ThemeData(
         primarySwatch: Colors.green,
         scaffoldBackgroundColor: const Color(0xFFF5F6FA),
         elevatedButtonTheme: ElevatedButtonThemeData(
@@ -52,6 +53,7 @@ class FreshTallyApp extends StatelessWidget {
             foregroundColor: Colors.white,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
+
             ),
           ),
         ),
@@ -207,7 +209,7 @@ class FreshTallyApp extends StatelessWidget {
               },
             );
         }
-      },
+      // },*/
     );
   }
 }
