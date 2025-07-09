@@ -44,7 +44,7 @@ class ProductAllocationView extends StatelessWidget {
           return Card(
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.all(17.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
