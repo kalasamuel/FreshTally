@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:freshtally/pages/manager/analytics/analytics_dashbaord_page.dart';
 import 'package:freshtally/pages/shelfStaff/notifications/notifications_shelfstaff.dart';
 import 'package:freshtally/pages/shelfStaff/settings/settings_page.dart';
-import 'package:freshtally/pages/shelfStaff/shelves/shelf_mapping_page.dart';
+import 'package:freshtally/pages/manager/productAllocationView/product_allocation_view.dart';
 import 'package:freshtally/pages/manager/promotions/smart_promotions_suggestions.dart';
 import 'package:freshtally/pages/shelfStaff/sync/sync_status_page.dart';
 import 'package:freshtally/pages/manager/promotions/promotions.dart';
@@ -160,7 +160,7 @@ class ManagerDashboardPage extends StatelessWidget {
                           context,
                           MaterialPageRoute(
                             builder: (context) {
-                              return ShelfMappingPage();
+                              return ProductAllocationView();
                             },
                           ),
                         );
@@ -227,35 +227,40 @@ Widget _buildDashboardTile({
   required Color color,
   VoidCallback? onTap,
 }) {
-  return Card(
-    elevation: 0.1,
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-    color: color,
-    child: InkWell(
-      onTap:
-          onTap ??
-          () {
-            debugPrint('$title tile tapped!');
-          },
-      borderRadius: BorderRadius.circular(16),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Icon(icon, size: 60, color: Colors.black87),
-            const SizedBox(height: 8),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: Colors.black87,
+  return SizedBox(
+    // Adjust width as needed
+    child: Card(
+      elevation: 0.1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      color: color,
+      child: InkWell(
+        onTap:
+            onTap ??
+            () {
+              debugPrint('$title tile tapped!');
+            },
+        borderRadius: BorderRadius.circular(16),
+
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Icon(icon, size: 60, color: Colors.black87),
+              const SizedBox(height: 8),
+
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     ),
