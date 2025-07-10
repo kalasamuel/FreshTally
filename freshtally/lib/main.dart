@@ -30,9 +30,12 @@ import 'pages/auth/customer_signup_page.dart';
 
 // import 'pages/staff/home_screen.dart';
 void main() async {
-  // WidgetsFlutterBinding.ensureInitialized();
-  // await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  // await uploadProductsToFirestore();
+  WidgetsFlutterBinding.ensureInitialized();
+  print('>>> before Firebase.init');
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  await uploadProductsToFirestore();
+  print('>>> Firebase init done');
   runApp(const FreshTallyApp());
 }
 
@@ -43,8 +46,8 @@ class FreshTallyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'FreshTally',
-      //home: ManagerDashboardPage(),
-      theme: ThemeData(
+      home: ManagerDashboardPage(),
+      /*theme: ThemeData(
         primarySwatch: Colors.green,
         scaffoldBackgroundColor: const Color(0xFFF5F6FA),
         elevatedButtonTheme: ElevatedButtonThemeData(
@@ -208,7 +211,7 @@ class FreshTallyApp extends StatelessWidget {
               },
             );
         }
-      },
+      },*/
     );
   }
 }
