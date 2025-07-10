@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:freshtally/pages/staff/home/cashier_home_screen.dart';
-import 'package:freshtally/pages/staff/home/shelf_staff_home_screen.dart';
+import 'package:freshtally/pages/shelfStaff/home/shelf_staff_home_screen.dart';
+import 'package:freshtally/pages/storeManager/home/home_screen.dart';
 
 class RoleSelectionPage extends StatefulWidget {
   const RoleSelectionPage({super.key, required String role});
@@ -95,7 +95,7 @@ class _RoleSelectionPageState extends State<RoleSelectionPage> {
               child: Column(
                 children: [
                   buildRoleCard(
-                    'Cashier',
+                    'Store Manager',
                     Image.asset('assets/icons/cashier.png', width: 100),
                   ),
                   buildRoleCard(
@@ -109,12 +109,12 @@ class _RoleSelectionPageState extends State<RoleSelectionPage> {
                       onPressed: selectedRole.isEmpty
                           ? null
                           : () {
-                              if (selectedRole == 'Cashier') {
+                              if (selectedRole == 'Store Manager') {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) =>
-                                        const CashierDashboardPage(),
+                                        const StoreManagerDashboard(),
                                   ),
                                 );
                               } else if (selectedRole == 'Shelf Staff') {
@@ -122,7 +122,7 @@ class _RoleSelectionPageState extends State<RoleSelectionPage> {
                                   context,
                                   MaterialPageRoute(
                                     builder: (context) =>
-                                        const ShelfStaffDashboardPage(),
+                                        const ShelfStaffDashboard(),
                                   ),
                                 );
                               }
