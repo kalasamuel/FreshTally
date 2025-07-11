@@ -31,11 +31,11 @@ import 'pages/auth/customer_signup_page.dart';
 // import 'pages/staff/home_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  print('>>> before Firebase.init');
+
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   await uploadProductsToFirestore();
-  print('>>> Firebase init done');
+
   runApp(const FreshTallyApp());
 }
 
@@ -46,8 +46,11 @@ class FreshTallyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'FreshTally',
-      home: ManagerDashboardPage(),
-      /*theme: ThemeData(
+      /*home: const ManagerDashboardPage(
+        supermarketName: 'Demo Supermarket',
+        location: 'Demo Location',
+      ),*/
+      theme: ThemeData(
         primarySwatch: Colors.green,
         scaffoldBackgroundColor: const Color(0xFFF5F6FA),
         elevatedButtonTheme: ElevatedButtonThemeData(
@@ -109,10 +112,15 @@ class FreshTallyApp extends StatelessWidget {
                 return const ShelfStaffDashboard();
               },
             );
-          case '/staff/managerHome':
+          case '/manager/managerHome':
+            final args = settings.arguments as Map<String, dynamic>? ?? {};
             return MaterialPageRoute(
               builder: (_) {
-                return const ManagerDashboardPage();
+                return ManagerDashboardPage(
+                  supermarketName:
+                      args['supermarketName'] ?? 'Demo Supermarket',
+                  location: args['location'] ?? 'Demo Location',
+                );
               },
             );
           case '/staff/productEntry':
@@ -211,7 +219,7 @@ class FreshTallyApp extends StatelessWidget {
               },
             );
         }
-      },*/
+      },
     );
   }
 }

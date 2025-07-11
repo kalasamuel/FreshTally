@@ -21,6 +21,7 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
       TextEditingController();
+  final TextEditingController _locationController = TextEditingController();
 
   @override
   void initState() {
@@ -31,12 +32,14 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
     _emailController.addListener(_validateForm);
     _passwordController.addListener(_validateForm);
     _confirmPasswordController.addListener(_validateForm);
+    _locationController.addListener(_validateForm);
   }
 
   void _validateForm() {
     setState(() {
       _isFormValid =
           _supermarketNameController.text.trim().isNotEmpty &&
+          _locationController.text.trim().isNotEmpty &&
           _firstNameController.text.trim().isNotEmpty &&
           _lastNameController.text.trim().isNotEmpty &&
           _emailController.text.trim().isNotEmpty &&
@@ -99,6 +102,19 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
                 },
               ),
               const SizedBox(height: 24.0),
+
+              IconTextField(
+                hintText: 'Supermarket Location',
+                icon: Icons.location_on,
+                controller: _locationController,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Location is required';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16.0),
               const Text(
                 'Manager details:',
                 style: TextStyle(
@@ -250,6 +266,14 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
               const SizedBox(height: 30.0),
               TextButton(
                 onPressed: () {
+                  Navigator.pushReplacementNamed(
+                    context,
+                    '/manager/managerHome',
+                    arguments: {
+                      'supermarketName': _supermarketNameController.text.trim(),
+                      'location': _locationController.text.trim(),
+                    },
+                  );
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => const LoginPage()),
