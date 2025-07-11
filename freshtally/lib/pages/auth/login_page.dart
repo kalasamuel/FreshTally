@@ -169,7 +169,10 @@ class LoginPage extends StatelessWidget {
                       context,
                       MaterialPageRoute(
                         builder: (context) {
-                          return ManagerDashboardPage();
+                          return ManagerDashboardPage(
+                            supermarketName: '',
+                            location: '',
+                          );
                         },
                       ),
                     );

@@ -54,7 +54,8 @@ class FreshTallyApp extends StatelessWidget {
             return MaterialPageRoute(builder: (_) => const ShelfMappingPage());
           case '/managerHome':
             return MaterialPageRoute(
-              builder: (_) => const ManagerDashboardPage(),
+              builder: (_) =>
+                  const ManagerDashboardPage(supermarketName: '', location: ''),
             );
           default:
             return MaterialPageRoute(
