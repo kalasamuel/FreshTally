@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:freshtally/pages/shelfStaff/settings/settings_page.dart';
 import 'package:freshtally/pages/storeManager/batches/batch_entry_page.dart';
-import 'package:freshtally/pages/storeManager/batches/supplier_entry_page.dart';
+import 'package:freshtally/pages/storeManager/batches/supplier_batch_entry_page.dart';
 import 'package:freshtally/pages/storeManager/notifications/notification_center_page.dart';
 import 'package:freshtally/pages/storeManager/products/product_entry_page.dart';
 import 'package:freshtally/pages/storeManager/sync/sync_status_page.dart';
@@ -98,40 +98,15 @@ class StoreManagerDashboard extends StatelessWidget {
                   childAspectRatio: 1.5,
                   children: [
                     _buildDashboardTile(
-                      title: 'Products',
+                      title: 'Supplier and Batch Entry',
                       icon: Icons.inventory,
                       color: const Color(0xFFD1F2EB),
                       onTap: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const ProductEntryPage(),
-                          ),
-                        );
-                      },
-                    ),
-                    _buildDashboardTile(
-                      title: 'Batches',
-                      icon: Icons.archive,
-                      color: const Color(0xFFFDECEB),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const BatchEntryPage(),
-                          ),
-                        );
-                      },
-                    ),
-                    _buildDashboardTile(
-                      title: 'Suppliers',
-                      icon: Icons.local_shipping,
-                      color: const Color(0xFFE0F2F1),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const SupplierEntryPage(),
+                            builder: (context) =>
+                                const SupplierBatchEntryPage(),
                           ),
                         );
                       },

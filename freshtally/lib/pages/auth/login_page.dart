@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:freshtally/pages/auth/create_supermarket_page.dart';
-import 'package:freshtally/pages/auth/join_supermarket_page.dart';
+// import 'package:freshtally/pages/auth/create_supermarket_page.dart';
+// import 'package:freshtally/pages/auth/join_supermarket_page.dart';
+import 'package:freshtally/pages/auth/role_selection_page.dart';
 import 'package:freshtally/pages/customer/home/customer_home_page.dart';
+import 'package:freshtally/pages/manager/home/manager_home_screen.dart';
 
 class IconTextField extends StatelessWidget {
   final String hintText;
@@ -167,7 +169,7 @@ class LoginPage extends StatelessWidget {
                       context,
                       MaterialPageRoute(
                         builder: (context) {
-                          return CreateSupermarketPage();
+                          return ManagerDashboardPage();
                         },
                       ),
                     );
@@ -189,7 +191,7 @@ class LoginPage extends StatelessWidget {
                       context,
                       MaterialPageRoute(
                         builder: (context) {
-                          return JoinSupermarketPage();
+                          return RoleSelectionPage(role: '');
                         },
                       ),
                     );

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:freshtally/pages/shelfStaff/settings/settings_page.dart'; // Assuming settings page is shared or similar
+// Assuming settings page is shared or similar
 
 class NotificationCenterPage extends StatefulWidget {
   const NotificationCenterPage({super.key});

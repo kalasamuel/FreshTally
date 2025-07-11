@@ -30,7 +30,7 @@ const List<Map<String, dynamic>> products = [
 ];
 
 class ProductAllocationView extends StatelessWidget {
-  const ProductAllocationView({Key? key}) : super(key: key);
+  const ProductAllocationView({super.key});
 
   @override
   Widget build(BuildContext context) {

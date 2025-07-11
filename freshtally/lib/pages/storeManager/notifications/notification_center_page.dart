@@ -104,6 +104,8 @@ void main() {
 }
 
 class NotificationsPage extends StatelessWidget {
+  const NotificationsPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -187,6 +189,8 @@ class NotificationsPage extends StatelessWidget {
 class FilterChips extends StatelessWidget {
   final filters = ['All', 'Expiry', 'Restock', 'Sync', 'Suggestions'];
 
+  FilterChips({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Wrap(
@@ -217,7 +221,8 @@ class NotificationCard extends StatelessWidget {
   final Color iconColor;
   final List<ActionButton> buttons;
 
-  NotificationCard({
+  const NotificationCard({
+    super.key,
     required this.title,
     required this.description,
     required this.time,
