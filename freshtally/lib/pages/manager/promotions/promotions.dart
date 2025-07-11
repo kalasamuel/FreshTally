@@ -10,6 +10,22 @@ class PromotionsPage extends StatefulWidget {
 }
 
 class _PromotionsPageState extends State<PromotionsPage> {
+  Future<void> _deletePromotion(String docId) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('promotions')
+          .doc(docId)
+          .delete();
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Promotion deleted')));
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -60,6 +76,33 @@ class _PromotionsPageState extends State<PromotionsPage> {
                         'Expires: ${product.discountExpiry.toLocal().toString().split(' ')[0]}',
                       ),
                     ],
+                  ),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.delete, color: Colors.red),
+                    onPressed: () async {
+                      final confirm = await showDialog<bool>(
+                        context: context,
+                        builder: (_) => AlertDialog(
+                          title: const Text('Delete promotion?'),
+                          content: Text('Remove "${product.name}"?'),
+                          actions: [
+                            TextButton(
+                              child: const Text('Cancel'),
+                              onPressed: () => Navigator.pop(context, false),
+                            ),
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.red,
+                              ),
+                              child: const Text('Delete'),
+                              onPressed: () => Navigator.pop(context, true),
+                            ),
+                          ],
+                        ),
+                      );
+                      if (confirm == true) _deletePromotion(product.id);
+                    },
+                    tooltip: 'Delete',
                   ),
                 ),
               );

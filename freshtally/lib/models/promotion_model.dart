@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'product_model.dart'; // Import the Product model (adjust path if needed)
 
 /// Promotion model for managing discounts and special offers
 /// Handles expiry-based promotions and general promotional campaigns
@@ -42,11 +43,11 @@ class Promotion {
   /// Check if promotion is currently valid
   bool get isValid {
     final now = DateTime.now();
-    return isActive && 
-           now.isAfter(startDate) && 
-           now.isBefore(endDate) &&
-           status == PromotionStatus.active &&
-           (maxUsageCount == null || currentUsageCount < maxUsageCount!);
+    return isActive &&
+        now.isAfter(startDate) &&
+        now.isBefore(endDate) &&
+        status == PromotionStatus.active &&
+        (maxUsageCount == null || currentUsageCount < maxUsageCount!);
   }
 
   /// Calculate days remaining for promotion
@@ -64,7 +65,8 @@ class Promotion {
   double calculateEstimatedRecovery(List<Product> products) {
     double totalRecovery = 0.0;
     for (final product in products) {
-      if (productIds.contains(product.id) || categories.contains(product.category)) {
+      if (productIds.contains(product.id) ||
+          categories.contains(product.category)) {
         final discountedPrice = product.price * (1 - discountPercentage / 100);
         totalRecovery += discountedPrice * product.totalQuantity;
       }
@@ -158,20 +160,20 @@ class Promotion {
 
 /// Types of promotions available
 enum PromotionType {
-  expiry,     // Promotions for products nearing expiry
-  general,    // General promotional campaigns
-  seasonal,   // Seasonal promotions
-  clearance,  // Clearance sales
-  bulk,       // Bulk purchase discounts
+  expiry, // Promotions for products nearing expiry
+  general, // General promotional campaigns
+  seasonal, // Seasonal promotions
+  clearance, // Clearance sales
+  bulk, // Bulk purchase discounts
 }
 
 /// Status of promotions
 enum PromotionStatus {
-  draft,      // Being created/edited
-  active,     // Currently running
-  paused,     // Temporarily paused
-  completed,  // Ended successfully
-  cancelled,  // Cancelled before completion
+  draft, // Being created/edited
+  active, // Currently running
+  paused, // Temporarily paused
+  completed, // Ended successfully
+  cancelled, // Cancelled before completion
 }
 
 /// Extension to get display names for enums
@@ -258,3 +260,4 @@ class PromotionAnalytics {
       'calculatedAt': Timestamp.fromDate(calculatedAt),
     };
   }
+}

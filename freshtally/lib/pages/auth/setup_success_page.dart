@@ -41,7 +41,10 @@ class OrganizationSetupSuccessPage extends StatelessWidget {
                     context,
                     MaterialPageRoute(
                       builder: (context) {
-                        return ManagerDashboardPage();
+                        return ManagerDashboardPage(
+                          supermarketName: 'Your Supermarket Name',
+                          location: 'Your Location',
+                        );
                       },
                     ),
                   );

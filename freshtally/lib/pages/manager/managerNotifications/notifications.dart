@@ -1,5 +1,7 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:freshtally/pages/shelfStaff/settings/settings_page.dart';
+import 'package:intl/intl.dart';
+import 'package:flutter/services.dart';
 
 class NotificationCenterPage extends StatefulWidget {
   const NotificationCenterPage({super.key});
@@ -10,262 +12,66 @@ class NotificationCenterPage extends StatefulWidget {
 
 class _NotificationCenterPageState extends State<NotificationCenterPage> {
   String _selectedFilter = 'All';
+  final _filters = const ['All', 'Staff', 'Expiry'];
+
+  Stream<QuerySnapshot<Map<String, dynamic>>> _stream() {
+    final base = FirebaseFirestore.instance
+        .collection('notifications')
+        .orderBy('createdAt', descending: true);
+    switch (_selectedFilter) {
+      case 'Staff':
+        return base.where('type', isEqualTo: 'staff_signup').snapshots();
+      case 'Expiry':
+        return base.where('type', isEqualTo: 'promo_expiry').snapshots();
+      default:
+        return base.snapshots();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFFFFFF),
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFFFFFF),
-        elevation: 0.0,
         title: const Text(
           'Notifications',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
-          ),
+          style: TextStyle(color: Colors.black87),
         ),
+        backgroundColor: Colors.white,
+        elevation: 0,
         centerTitle: true,
+        iconTheme: const IconThemeData(color: Colors.black87),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 24.0,
-              vertical: 24.0,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Notifications',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 0.0,
-                    vertical: 8.0,
-                  ),
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: [
-                        _buildFilterChip('All'),
-                        _buildFilterChip('Expiry'),
-                        _buildFilterChip('Restock'),
-                        _buildFilterChip('Sync'),
-                        _buildFilterChip('Suggestions'),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                _buildNotificationCard(
-                  context,
-                  title: 'Fresh Milk 500ml',
-                  icon: Icons.error_outline,
-                  iconColor: Colors.red,
-                  details: [
-                    'Expires in 1 day. Qty: 15 units',
-                    'Recovery: UGX 25,000',
-                  ],
-                  actionButtons: [
-                    _buildActionButton(
-                      'Snooze',
-                      const Color(0xFFE0E0E0),
-                      Colors.black87,
-                      () => debugPrint('Snooze pressed'),
-                    ),
-                    _buildActionButton(
-                      'Mark Done',
-                      const Color(0xFFFFCC80),
-                      Colors.black87,
-                      () => debugPrint('Mark Done pressed'),
-                    ),
-                    _buildActionButton(
-                      'Dismiss',
-                      const Color(0xFFC8E6C9),
-                      Colors.black87,
-                      () => debugPrint('Dismiss pressed'),
-                    ),
-                  ],
-                  time: 'Today, 8:30 AM',
-                  cardColor: const Color(0xFFFFF0F0),
-                  borderColor: const Color(0xFFFFCCCC),
-                ),
-                const SizedBox(height: 16),
-                _buildNotificationCard(
-                  context,
-                  title: 'Sync Reminder',
-                  icon: Icons.sync,
-                  iconColor: Colors.black87,
-                  details: ['3 items pending sync'],
-                  actionButtons: [
-                    _buildActionButton(
-                      'Sync Now',
-                      const Color(0xFFC8E6C9),
-                      Colors.black87,
-                      () => debugPrint('Sync Now pressed'),
-                    ),
-                    _buildActionButton(
-                      'Snooze',
-                      const Color(0xFFE0E0E0),
-                      Colors.black87,
-                      () => debugPrint('Snooze pressed'),
-                    ),
-                    _buildActionButton(
-                      'Dismiss',
-                      const Color(0xFFFFCC80),
-                      Colors.black87,
-                      () => debugPrint('Dismiss pressed'),
-                    ),
-                  ],
-                  time: 'Today, 7:45 AM',
-                  cardColor: const Color(0xFFF5F6FA),
-                  borderColor: Colors.transparent,
-                ),
-                const SizedBox(height: 16),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFilterChip(String text) {
-    final bool isSelected = _selectedFilter == text;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4.0),
-      child: ChoiceChip(
-        label: Text(
-          text,
-          style: TextStyle(
-            color: isSelected ? Colors.white : Colors.black87,
-            fontWeight: FontWeight.w600,
-            fontSize: 15,
-          ),
-        ),
-        selected: isSelected,
-        selectedColor: const Color(0xFF4CAF50),
-        backgroundColor: const Color(0xFFF5F6FA),
-        onSelected: (bool selected) {
-          setState(() {
-            _selectedFilter = text;
-          });
-        },
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12.0),
-          side: BorderSide(
-            color: isSelected ? const Color(0xFF4CAF50) : Colors.transparent,
-          ),
-        ),
-        labelPadding: const EdgeInsets.symmetric(
-          horizontal: 12.0,
-          vertical: 4.0,
-        ),
-        avatar: isSelected
-            ? const Icon(Icons.check_circle, color: Colors.white, size: 18)
-            : null,
-        elevation: 0.1,
-      ),
-    );
-  }
-
-  Widget _buildNotificationCard(
-    BuildContext context, {
-    required String title,
-    required IconData icon,
-    required Color iconColor,
-    required List<String> details,
-    required List<Widget> actionButtons,
-    required String time,
-    required Color cardColor,
-    required Color borderColor,
-  }) {
-    return Card(
-      elevation: 0.1,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: borderColor),
-      ),
-      color: cardColor,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Icon(icon, color: iconColor, size: 24),
-                const SizedBox(width: 8),
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: details
-                  .map(
-                    (detail) => Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 2.0),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Icon(Icons.info_outline, color: Colors.red, size: 18),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              detail,
-                              style: const TextStyle(
-                                color: Colors.black87,
-                                fontSize: 15,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  )
-                  .toList(),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: actionButtons
-                          .map(
-                            (button) => Padding(
-                              padding: const EdgeInsets.only(right: 8.0),
-                              child: button,
-                            ),
-                          )
-                          .toList(),
-                    ),
-                  ),
-                ),
-                Text(
-                  time,
-                  style: const TextStyle(color: Colors.grey, fontSize: 13),
-                ),
-              ],
+            _filterRow(),
+            const Divider(height: 1),
+            Expanded(
+              child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+                stream: _stream(),
+                builder: (ctx, snap) {
+                  if (snap.hasError) {
+                    return const Center(
+                      child: Text('Error loading notifications'),
+                    );
+                  }
+                  if (!snap.hasData) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  final docs = snap.data!.docs;
+                  if (docs.isEmpty) {
+                    return const Center(child: Text('Nothing here yet'));
+                  }
+                  return ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: docs.length,
+                    itemBuilder: (ctx, i) {
+                      final n = docs[i].data();
+                      return _buildCard(n, docs[i].id);
+                    },
+                  );
+                },
+              ),
             ),
           ],
         ),
@@ -273,33 +79,143 @@ class _NotificationCenterPageState extends State<NotificationCenterPage> {
     );
   }
 
-  Widget _buildActionButton(
-    String text,
-    Color backgroundColor,
-    Color textColor,
-    VoidCallback onPressed,
-  ) {
-    return SizedBox(
-      height: 36,
-      child: ElevatedButton(
-        onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: backgroundColor,
-          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12.0),
-          ),
-          elevation: 0.1,
-          minimumSize: Size.zero,
-          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+  Widget _filterRow() => SingleChildScrollView(
+    scrollDirection: Axis.horizontal,
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+    child: Row(children: _filters.map(_buildFilterChip).toList()),
+  );
+
+  Widget _buildFilterChip(String label) {
+    final selected = _selectedFilter == label;
+    return Padding(
+      padding: const EdgeInsets.only(right: 8),
+      child: ChoiceChip(
+        label: Text(label),
+        selected: selected,
+        selectedColor: const Color(0xFF4CAF50),
+        onSelected: (_) => setState(() => _selectedFilter = label),
+      ),
+    );
+  }
+
+  Widget _buildCard(Map<String, dynamic> n, String docId) {
+    final type = n['type'] as String;
+    final createdAt = n['createdAt'] as Timestamp?;
+    final time = createdAt != null
+        ? DateFormat('MMM d, h:mm a').format(createdAt.toDate())
+        : '';
+    final title = n['title'] ?? '';
+    final message = n['message'] ?? '';
+    final payload = n['payload'] as Map<String, dynamic>? ?? {};
+
+    IconData icon;
+    Color cardColor, borderColor, iconColor;
+
+    switch (type) {
+      case 'staff_signup':
+        icon = Icons.person_add_alt_1;
+        cardColor = const Color(0xFFE8F5E9);
+        borderColor = const Color(0xFF81C784);
+        iconColor = const Color(0xFF388E3C);
+        break;
+      case 'promo_expiry':
+        icon = Icons.timer;
+        cardColor = const Color(0xFFFFF3E0);
+        borderColor = const Color(0xFFFFB74D);
+        iconColor = const Color(0xFFF57C00);
+        break;
+      default:
+        icon = Icons.notifications;
+        cardColor = Colors.white;
+        borderColor = Colors.grey.shade200;
+        iconColor = Colors.blueGrey;
+    }
+
+    // quick actions
+    final buttons = <Widget>[
+      TextButton(
+        onPressed: () => FirebaseFirestore.instance
+            .collection('notifications')
+            .doc(docId)
+            .update({'isRead': true}),
+        child: const Text('Mark read'),
+      ),
+    ];
+
+    if (type == 'staff_signup') {
+      buttons.insert(
+        0,
+        TextButton(
+          onPressed: () {
+            Clipboard.setData(
+              ClipboardData(text: payload['verificationCode'] ?? ''),
+            );
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(const SnackBar(content: Text('Code copied')));
+          },
+          child: const Text('Copy code'),
         ),
-        child: Text(
-          text,
-          style: TextStyle(
-            fontSize: 14,
-            color: textColor,
-            fontWeight: FontWeight.w600,
-          ),
+      );
+    } else if (type == 'promo_expiry') {
+      buttons.insert(
+        0,
+        TextButton(onPressed: () {}, child: const Text('View')),
+      );
+    }
+
+    return Card(
+      color: cardColor,
+      shape: RoundedRectangleBorder(
+        side: BorderSide(color: borderColor),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      margin: const EdgeInsets.only(bottom: 16),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(icon, color: iconColor),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(message),
+            if (type == 'staff_signup' &&
+                payload['verificationCode'] != null) ...[
+              const SizedBox(height: 8),
+              SelectableText(
+                'Code: ${payload['verificationCode']}',
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 1.2,
+                ),
+              ),
+            ],
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Wrap(spacing: 8, children: buttons),
+                Text(
+                  time,
+                  style: const TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );

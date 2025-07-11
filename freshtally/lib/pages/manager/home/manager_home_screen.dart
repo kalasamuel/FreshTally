@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:freshtally/pages/manager/analytics/analytics_dashbaord_page.dart';
-import 'package:freshtally/pages/shelfStaff/notifications/notifications_shelfstaff.dart';
+import 'package:freshtally/pages/manager/managerNotifications/notifications.dart';
 import 'package:freshtally/pages/shelfStaff/settings/settings_page.dart';
 import 'package:freshtally/pages/manager/productAllocationView/product_allocation_view.dart';
 import 'package:freshtally/pages/manager/promotions/smart_promotions_suggestions.dart';
@@ -8,7 +8,14 @@ import 'package:freshtally/pages/shelfStaff/sync/sync_status_page.dart';
 import 'package:freshtally/pages/manager/promotions/promotions.dart';
 
 class ManagerDashboardPage extends StatelessWidget {
-  const ManagerDashboardPage({super.key});
+  final String supermarketName;
+  final String location;
+
+  const ManagerDashboardPage({
+    Key? key,
+    required this.supermarketName,
+    required this.location,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -37,13 +44,25 @@ class ManagerDashboardPage extends StatelessWidget {
                     ),
                     const SizedBox(width: 12),
                     // Supermarket Name
-                    const Text(
-                      'Mega Supermarket - Kampala',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          supermarketName,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        Text(
+                          location,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Colors.black54,
+                          ),
+                        ),
+                      ],
                     ),
                     const Spacer(),
                     // Settings Icon
