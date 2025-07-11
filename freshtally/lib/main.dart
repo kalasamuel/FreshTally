@@ -112,7 +112,7 @@ class FreshTallyApp extends StatelessWidget {
                 return const ShelfStaffDashboard();
               },
             );
-          case '/manager/managerHome':
+          case '/staff/managerHome':
             final args = settings.arguments as Map<String, dynamic>? ?? {};
             return MaterialPageRoute(
               builder: (_) {

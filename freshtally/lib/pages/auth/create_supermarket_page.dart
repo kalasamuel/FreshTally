@@ -200,6 +200,15 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
                 onPressed: _isFormValid
                     ? () {
                         if (_formKey.currentState?.validate() ?? false) {
+                          Navigator.pushReplacementNamed(
+                            context,
+                            '/staff/managerHome',
+                            arguments: {
+                              'supermarketName': _supermarketNameController.text
+                                  .trim(),
+                              'location': _locationController.text.trim(),
+                            },
+                          );
                           // Handle account creation logic here
                           Navigator.push(
                             context,
@@ -266,14 +275,6 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
               const SizedBox(height: 30.0),
               TextButton(
                 onPressed: () {
-                  Navigator.pushReplacementNamed(
-                    context,
-                    '/manager/managerHome',
-                    arguments: {
-                      'supermarketName': _supermarketNameController.text.trim(),
-                      'location': _locationController.text.trim(),
-                    },
-                  );
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => const LoginPage()),

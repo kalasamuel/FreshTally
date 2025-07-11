@@ -44,13 +44,25 @@ class ManagerDashboardPage extends StatelessWidget {
                     ),
                     const SizedBox(width: 12),
                     // Supermarket Name
-                    Text(
-                      supermarketName,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          supermarketName,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        Text(
+                          location,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Colors.black54,
+                          ),
+                        ),
+                      ],
                     ),
                     const Spacer(),
                     // Settings Icon
