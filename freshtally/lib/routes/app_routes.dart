@@ -20,7 +20,7 @@ import '../pages/shelfStaff/expiry/expiry_tracking_page.dart';
 import '../pages/shelfStaff/expiry/expired_details_page.dart';
 import '../pages/shelfStaff/notifications/notifications_shelfstaff.dart';
 import '../pages/shelfStaff/sync/sync_status_page.dart';
-
+// customer pages
 import '../pages/customer/home/customer_home_page.dart';
 import '../pages/customer/search/product_search_page.dart';
 import '../pages/customer/list/shopping_list_page.dart';
