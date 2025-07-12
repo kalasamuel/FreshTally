@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
 
-class SupplierEntryPage extends StatefulWidget {
-  const SupplierEntryPage({super.key});
+class BatchEntryPage extends StatefulWidget {
+  const BatchEntryPage({super.key});
 
   @override
-  State<SupplierEntryPage> createState() => _SupplierEntryPageState();
+  State<BatchEntryPage> createState() => _BatchEntryPageState();
 }
 
-class _SupplierEntryPageState extends State<SupplierEntryPage> {
-  final nameController = TextEditingController();
-  final contactController = TextEditingController();
-  final addressController = TextEditingController();
+class _BatchEntryPageState extends State<BatchEntryPage> {
+  final productIdController = TextEditingController();
+  final supplierIdController = TextEditingController();
+  final quantityController = TextEditingController();
+  final expiryDateController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +19,7 @@ class _SupplierEntryPageState extends State<SupplierEntryPage> {
       backgroundColor: const Color(0xFFFFFFFF),
       appBar: AppBar(
         title: const Text(
-          'Add Supplier',
+          'Add Batch',
           style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
@@ -42,7 +43,7 @@ class _SupplierEntryPageState extends State<SupplierEntryPage> {
               children: [
                 // Section Title
                 const Text(
-                  'Supplier Details',
+                  'Batch Details',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -51,11 +52,11 @@ class _SupplierEntryPageState extends State<SupplierEntryPage> {
                 ),
                 const SizedBox(height: 24),
 
-                // Supplier Name Field
+                // Product ID Field
                 TextField(
-                  controller: nameController,
+                  controller: productIdController,
                   decoration: InputDecoration(
-                    labelText: 'Supplier Name',
+                    labelText: 'Product ID',
                     labelStyle: const TextStyle(
                       fontWeight: FontWeight.w600,
                       color: Colors.black87,
@@ -71,11 +72,11 @@ class _SupplierEntryPageState extends State<SupplierEntryPage> {
                 ),
                 const SizedBox(height: 16),
 
-                // Contact Field
+                // Supplier ID Field
                 TextField(
-                  controller: contactController,
+                  controller: supplierIdController,
                   decoration: InputDecoration(
-                    labelText: 'Contact',
+                    labelText: 'Supplier ID',
                     labelStyle: const TextStyle(
                       fontWeight: FontWeight.w600,
                       color: Colors.black87,
@@ -91,11 +92,32 @@ class _SupplierEntryPageState extends State<SupplierEntryPage> {
                 ),
                 const SizedBox(height: 16),
 
-                // Address Field
+                // Quantity Field
                 TextField(
-                  controller: addressController,
+                  controller: quantityController,
                   decoration: InputDecoration(
-                    labelText: 'Address',
+                    labelText: 'Quantity',
+                    labelStyle: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: Colors.black87,
+                    ),
+                    filled: true,
+                    fillColor: const Color(0xFFF5F6FA),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                  keyboardType: TextInputType.number,
+                  style: const TextStyle(fontSize: 16, color: Colors.black87),
+                ),
+                const SizedBox(height: 16),
+
+                // Expiry Date Field
+                TextField(
+                  controller: expiryDateController,
+                  decoration: InputDecoration(
+                    labelText: 'Expiry Date (YYYY-MM-DD)',
                     labelStyle: const TextStyle(
                       fontWeight: FontWeight.w600,
                       color: Colors.black87,
@@ -116,7 +138,7 @@ class _SupplierEntryPageState extends State<SupplierEntryPage> {
                   width: double.infinity,
                   height: 56,
                   child: ElevatedButton(
-                    onPressed: _saveSupplier,
+                    onPressed: _saveBatch,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFFC8E6C9),
                       shape: RoundedRectangleBorder(
@@ -125,7 +147,7 @@ class _SupplierEntryPageState extends State<SupplierEntryPage> {
                       elevation: 0.1,
                     ),
                     child: const Text(
-                      'Save Supplier',
+                      'Save Batch',
                       style: TextStyle(
                         fontSize: 18,
                         color: Colors.black87,
@@ -142,11 +164,11 @@ class _SupplierEntryPageState extends State<SupplierEntryPage> {
     );
   }
 
-  void _saveSupplier() {
+  void _saveBatch() {
     // Simulate saving (remove Firestore for static UI preview)
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(const SnackBar(content: Text('Supplier added')));
+    ).showSnackBar(const SnackBar(content: Text('Batch added')));
     Navigator.pop(context);
   }
 }

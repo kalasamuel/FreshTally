@@ -66,6 +66,21 @@ class ManagerDashboardPage extends StatelessWidget {
                       ],
                     ),
                     const Spacer(),
+                    // Notifications Icon
+                    IconButton(
+                      icon: const Icon(Icons.notifications, size: 30),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) {
+                              return ManagerNotificationCenterPage();
+                            },
+                          ),
+                        );
+                        // Handle settings tap
+                      },
+                    ),
                     // Settings Icon
                     IconButton(
                       icon: const Icon(Icons.settings, size: 30),
@@ -135,21 +150,6 @@ class ManagerDashboardPage extends StatelessWidget {
                           MaterialPageRoute(
                             builder: (context) {
                               return PromotionsPage();
-                            },
-                          ),
-                        );
-                      },
-                    ),
-                    _buildDashboardTile(
-                      title: 'Notifications',
-                      icon: Icons.notifications,
-                      color: const Color(0xFFFFF3E0), // Beige/Yellow color
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) {
-                              return NotificationCenterPage();
                             },
                           ),
                         );
