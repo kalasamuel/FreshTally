@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:freshtally/pages/auth/login_page.dart';
-import 'package:freshtally/pages/auth/setup_success_page.dart';
 
 class CreateSupermarketPage extends StatefulWidget {
   const CreateSupermarketPage({super.key});

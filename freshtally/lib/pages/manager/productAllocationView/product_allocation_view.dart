@@ -1,97 +1,178 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-const List<Map<String, dynamic>> products = [
-  {
-    'name': 'Chocolate Bar',
-    'price': 2000.0,
-    'discount': 20.0,
-    'locations': [
-      {'floor': 1, 'shelf': 3, 'position': 'top'},
-      {'floor': 2, 'shelf': 1, 'position': 'middle'},
-    ],
-  },
-  {
-    'name': 'Fresh Milk 1L',
-    'price': 3500.0,
-    'discount': null,
-    'locations': [
-      {'floor': 1, 'shelf': 5, 'position': 'middle'},
-    ],
-  },
-  {
-    'name': 'Apple Juice 500ml',
-    'price': 1800.0,
-    'discount': 10.0,
-    'locations': [
-      {'floor': 2, 'shelf': 8, 'position': 'bottom'},
-      {'floor': 1, 'shelf': 2, 'position': 'top'},
-    ],
-  },
-];
-
-class ProductAllocationView extends StatelessWidget {
+class ProductAllocationView extends StatefulWidget {
   const ProductAllocationView({super.key});
+
+  @override
+  State<ProductAllocationView> createState() => _ProductAllocationViewState();
+}
+
+class _ProductAllocationViewState extends State<ProductAllocationView> {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Product Locations & Pricing')),
-      body: ListView.builder(
-        itemCount: products.length,
-        itemBuilder: (context, index) {
-          final product = products[index];
-          final locations = product['locations'] as List<dynamic>;
-          return Card(
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Padding(
-              padding: const EdgeInsets.all(17.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    product['name'],
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Price: ${product['price']} UGX',
-                    style: const TextStyle(fontSize: 16),
-                  ),
-                  if (product['discount'] != null)
-                    Text(
-                      'Discount: ${product['discount']}%',
-                      style: const TextStyle(color: Colors.red, fontSize: 16),
-                    ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Locations:',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  ...locations.map(
-                    (loc) => Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 2.0),
-                      child: Text(_locationString(loc)),
-                    ),
-                  ),
-                ],
+      appBar: AppBar(title: const Text('Product Locations')),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: 'Search products...',
+                prefixIcon: const Icon(Icons.search),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          _searchController.clear();
+                          setState(() => _searchQuery = '');
+                        },
+                      )
+                    : null,
               ),
+              onChanged: (value) {
+                setState(() => _searchQuery = value.toLowerCase());
+              },
             ),
-          );
-        },
+          ),
+          Expanded(
+            child: StreamBuilder<QuerySnapshot>(
+              stream: _firestore.collection('products').snapshots(),
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                }
+
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                final products = snapshot.data!.docs.where((doc) {
+                  if (_searchQuery.isEmpty) return true;
+                  final product = doc.data() as Map<String, dynamic>;
+                  final name = product['name']?.toString().toLowerCase() ?? '';
+                  return name.contains(_searchQuery.toLowerCase());
+                }).toList();
+
+                if (products.isEmpty) {
+                  return const Center(child: Text('No products found'));
+                }
+
+                return ListView.builder(
+                  itemCount: products.length,
+                  itemBuilder: (context, index) {
+                    final doc = products[index];
+                    final product = doc.data() as Map<String, dynamic>;
+                    final location =
+                        product['location'] as Map<String, dynamic>?;
+
+                    return Card(
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Product Name
+                            Text(
+                              product['name'] ?? 'Unnamed Product',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+
+                            // Category
+                            if (product['category'] != null)
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 4),
+                                child: Text(
+                                  'Category: ${product['category']}',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey[700],
+                                  ),
+                                ),
+                              ),
+
+                            // Price and Supplier
+                            Row(
+                              children: [
+                                Text(
+                                  '${product['price']?.toStringAsFixed(2) ?? 'N/A'} UGX',
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+
+                            // Location Details
+                            const Text(
+                              'Location:',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+
+                            if (location == null)
+                              const Text('No location data available')
+                            else
+                              _buildLocationDetail(location),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
-}
 
-String _locationString(dynamic loc) {
-  if (loc is Map &&
-      loc.containsKey('floor') &&
-      loc.containsKey('shelf') &&
-      loc.containsKey('position')) {
-    return 'Floor: ${loc['floor']}, Shelf: ${loc['shelf']}, Position: ${loc['position']}';
+  Widget _buildLocationDetail(Map<String, dynamic> location) {
+    return Row(
+      children: [
+        const Icon(Icons.location_on, size: 16, color: Colors.blue),
+        const SizedBox(width: 8),
+        Text(
+          'Floor ${location['floor']}, Shelf ${location['shelf']}, '
+          '${_formatPosition(location['position'])}',
+          style: const TextStyle(fontSize: 14),
+        ),
+      ],
+    );
   }
-  return loc.toString();
+
+  String _formatPosition(String position) {
+    // Convert "TOP" to "Top", "MIDDLE" to "Middle", etc.
+    if (position.isEmpty) return position;
+    return position[0].toUpperCase() + position.substring(1).toLowerCase();
+  }
 }

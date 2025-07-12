@@ -13,10 +13,10 @@ class ManagerDashboardPage extends StatelessWidget {
   final String location;
 
   const ManagerDashboardPage({
-    Key? key,
+    super.key,
     required this.supermarketName,
     required this.location,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

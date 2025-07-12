@@ -80,7 +80,7 @@ class DiscountsAndPromotionsPage extends StatelessWidget {
                             highlightProductName!.toLowerCase(),
                           ),
                     );
-                  }).toList(),
+                  }),
                 ],
               ),
             );

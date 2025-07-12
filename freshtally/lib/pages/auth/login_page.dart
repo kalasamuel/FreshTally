@@ -6,6 +6,8 @@ import 'package:freshtally/pages/customer/home/customer_home_page.dart';
 //import 'package:freshtally/pages/shelfStaff/expiry/expiry_tracking_page.dart';
 //import 'package:freshtally/pages/manager/home/manager_home_screen.dart';
 import 'package:freshtally/pages/auth/staff_signup_page.dart';
+import 'package:freshtally/pages/manager/home/manager_home_screen.dart';
+import 'package:freshtally/pages/shelfStaff/home/shelf_staff_home_screen.dart';
 
 class IconTextField extends StatelessWidget {
   final String hintText;
@@ -52,10 +54,10 @@ class LoginPage extends StatelessWidget {
   final String location;
 
   const LoginPage({
-    Key? key,
+    super.key,
     required this.supermarketName,
     required this.location,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -118,8 +120,14 @@ class LoginPage extends StatelessWidget {
             const SizedBox(height: 30.0),
             ElevatedButton(
               onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Login button pressed!')),
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ManagerDashboardPage(
+                      supermarketName: "Supermarket",
+                      location: "Location",
+                    ),
+                  ),
                 );
               },
               style: ElevatedButton.styleFrom(
