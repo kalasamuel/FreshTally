@@ -246,7 +246,10 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const LoginPage()),
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          const LoginPage(supermarketName: '', location: ''),
+                    ),
                   );
                 },
                 child: const Text(

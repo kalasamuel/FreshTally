@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
-// import 'package:freshtally/pages/auth/create_supermarket_page.dart';
+import 'package:freshtally/pages/auth/create_supermarket_page.dart';
 // import 'package:freshtally/pages/auth/join_supermarket_page.dart';
-import 'package:freshtally/pages/auth/role_selection_page.dart';
+//import 'package:freshtally/pages/auth/role_selection_page.dart';
 import 'package:freshtally/pages/customer/home/customer_home_page.dart';
-import 'package:freshtally/pages/manager/home/manager_home_screen.dart';
+//import 'package:freshtally/pages/shelfStaff/expiry/expiry_tracking_page.dart';
+//import 'package:freshtally/pages/manager/home/manager_home_screen.dart';
+import 'package:freshtally/pages/auth/staff_signup_page.dart';
 
 class IconTextField extends StatelessWidget {
   final String hintText;
@@ -46,7 +48,14 @@ class IconTextField extends StatelessWidget {
 }
 
 class LoginPage extends StatelessWidget {
-  const LoginPage({super.key});
+  final String supermarketName;
+  final String location;
+
+  const LoginPage({
+    Key? key,
+    required this.supermarketName,
+    required this.location,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -169,10 +178,7 @@ class LoginPage extends StatelessWidget {
                       context,
                       MaterialPageRoute(
                         builder: (context) {
-                          return ManagerDashboardPage(
-                            supermarketName: '',
-                            location: '',
-                          );
+                          return const CreateSupermarketPage();
                         },
                       ),
                     );
@@ -193,9 +199,8 @@ class LoginPage extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) {
-                          return RoleSelectionPage(role: '');
-                        },
+                        builder: (context) =>
+                            const StaffRegistrationPage(), // Fixed this line
                       ),
                     );
                   },

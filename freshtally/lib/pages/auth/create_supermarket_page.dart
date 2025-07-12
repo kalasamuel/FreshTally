@@ -269,7 +269,10 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const LoginPage()),
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          const LoginPage(supermarketName: '', location: ''),
+                    ),
                   );
                 },
                 child: const Text(
