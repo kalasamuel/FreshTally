@@ -1,9 +1,17 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:freshtally/pages/manager/staffCodeGeneration/staff_code_generation_page.dart';
 
 class ManagerNotificationCenterPage extends StatefulWidget {
-  const ManagerNotificationCenterPage({super.key});
+  final String? supermarketName;
+  final String? location;
+
+  const ManagerNotificationCenterPage({
+    super.key,
+    this.supermarketName,
+    this.location,
+  });
 
   @override
   State<ManagerNotificationCenterPage> createState() =>
@@ -13,16 +21,7 @@ class ManagerNotificationCenterPage extends StatefulWidget {
 class _ManagerNotificationCenterPageState
     extends State<ManagerNotificationCenterPage> {
   String _selectedFilter = 'All';
-  // Corrected and expanded the filters to match the UI chips
-  final List<String> _filters = const [
-    'All',
-    'Staff',
-    'Expiry',
-    'Supplier',
-    'Batch',
-    'Sync',
-    'Suggestion',
-  ];
+  final _filters = const ['All', 'Staff', 'Expiry', 'Supplier', 'Batch', 'Sync', 'Suggestion'];
 
   Stream<QuerySnapshot<Map<String, dynamic>>> _stream() {
     final base = FirebaseFirestore.instance
@@ -37,7 +36,6 @@ class _ManagerNotificationCenterPageState
         // Ensure this matches the 'type' field in Firestore for staff notifications
         return base.where('type', isEqualTo: 'staff_signup').snapshots();
       case 'Expiry':
-        // Ensure this matches the 'type' field in Firestore for promo expiry notifications
         return base.where('type', isEqualTo: 'promo_expiry').snapshots();
       case 'Supplier':
         return base.where('type', isEqualTo: 'supplier').snapshots();
@@ -49,6 +47,64 @@ class _ManagerNotificationCenterPageState
         return base.where('type', isEqualTo: 'suggestion').snapshots();
       default:
         return base.snapshots();
+    }
+  }
+
+  Future<void> _generateCodeForStaff(String staffName, String supermarketName) async {
+    try {
+      // Generate a 6-digit code
+      String code = (100000 + (DateTime.now().millisecondsSinceEpoch % 900000))
+          .toString();
+
+      // Store the verification code
+      await FirebaseFirestore.instance.collection('verification_codes').add({
+        'code': code,
+        'supermarketName': supermarketName,
+        'staffName': staffName,
+        'isUsed': false,
+        'createdAt': FieldValue.serverTimestamp(),
+        'expiresAt': FieldValue.serverTimestamp(), // Add expiration logic if needed
+      });
+
+      // Create a notification for tracking
+      await FirebaseFirestore.instance.collection('notifications').add({
+        'type': 'code_generated',
+        'title': 'Verification Code Generated',
+        'message':
+            'A verification code was generated for $staffName to join $supermarketName.',
+        'payload': {
+          'verificationCode': code,
+          'staffName': staffName,
+          'supermarketName': supermarketName,
+        },
+        'createdAt': FieldValue.serverTimestamp(),
+        'isRead': false,
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Code generated: $code'),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 5),
+            action: SnackBarAction(
+              label: 'Copy',
+              onPressed: () {
+                // Copy to clipboard functionality
+              },
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error generating code: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -64,6 +120,23 @@ class _ManagerNotificationCenterPageState
         elevation: 0,
         centerTitle: true,
         iconTheme: const IconThemeData(color: Colors.black87),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.qr_code),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => StaffCodeGenerationPage(
+                    supermarketName: widget.supermarketName ?? 'Unknown',
+                    location: widget.location ?? '',
+                  ),
+                ),
+              );
+            },
+            tooltip: 'Generate Staff Code',
+          ),
+        ],
       ),
       body: SafeArea(
         child: Column(
@@ -148,10 +221,9 @@ class _ManagerNotificationCenterPageState
     // Ensure the 'type' field matches what's stored in Firestore
     final type = data['type']?.toLowerCase() ?? 'general';
     final title = data['title'] ?? '';
-    final details = List<String>.from(data['details'] ?? []);
-    final timestamp =
-        data['timestamp']
-            as Timestamp?; // Use 'timestamp' for consistency if that's the field name
+    final message = data['message'] ?? '';
+    final payload = data['payload'] as Map<String, dynamic>?;
+    final timestamp = data['createdAt'] as Timestamp?;
 
     Color cardColor = Colors.white;
     Color borderColor = Colors.transparent;
@@ -169,20 +241,25 @@ class _ManagerNotificationCenterPageState
       cardColor = const Color(0xFFE8F5E9);
       borderColor = const Color(0xFFC8E6C9);
     } else if (type == 'staff_signup') {
-      icon = Icons.person_add; // Example icon for staff
-      iconColor = Colors.purple; // Example color for staff
-      cardColor = const Color(0xFFF3E5F5); // Light purple
-      borderColor = const Color(0xFFE1BEE7); // Purple border
+      icon = Icons.person_add;
+      iconColor = Colors.purple;
+      cardColor = const Color(0xFFF3E5F5);
+      borderColor = const Color(0xFFE1BEE7);
+    } else if (type == 'code_generated') {
+      icon = Icons.qr_code;
+      iconColor = Colors.teal;
+      cardColor = const Color(0xFFE0F2F1);
+      borderColor = const Color(0xFFB2DFDB);
     } else if (type == 'sync') {
       icon = Icons.sync;
       iconColor = Colors.orange;
-      cardColor = const Color(0xFFFFF3E0); // Light orange
-      borderColor = const Color(0xFFFFCC80); // Orange border
+      cardColor = const Color(0xFFFFF3E0);
+      borderColor = const Color(0xFFFFCC80);
     } else if (type == 'suggestion') {
       icon = Icons.lightbulb_outline;
       iconColor = Colors.teal;
-      cardColor = const Color(0xFFE0F2F7); // Light blue
-      borderColor = const Color(0xFFB3E5FC); // Blue border
+      cardColor = const Color(0xFFE0F2F7);
+      borderColor = const Color(0xFFB3E5FC);
     }
 
     final formattedTime = timestamp != null
@@ -218,43 +295,134 @@ class _ManagerNotificationCenterPageState
               ],
             ),
             const SizedBox(height: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: details
-                  .map(
-                    (detail) => Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 2.0),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Icon(
-                            Icons.info_outline,
-                            color: detail.toLowerCase().contains('day')
-                                ? Colors.red
-                                : Colors.black54,
-                            size: 18,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              detail,
-                              style: TextStyle(
-                                color: detail.toLowerCase().contains('day')
-                                    ? Colors.red
-                                    : Colors.black87,
-                                fontSize: 15,
-                                fontWeight: detail.toLowerCase().contains('day')
-                                    ? FontWeight.bold
-                                    : FontWeight.normal,
-                              ),
+            
+            // Display message
+            Text(
+              message,
+              style: const TextStyle(
+                fontSize: 15,
+                color: Colors.black87,
+              ),
+            ),
+            
+            // Special handling for staff signup notifications
+            if (type == 'staff_signup' && payload != null) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.purple.shade200),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Staff Member: ${payload['staffName'] ?? 'Unknown'}',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Supermarket: ${payload['supermarketName'] ?? 'Unknown'}',
+                      style: const TextStyle(fontSize: 14),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () => _generateCodeForStaff(
+                              payload['staffName'] ?? '',
+                              payload['supermarketName'] ?? '',
                             ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.purple,
+                              foregroundColor: Colors.white,
+                            ),
+                            child: const Text('Generate Code'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            
+            // Special handling for code generated notifications
+            if (type == 'code_generated' && payload != null) ...[
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.teal.shade200),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Generated Code:',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.teal.shade50,
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(color: Colors.teal.shade200),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            payload['verificationCode'] ?? 'N/A',
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.teal,
+                              letterSpacing: 2,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          IconButton(
+                            onPressed: () {
+                              // Copy to clipboard functionality
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Code copied to clipboard!'),
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
+                            },
+                            icon: const Icon(Icons.copy, color: Colors.teal, size: 20),
+                            tooltip: 'Copy code',
                           ),
                         ],
                       ),
                     ),
-                  )
-                  .toList(),
-            ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'For: ${payload['staffName'] ?? 'Unknown'}',
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            
             const SizedBox(height: 12),
             Align(
               alignment: Alignment.bottomRight,

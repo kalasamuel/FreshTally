@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:freshtally/pages/auth/role_selection_page.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:freshtally/pages/shelfStaff/home/shelf_staff_home_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -170,7 +170,6 @@ class _StaffSignupPageState extends State<StaffSignupPage> {
         'email': _emailController.text.trim(),
         'phone': _phoneController.text.trim(),
         'supermarketName': _supermarketNameController.text.trim(),
-        'role': widget.role,
         'verificationCode': _verificationCodeController.text,
         'createdAt': FieldValue.serverTimestamp(),
         'isActive': true,
@@ -187,9 +186,7 @@ class _StaffSignupPageState extends State<StaffSignupPage> {
         // Navigate to role selection or dashboard
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(
-            builder: (context) => RoleSelectionPage(role: widget.role),
-          ),
+          MaterialPageRoute(builder: (context) => ShelfStaffDashboard()),
         );
       }
     } catch (e) {

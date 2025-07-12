@@ -74,7 +74,10 @@ class ManagerDashboardPage extends StatelessWidget {
                           context,
                           MaterialPageRoute(
                             builder: (context) {
-                              return ManagerNotificationCenterPage();
+                              return ManagerNotificationCenterPage(
+                                supermarketName: supermarketName,
+                                location: location,
+                              );
                             },
                           ),
                         );
@@ -201,24 +204,6 @@ class ManagerDashboardPage extends StatelessWidget {
                         );
                       },
                     ),
-                    _buildDashboardTile(
-                      title: 'Generate Staff Code',
-                      icon: Icons.qr_code,
-                      color: const Color(0xFFE8F5E8), // Light green color
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) {
-                              return StaffCodeGenerationPage(
-                                supermarketName: supermarketName,
-                                location: location,
-                              );
-                            },
-                          ),
-                        );
-                      },
-                    ),
                   ],
                 ),
               ),
@@ -253,6 +238,23 @@ class ManagerDashboardPage extends StatelessWidget {
             ],
           ),
         ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => StaffCodeGenerationPage(
+                supermarketName: supermarketName,
+                location: location,
+              ),
+            ),
+          );
+        },
+        backgroundColor: const Color(0xFF4CAF50),
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.qr_code),
+        label: const Text('Generate Staff Code'),
       ),
     );
   }
