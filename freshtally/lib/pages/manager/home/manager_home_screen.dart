@@ -6,6 +6,7 @@ import 'package:freshtally/pages/manager/productAllocationView/product_allocatio
 import 'package:freshtally/pages/manager/promotions/smart_promotions_suggestions.dart';
 import 'package:freshtally/pages/shelfStaff/sync/sync_status_page.dart';
 import 'package:freshtally/pages/manager/promotions/promotions.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ManagerDashboardPage extends StatelessWidget {
   final String supermarketName;
@@ -236,6 +237,40 @@ class ManagerDashboardPage extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+Future<void> checkPromotionExpiries() async {
+  final now = DateTime.now();
+  final twoDaysFromNow = now.add(const Duration(days: 2));
+  final promos = await FirebaseFirestore.instance
+      .collection('promotions')
+      .get();
+
+  for (var doc in promos.docs) {
+    final expiryTimestamp = doc['expiryDate'];
+    if (expiryTimestamp == null) continue;
+    final expiry = (expiryTimestamp as Timestamp).toDate();
+
+    if (expiry.isAfter(now) && expiry.isBefore(twoDaysFromNow)) {
+      // Check if notification already exists for this promo
+      final existing = await FirebaseFirestore.instance
+          .collection('notifications')
+          .where('type', isEqualTo: 'promo_expiry')
+          .where('payload.promotionId', isEqualTo: doc.id)
+          .get();
+
+      if (existing.docs.isEmpty) {
+        await FirebaseFirestore.instance.collection('notifications').add({
+          'type': 'promo_expiry',
+          'title': 'Promotion Expiring Soon',
+          'message': 'The promotion "${doc['title']}" is expiring in 2 days.',
+          'payload': {'promotionId': doc.id, 'expiryDate': doc['expiryDate']},
+          'createdAt': FieldValue.serverTimestamp(),
+          'isRead': false,
+        });
+      }
+    }
   }
 }
 

@@ -12,7 +12,7 @@ class NotificationCenterPage extends StatefulWidget {
 
 class _NotificationCenterPageState extends State<NotificationCenterPage> {
   String _selectedFilter = 'All';
-  final _filters = const ['All', 'Staff', 'Expiry'];
+  final _filters = const ['All', 'Staff', 'Promotion expiry'];
 
   Stream<QuerySnapshot<Map<String, dynamic>>> _stream() {
     final base = FirebaseFirestore.instance
@@ -21,7 +21,7 @@ class _NotificationCenterPageState extends State<NotificationCenterPage> {
     switch (_selectedFilter) {
       case 'Staff':
         return base.where('type', isEqualTo: 'staff_signup').snapshots();
-      case 'Expiry':
+      case 'Promotion expiry':
         return base.where('type', isEqualTo: 'promo_expiry').snapshots();
       default:
         return base.snapshots();

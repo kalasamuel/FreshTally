@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:freshtally/pages/auth/role_selection_page.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 void main() {
   runApp(const MyApp());
@@ -38,6 +39,8 @@ class _StaffSignupPageState extends State<StaffSignupPage> {
   final TextEditingController _confirmPasswordController =
       TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _supermarketNameController =
+      TextEditingController();
 
   @override
   void dispose() {
@@ -48,6 +51,7 @@ class _StaffSignupPageState extends State<StaffSignupPage> {
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     _phoneController.dispose();
+    _supermarketNameController.dispose();
     super.dispose();
   }
 
@@ -294,4 +298,30 @@ class _StaffSignupPageState extends State<StaffSignupPage> {
       ),
     );
   }
+}
+
+Future<void> requestStaffSignup({
+  required String supermarketName,
+  required String staffName,
+}) async {
+  // Generate a 6-digit code
+  String code = (100000 + (DateTime.now().millisecondsSinceEpoch % 900000))
+      .toString();
+
+  // Create a notification for the manager
+  await FirebaseFirestore.instance.collection('notifications').add({
+    'type': 'staff_signup',
+    'title': 'Staff Signup Request',
+    'message':
+        'A new staff member ($staffName) wants to join your supermarket "$supermarketName". Share the code below with them.',
+    'payload': {
+      'verificationCode': code,
+      'staffName': staffName,
+      'supermarketName': supermarketName,
+    },
+    'createdAt': FieldValue.serverTimestamp(),
+    'isRead': false,
+  });
+
+  // Optionally, show a dialog to the staff member
 }

@@ -117,9 +117,8 @@ class FreshTallyApp extends StatelessWidget {
             return MaterialPageRoute(
               builder: (_) {
                 return ManagerDashboardPage(
-                  supermarketName:
-                      args['supermarketName'] ?? 'Demo Supermarket',
-                  location: args['location'] ?? 'Demo Location',
+                  supermarketName: args['supermarketName'],
+                  location: args['location'],
                 );
               },
             );

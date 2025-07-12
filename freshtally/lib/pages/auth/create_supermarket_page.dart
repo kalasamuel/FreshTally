@@ -210,14 +210,6 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
                             },
                           );
                           // Handle account creation logic here
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) {
-                                return const OrganizationSetupSuccessPage();
-                              },
-                            ),
-                          );
                         }
                       }
                     : null,
