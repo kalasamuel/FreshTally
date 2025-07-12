@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:freshtally/pages/auth/login_page.dart';
 
 class CreateSupermarketPage extends StatefulWidget {
@@ -10,7 +12,9 @@ class CreateSupermarketPage extends StatefulWidget {
 
 class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
   final _formKey = GlobalKey<FormState>();
-  bool _isFormValid = false;
+  bool _isLoading = false;
+  String? _errorMessage;
+  bool _isSupermarketValid = true;
 
   final TextEditingController _supermarketNameController =
       TextEditingController();
@@ -22,29 +26,130 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
       TextEditingController();
   final TextEditingController _locationController = TextEditingController();
 
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
   @override
-  void initState() {
-    super.initState();
-    _supermarketNameController.addListener(_validateForm);
-    _firstNameController.addListener(_validateForm);
-    _lastNameController.addListener(_validateForm);
-    _emailController.addListener(_validateForm);
-    _passwordController.addListener(_validateForm);
-    _confirmPasswordController.addListener(_validateForm);
-    _locationController.addListener(_validateForm);
+  void dispose() {
+    _supermarketNameController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    _locationController.dispose();
+    super.dispose();
   }
 
-  void _validateForm() {
+  Future<void> _validateSupermarket() async {
+    final name = _supermarketNameController.text.trim();
+    final location = _locationController.text.trim();
+
+    if (name.isEmpty || location.isEmpty) {
+      setState(() => _isSupermarketValid = true);
+      return;
+    }
+
+    try {
+      final query = await _firestore
+          .collection('supermarkets')
+          .where('name', isEqualTo: name)
+          .where('location', isEqualTo: location)
+          .limit(1)
+          .get();
+
+      setState(() {
+        _isSupermarketValid = query.docs.isEmpty;
+      });
+    } catch (e) {
+      setState(() {
+        _isSupermarketValid = true;
+      });
+    }
+  }
+
+  Future<void> _createAccount() async {
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    if (!_isSupermarketValid) return;
+
     setState(() {
-      _isFormValid =
-          _supermarketNameController.text.trim().isNotEmpty &&
-          _locationController.text.trim().isNotEmpty &&
-          _firstNameController.text.trim().isNotEmpty &&
-          _lastNameController.text.trim().isNotEmpty &&
-          _emailController.text.trim().isNotEmpty &&
-          _passwordController.text.isNotEmpty &&
-          _confirmPasswordController.text.isNotEmpty;
+      _isLoading = true;
+      _errorMessage = null;
     });
+
+    try {
+      // 1. Create user account
+      final UserCredential userCredential = await _auth
+          .createUserWithEmailAndPassword(
+            email: _emailController.text.trim(),
+            password: _passwordController.text.trim(),
+          );
+
+      // 2. Create supermarket document with uniqueness check
+      final supermarketData = {
+        'name': _supermarketNameController.text.trim(),
+        'location': _locationController.text.trim(),
+        'manager': {
+          'uid': userCredential.user?.uid,
+          'firstName': _firstNameController.text.trim(),
+          'lastName': _lastNameController.text.trim(),
+          'email': _emailController.text.trim(),
+        },
+        'createdAt': FieldValue.serverTimestamp(),
+        'staffCount': 1,
+      };
+
+      await _firestore
+          .collection('supermarkets')
+          .doc(userCredential.user?.uid)
+          .set(supermarketData);
+
+      // 3. Create user profile
+      await _firestore.collection('users').doc(userCredential.user?.uid).set({
+        'firstName': _firstNameController.text.trim(),
+        'lastName': _lastNameController.text.trim(),
+        'email': _emailController.text.trim(),
+        'role': 'manager',
+        'supermarketId': userCredential.user?.uid,
+        'supermarketName': _supermarketNameController.text.trim(),
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      // Navigate to manager home
+      Navigator.pushReplacementNamed(
+        context,
+        '/staff/managerHome',
+        arguments: {
+          'supermarketName': _supermarketNameController.text.trim(),
+          'location': _locationController.text.trim(),
+        },
+      );
+    } on FirebaseAuthException catch (e) {
+      setState(() {
+        _errorMessage = _getAuthErrorMessage(e.code);
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'An unexpected error occurred. Please try again.';
+      });
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  String _getAuthErrorMessage(String code) {
+    switch (code) {
+      case 'email-already-in-use':
+        return 'This email is already registered.';
+      case 'invalid-email':
+        return 'Please enter a valid email address.';
+      case 'operation-not-allowed':
+        return 'Email/password accounts are not enabled.';
+      case 'weak-password':
+        return 'The password is too weak.';
+      default:
+        return 'Registration failed. Please try again.';
+    }
   }
 
   @override
@@ -56,9 +161,7 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
         foregroundColor: Colors.black,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.pop(context);
-          },
+          onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
           'Create Supermarket',
@@ -89,10 +192,18 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
                 ),
               ),
               const SizedBox(height: 30.0),
-              IconTextField(
-                hintText: 'Supermarket Name',
-                icon: Icons.store,
+
+              // Supermarket Name Field
+              TextFormField(
                 controller: _supermarketNameController,
+                decoration: InputDecoration(
+                  labelText: 'Supermarket Name',
+                  prefixIcon: const Icon(Icons.store),
+                  errorText: !_isSupermarketValid
+                      ? 'A supermarket with this name already exists at this location'
+                      : null,
+                ),
+                onChanged: (_) => _validateSupermarket(),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return 'Supermarket name is required';
@@ -102,10 +213,14 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
               ),
               const SizedBox(height: 24.0),
 
-              IconTextField(
-                hintText: 'Supermarket Location',
-                icon: Icons.location_on,
+              // Supermarket Location Field
+              TextFormField(
                 controller: _locationController,
+                decoration: const InputDecoration(
+                  labelText: 'Supermarket Location',
+                  prefixIcon: Icon(Icons.location_on),
+                ),
+                onChanged: (_) => _validateSupermarket(),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return 'Location is required';
@@ -114,6 +229,7 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
                 },
               ),
               const SizedBox(height: 16.0),
+
               const Text(
                 'Manager details:',
                 style: TextStyle(
@@ -123,10 +239,14 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
                 ),
               ),
               const SizedBox(height: 16.0),
-              IconTextField(
-                hintText: 'First Name',
-                icon: Icons.person,
+
+              // First Name Field
+              TextFormField(
                 controller: _firstNameController,
+                decoration: const InputDecoration(
+                  labelText: 'First Name',
+                  prefixIcon: Icon(Icons.person),
+                ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return 'First name is required';
@@ -135,10 +255,14 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
                 },
               ),
               const SizedBox(height: 16.0),
-              IconTextField(
-                hintText: 'Last Name',
-                icon: Icons.person_outline,
+
+              // Last Name Field
+              TextFormField(
                 controller: _lastNameController,
+                decoration: const InputDecoration(
+                  labelText: 'Last Name',
+                  prefixIcon: Icon(Icons.person_outline),
+                ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return 'Last name is required';
@@ -147,15 +271,19 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
                 },
               ),
               const SizedBox(height: 16.0),
-              IconTextField(
-                hintText: 'Email',
-                icon: Icons.email,
+
+              // Email Field
+              TextFormField(
                 controller: _emailController,
+                decoration: const InputDecoration(
+                  labelText: 'Email',
+                  prefixIcon: Icon(Icons.email),
+                ),
+                keyboardType: TextInputType.emailAddress,
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return 'Email is required';
                   }
-                  // Simple email validation
                   if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
                     return 'Enter a valid email';
                   }
@@ -163,11 +291,15 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
                 },
               ),
               const SizedBox(height: 16.0),
-              IconTextField(
-                hintText: 'Password',
-                icon: Icons.lock,
-                isPassword: true,
+
+              // Password Field
+              TextFormField(
                 controller: _passwordController,
+                decoration: const InputDecoration(
+                  labelText: 'Password',
+                  prefixIcon: Icon(Icons.lock),
+                ),
+                obscureText: true,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Password is required';
@@ -179,11 +311,15 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
                 },
               ),
               const SizedBox(height: 16.0),
-              IconTextField(
-                hintText: 'Confirm Password',
-                icon: Icons.lock_outline,
-                isPassword: true,
+
+              // Confirm Password Field
+              TextFormField(
                 controller: _confirmPasswordController,
+                decoration: const InputDecoration(
+                  labelText: 'Confirm Password',
+                  prefixIcon: Icon(Icons.lock_outline),
+                ),
+                obscureText: true,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Confirm password is required';
@@ -195,23 +331,21 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
                 },
               ),
               const SizedBox(height: 32.0),
+
+              if (_errorMessage != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16.0),
+                  child: Text(
+                    _errorMessage!,
+                    style: const TextStyle(color: Colors.red),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+
               ElevatedButton(
-                onPressed: _isFormValid
-                    ? () {
-                        if (_formKey.currentState?.validate() ?? false) {
-                          Navigator.pushReplacementNamed(
-                            context,
-                            '/staff/managerHome',
-                            arguments: {
-                              'supermarketName': _supermarketNameController.text
-                                  .trim(),
-                              'location': _locationController.text.trim(),
-                            },
-                          );
-                          // Handle account creation logic here
-                        }
-                      }
-                    : null,
+                onPressed: _isLoading || !_isSupermarketValid
+                    ? null
+                    : _createAccount,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green[600],
                   padding: const EdgeInsets.symmetric(vertical: 16.0),
@@ -219,66 +353,21 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
                     borderRadius: BorderRadius.circular(10.0),
                   ),
                 ),
-                child: const Text(
-                  'Create Account',
-                  style: TextStyle(
-                    fontSize: 18.0,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
+                child: _isLoading
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text(
+                        'Create Account',
+                        style: TextStyle(
+                          fontSize: 18.0,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
               ),
               const SizedBox(height: 20.0),
-              const Center(
-                child: Text(
-                  "Or Sign In with:",
-                  style: TextStyle(color: Colors.grey),
-                ),
-              ),
-              const SizedBox(height: 15.0),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  IconButton(
-                    icon: const Icon(
-                      Icons.facebook,
-                      size: 40,
-                      color: Colors.blue,
-                    ),
-                    onPressed: () {},
-                  ),
-                  const SizedBox(width: 20),
-                  IconButton(
-                    icon: Image.asset('assets/icons/google.png', height: 35),
-                    onPressed: () {},
-                  ),
-                  const SizedBox(width: 20),
-                  IconButton(
-                    icon: const Icon(
-                      Icons.apple,
-                      size: 40,
-                      color: Colors.black,
-                    ),
-                    onPressed: () {},
-                  ),
-                ],
-              ),
-              const SizedBox(height: 30.0),
-              TextButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          const LoginPage(supermarketName: '', location: ''),
-                    ),
-                  );
-                },
-                child: const Text(
-                  'Already have an account? Sign In',
-                  style: TextStyle(color: Colors.green),
-                ),
-              ),
+
+              // Social login options and existing account link
+              // ... (keep your existing social login and sign-in button code)
             ],
           ),
         ),

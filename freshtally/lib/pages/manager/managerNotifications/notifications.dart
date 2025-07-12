@@ -113,11 +113,28 @@ class _ManagerNotificationCenterPageState
     final data = doc.data() as Map<String, dynamic>;
     final type = (data['type'] ?? '').toLowerCase();
     final title = data['title'] ?? '';
-    final details = List<String>.from(data['details'] ?? []);
+    final message = data['message'] ?? '';
     final timestamp = data['createdAt'] as Timestamp?;
     final formattedTime = timestamp != null
         ? DateFormat('MMM d, h:mm a').format(timestamp.toDate())
         : '';
+
+    // For staff signup, include verification code in details
+    List<String> details = [];
+    if (type == 'staff_signup') {
+      final payload = data['payload'] as Map<String, dynamic>? ?? {};
+      final staffName = payload['staffName'] ?? data['staffName'] ?? '';
+      final code =
+          payload['verificationCode'] ?? data['verificationCode'] ?? '';
+
+      details.addAll([
+        message,
+        if (staffName.isNotEmpty) 'Staff: $staffName',
+        if (code.isNotEmpty) 'Code: $code',
+      ]);
+    } else {
+      details = List<String>.from(data['details'] ?? []);
+    }
 
     // Visual styling based on type
     final style = _getNotificationStyle(type);
@@ -159,10 +176,13 @@ class _ManagerNotificationCenterPageState
                   style: TextStyle(
                     color:
                         detail.toLowerCase().contains('expire') ||
-                            detail.toLowerCase().contains('hour')
-                        ? Colors.red
+                            detail.toLowerCase().contains('hour') ||
+                            detail.toLowerCase().contains('code')
+                        ? Colors.blue
                         : Colors.black87,
-                    fontWeight: detail.toLowerCase().contains('hour')
+                    fontWeight:
+                        detail.toLowerCase().contains('hour') ||
+                            detail.toLowerCase().contains('code')
                         ? FontWeight.bold
                         : FontWeight.normal,
                   ),
@@ -237,11 +257,22 @@ class _ManagerNotificationCenterPageState
     DocumentSnapshot doc,
   ) async {
     final data = doc.data() as Map<String, dynamic>;
-    final verificationCode = data['signupCode'] ?? '';
-    final staffName = data['staffName'] ?? 'New Staff Member';
-    final supermarketName = data['supermarketName'] ?? 'Your Supermarket';
+    final payload = data['payload'] as Map<String, dynamic>? ?? {};
+
+    // Get verification details from payload or directly from data
+    final verificationCode =
+        payload['verificationCode'] ?? data['verificationCode'] ?? '';
+    final staffName =
+        payload['staffName'] ?? data['staffName'] ?? 'New Staff Member';
+    final supermarketName =
+        payload['supermarketName'] ??
+        data['supermarketName'] ??
+        'Your Supermarket';
     final createdAt = (data['createdAt'] as Timestamp?)?.toDate();
-    final expiresAt = (data['expiresAt'] as Timestamp?)?.toDate();
+    final expiresAt =
+        (payload['expiresAt'] as Timestamp?)?.toDate() ??
+        (data['expiresAt'] as Timestamp?)?.toDate();
+    final isUsed = payload['isUsed'] ?? data['isUsed'] ?? false;
 
     await showDialog(
       context: context,
@@ -252,9 +283,9 @@ class _ManagerNotificationCenterPageState
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
-                'New staff member requires verification:',
-                style: TextStyle(fontWeight: FontWeight.bold),
+              Text(
+                data['message'] ?? 'New staff member requires verification:',
+                style: const TextStyle(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16),
               _buildDetailRow('Staff Name:', staffName),
@@ -264,6 +295,13 @@ class _ManagerNotificationCenterPageState
                 'Verification Code:',
                 verificationCode,
                 isImportant: true,
+              ),
+              const SizedBox(height: 8),
+              _buildDetailRow(
+                'Status:',
+                isUsed ? 'Used (Expired)' : 'Active',
+                isImportant: true,
+                color: isUsed ? Colors.red : Colors.green,
               ),
               const SizedBox(height: 16),
               _buildDetailRow(
@@ -295,14 +333,17 @@ class _ManagerNotificationCenterPageState
       ),
     );
 
-    // Mark as read when dialog is closed
-    await doc.reference.update({'read': true});
+    // Mark as read when dialog is closed if not already read
+    if (!(data['read'] ?? false)) {
+      await doc.reference.update({'read': true});
+    }
   }
 
   Widget _buildDetailRow(
     String label,
     String value, {
     bool isImportant = false,
+    Color? color,
   }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -313,7 +354,7 @@ class _ManagerNotificationCenterPageState
             label,
             style: TextStyle(
               fontWeight: FontWeight.bold,
-              color: isImportant ? Colors.blue : Colors.black87,
+              color: isImportant ? (color ?? Colors.blue) : Colors.black87,
             ),
           ),
           const SizedBox(width: 8),
@@ -322,7 +363,7 @@ class _ManagerNotificationCenterPageState
               value,
               style: TextStyle(
                 fontWeight: isImportant ? FontWeight.bold : FontWeight.normal,
-                color: isImportant ? Colors.blue : Colors.black87,
+                color: isImportant ? (color ?? Colors.blue) : Colors.black87,
               ),
             ),
           ),

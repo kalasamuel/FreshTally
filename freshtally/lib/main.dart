@@ -45,10 +45,7 @@ class FreshTallyApp extends StatelessWidget {
       onGenerateRoute: (settings) {
         switch (settings.name) {
           case '/':
-            return MaterialPageRoute(
-              builder: (_) =>
-                  const LoginPage(supermarketName: '', location: ''),
-            );
+            return MaterialPageRoute(builder: (_) => const LoginPage());
           case '/customerHome':
             return MaterialPageRoute(builder: (_) => const CustomerHomePage());
           case '/customerSearch':
@@ -62,10 +59,7 @@ class FreshTallyApp extends StatelessWidget {
           case '/managerHome':
             return MaterialPageRoute(
               builder: (_) {
-                return const LoginPage(
-                  supermarketName: '', // Provide empty string or actual value
-                  location: '',
-                );
+                return const LoginPage();
               },
             );
           case '/createSupermarket':
