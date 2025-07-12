@@ -6,6 +6,7 @@ import 'package:freshtally/pages/manager/productAllocationView/product_allocatio
 import 'package:freshtally/pages/manager/promotions/smart_promotions_suggestions.dart';
 import 'package:freshtally/pages/shelfStaff/sync/sync_status_page.dart';
 import 'package:freshtally/pages/manager/promotions/promotions.dart';
+import 'package:freshtally/pages/shelfStaff/staffCodeGeneration/staff_code_generation_page.dart';
 
 class ManagerDashboardPage extends StatelessWidget {
   final String supermarketName;
@@ -195,6 +196,24 @@ class ManagerDashboardPage extends StatelessWidget {
                           MaterialPageRoute(
                             builder: (context) {
                               return SyncStatusPage();
+                            },
+                          ),
+                        );
+                      },
+                    ),
+                    _buildDashboardTile(
+                      title: 'Generate Staff Code',
+                      icon: Icons.qr_code,
+                      color: const Color(0xFFE8F5E8), // Light green color
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) {
+                              return StaffCodeGenerationPage(
+                                supermarketName: supermarketName,
+                                location: location,
+                              );
                             },
                           ),
                         );

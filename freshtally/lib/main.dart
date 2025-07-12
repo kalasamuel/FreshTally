@@ -82,11 +82,12 @@ class FreshTallyApp extends StatelessWidget {
               },
             );
           case '/staffSignup':
-            final role = settings.arguments as String?;
+            final args = settings.arguments as Map<String, dynamic>? ?? {};
             return MaterialPageRoute(
-              builder: (_) {
-                return StaffSignupPage(role: role ?? '');
-              },
+              builder: (_) => ShelfStaffDashboard(
+                supermarketName: args['supermarketName'],
+                location: args['location'],
+              ),
             );
           case '/customerSignup':
             return MaterialPageRoute(

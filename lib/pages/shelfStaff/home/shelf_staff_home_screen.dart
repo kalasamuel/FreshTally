@@ -7,7 +7,14 @@ import 'package:freshtally/pages/shelfStaff/shelves/smart_suggestions_page.dart'
 import 'package:freshtally/pages/shelfStaff/sync/sync_status_page.dart';
 
 class ShelfStaffDashboard extends StatelessWidget {
-  const ShelfStaffDashboard({super.key});
+  final String? supermarketName;
+  final String? location;
+
+  const ShelfStaffDashboard({
+    super.key,
+    this.supermarketName,
+    this.location,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -34,15 +41,28 @@ class ShelfStaffDashboard extends StatelessWidget {
             ), // Placeholder image.
           ),
         ),
-        title: const Text(
-          'Mega Supermarket',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
-          ),
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              supermarketName ?? 'Supermarket',
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
+            if (location != null)
+              Text(
+                location!,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey,
+                ),
+              ),
+          ],
         ),
-        centerTitle: true, // Centers the title in the app bar.
+        centerTitle: false, // Changed to false to align title to the left
         actions: [
           IconButton(
             icon: const Icon(
