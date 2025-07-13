@@ -10,7 +10,15 @@ import 'package:intl/intl.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 
 class CustomerHomePage extends StatefulWidget {
-  const CustomerHomePage({super.key});
+  final String? supermarketName;
+  final String? location;
+  final String? supermarketId;
+  const CustomerHomePage({
+    super.key,
+    this.supermarketName,
+    this.location,
+    required this.supermarketId,
+  });
 
   @override
   State<CustomerHomePage> createState() => _CustomerHomePageState();
@@ -56,20 +64,123 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        automaticallyImplyLeading: false,
-        title: Center(
-          child: Text(
-            _titles[_selectedIndex],
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
-          ),
-        ),
+        automaticallyImplyLeading:
+            false, // Ensures no back button is automatically added
         backgroundColor: const Color(0xFFFFFFFF),
         elevation: 0.0,
+        titleSpacing: 0, // Remove default spacing around title
+        title: Row(
+          children: [
+            // Supermarket Name and Location (Left side)
+            Expanded(
+              flex: 2,
+              child: Padding(
+                padding: const EdgeInsets.only(left: 16.0), // Add left padding
+                child: FutureBuilder<DocumentSnapshot>(
+                  future: FirebaseFirestore.instance
+                      .collection('supermarkets')
+                      .doc(widget.supermarketId) // Use widget.supermarketId
+                      .get(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Loading...',
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          Text(
+                            '',
+                            style: TextStyle(fontSize: 14, color: Colors.grey),
+                          ),
+                        ],
+                      );
+                    }
+                    if (snapshot.hasError) {
+                      return const Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Error',
+                            style: TextStyle(fontSize: 18, color: Colors.red),
+                          ),
+                          Text(
+                            'Failed to load',
+                            style: TextStyle(fontSize: 14, color: Colors.red),
+                          ),
+                        ],
+                      );
+                    }
+                    if (!snapshot.hasData || !snapshot.data!.exists) {
+                      return const Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Supermarket',
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          Text(
+                            'Unknown Location',
+                            style: TextStyle(fontSize: 14, color: Colors.grey),
+                          ),
+                        ],
+                      );
+                    }
+                    final data = snapshot.data!.data() as Map<String, dynamic>;
+                    final name = data['name'] ?? 'Supermarket';
+                    final location = data['location'] ?? 'Unknown Location';
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          name,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                          overflow: TextOverflow.ellipsis, // Handle long names
+                        ),
+                        Text(
+                          location,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey,
+                          ),
+                          overflow:
+                              TextOverflow.ellipsis, // Handle long locations
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+            ),
+            // Centered Page Title
+            Expanded(
+              flex: 2,
+              child: Center(
+                child: Text(
+                  _titles[_selectedIndex],
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
         actions: [
+          // Notifications Icon (Right side)
           IconButton(
             onPressed: () {
               Navigator.push(
@@ -85,15 +196,19 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
               color: Colors.black87,
             ),
           ),
+          // Settings Icon (Right side)
           IconButton(
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const SettingsPage()),
+                MaterialPageRoute(
+                  builder: (context) => const SettingsPage(supermarketId: ''),
+                ),
               );
             },
             icon: const Icon(Icons.settings, size: 30, color: Colors.black87),
           ),
+          const SizedBox(width: 8),
         ],
       ),
       body: _pages[_selectedIndex],
@@ -126,10 +241,7 @@ class _HomeBody extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
       children: [
-        /// 🔍 Firestore Search Bar
-        // Changed to TypeAheadField.builder for modern usage
         TypeAheadField<Map<String, dynamic>>(
-          // The builder property replaces textFieldConfiguration
           builder: (context, controller, focusNode) {
             return TextFormField(
               controller: controller,
@@ -249,7 +361,7 @@ class _HomeBody extends StatelessWidget {
             if (snapshot.hasError) {
               return const Center(child: Text('Failed to load discounts'));
             }
-            if (!snapshot.hasData) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
             }
 

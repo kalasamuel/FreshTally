@@ -18,6 +18,7 @@ class ManagerDashboardPage extends StatelessWidget {
     super.key,
     required this.supermarketName,
     required this.location,
+    this.managerId,
   });
 
   @override
@@ -93,7 +94,7 @@ class ManagerDashboardPage extends StatelessWidget {
                           context,
                           MaterialPageRoute(
                             builder: (context) {
-                              return SettingsPage();
+                              return SettingsPage(supermarketId: '');
                             },
                           ),
                         );
@@ -214,7 +215,7 @@ class ManagerDashboardPage extends StatelessWidget {
                           context,
                           MaterialPageRoute(
                             builder: (context) {
-                              return SyncStatusPage();
+                              return SyncStatusPage(supermarketId: '');
                             },
                           ),
                         );
