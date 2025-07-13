@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 // Assuming settings page is shared or similar
 
 class NotificationCenterPage extends StatefulWidget {
-  const NotificationCenterPage({super.key});
+  const NotificationCenterPage({super.key, required String supermarketId});
 
   @override
   State<NotificationCenterPage> createState() => _NotificationCenterPageState();

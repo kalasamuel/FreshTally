@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:freshtally/pages/shelfStaff/notifications/notifications_shelfstaff.dart';
 import 'package:freshtally/pages/shelfStaff/settings/settings_page.dart';
@@ -7,80 +8,80 @@ import 'package:freshtally/pages/shelfStaff/shelves/smart_suggestions_page.dart'
 import 'package:freshtally/pages/shelfStaff/sync/sync_status_page.dart';
 
 class ShelfStaffDashboard extends StatelessWidget {
-  final String? supermarketName;
-  final String? location;
+  final String supermarketId;
 
-  const ShelfStaffDashboard({super.key, this.supermarketName, this.location});
+  const ShelfStaffDashboard({
+    super.key,
+    required this.supermarketId,
+    required supermarketName,
+    required String location,
+  });
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFFFFFF),
       appBar: AppBar(
-        automaticallyImplyLeading:
-            false, // Ensures no default back button is added.
-        backgroundColor: const Color(
-          0xFFFFFFFF,
-        ), // AppBar background color matches the body for a clean UI.
-        elevation: 0.0, // Removes the shadow under the app bar for a flat look.
-        // Adjust leadingWidth to accommodate the avatar and desired padding.
-        // (28 radius * 2 diameter) + 16 (for 8px padding on each side) = 56 + 16 = 72
-        leadingWidth: 72,
-        leading: Padding(
-          padding: const EdgeInsets.only(
-            left: 16.0,
-          ), // Add left padding to the avatar.
-          child: CircleAvatar(
-            radius: 28, // Increased radius for a slightly larger circular icon.
-            backgroundImage: NetworkImage(
-              'https://i.pravatar.cc/150?img=60',
-            ), // Placeholder image.
-          ),
+        automaticallyImplyLeading: false,
+        backgroundColor: const Color(0xFFFFFFFF),
+        elevation: 0.0,
+        title: FutureBuilder<DocumentSnapshot>(
+          future: FirebaseFirestore.instance
+              .collection('supermarkets')
+              .doc(supermarketId)
+              .get(),
+          builder: (context, snapshot) {
+            if (!snapshot.hasData) {
+              return const Text('Loading...');
+            }
+            final data = snapshot.data!.data() as Map<String, dynamic>?;
+            final name = data?['name'] ?? 'Supermarket';
+            final location = data?['location'] ?? '';
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+                Text(
+                  location,
+                  style: const TextStyle(fontSize: 14, color: Colors.grey),
+                ),
+              ],
+            );
+          },
         ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              supermarketName ?? 'Supermarket',
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
-            ),
-            if (location != null)
-              Text(
-                location!,
-                style: const TextStyle(fontSize: 14, color: Colors.grey),
-              ),
-          ],
-        ),
-        centerTitle: false, // Centers the title in the app bar.
         actions: [
           IconButton(
             icon: const Icon(
               Icons.notifications,
               size: 30,
               color: Colors.black87,
-            ), // Added color for consistency.
+            ),
             onPressed: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const NotificationCenterPage(),
+                  builder: (context) =>
+                      NotificationCenterPage(supermarketId: supermarketId),
                 ),
               );
             },
           ),
           IconButton(
-            icon: const Icon(
-              Icons.settings,
-              size: 30,
-              color: Colors.black87,
-            ), // Added color for consistency.
+            icon: const Icon(Icons.settings, size: 30, color: Colors.black87),
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const SettingsPage()),
+                MaterialPageRoute(
+                  builder: (context) =>
+                      SettingsPage(supermarketId: supermarketId),
+                ),
               );
             },
           ),
@@ -120,7 +121,8 @@ class ShelfStaffDashboard extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const ShelfMappingPage(),
+                            builder: (context) =>
+                                ShelfMappingPage(supermarketId: supermarketId),
                           ),
                         );
                       },
@@ -133,7 +135,8 @@ class ShelfStaffDashboard extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const PriceEntryPage(),
+                            builder: (context) =>
+                                PriceEntryPage(supermarketId: supermarketId),
                           ),
                         );
                       },
@@ -146,7 +149,8 @@ class ShelfStaffDashboard extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const SyncStatusPage(),
+                            builder: (context) =>
+                                SyncStatusPage(supermarketId: supermarketId),
                           ),
                         );
                       },
@@ -159,8 +163,9 @@ class ShelfStaffDashboard extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) =>
-                                const SmartShelfSuggestionsPage(),
+                            builder: (context) => SmartShelfSuggestionsPage(
+                              supermarketId: supermarketId,
+                            ),
                           ),
                         );
                       },
@@ -187,11 +192,7 @@ class ShelfStaffDashboard extends StatelessWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       color: color,
       child: InkWell(
-        onTap:
-            onTap ??
-            () {
-              debugPrint('$title tile tapped!');
-            },
+        onTap: onTap,
         borderRadius: BorderRadius.circular(16),
         child: Padding(
           padding: const EdgeInsets.all(16.0),
