@@ -1,9 +1,53 @@
-import 'dart:math';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:freshtally/pages/auth/login_page.dart';
+
+// Assuming this helper widget is in a commonly accessible place
+// or you can define it within this file as well.
+// For the purpose of this solution, I'll include it here
+// as it was provided in the LoginPage code.
+class IconTextField extends StatelessWidget {
+  final String hintText;
+  final IconData icon;
+  final bool isPassword;
+  final TextEditingController? controller;
+  final String? Function(String?)? validator;
+  final void Function(String)? onChanged; // Added for onChanged callback
+
+  const IconTextField({
+    super.key,
+    required this.hintText,
+    required this.icon,
+    this.isPassword = false,
+    this.controller,
+    this.validator,
+    this.onChanged, // Initialize onChanged
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TextFormField(
+      controller: controller,
+      obscureText: isPassword,
+      validator: validator,
+      onChanged: onChanged, // Pass onChanged to TextFormField
+      decoration: InputDecoration(
+        hintText: hintText,
+        prefixIcon: Icon(icon, color: Colors.grey),
+        filled: true,
+        fillColor: Colors.grey[200],
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10.0),
+          borderSide: BorderSide.none,
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          vertical: 16.0,
+          horizontal: 16.0,
+        ),
+      ),
+    );
+  }
+}
 
 class CreateSupermarketPage extends StatefulWidget {
   const CreateSupermarketPage({super.key});
@@ -65,13 +109,17 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
       });
     } catch (e) {
       setState(() {
-        _isSupermarketValid = true;
+        _isSupermarketValid = true; // Assume valid on error to allow submission
       });
     }
   }
 
   Future<void> _createAccount() async {
+    // Validate all fields first
     if (!(_formKey.currentState?.validate() ?? false)) return;
+
+    // Check supermarket uniqueness after all other fields are validated
+    await _validateSupermarket();
     if (!_isSupermarketValid) return;
 
     setState(() {
@@ -118,9 +166,10 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
       });
 
       // Navigate to manager home
+      if (!mounted) return;
       Navigator.pushReplacementNamed(
         context,
-        '/staff/managerHome',
+        '/staff/managerHome', // Ensure this route is defined in your main.dart
         arguments: {
           'supermarketName': _supermarketNameController.text.trim(),
           'location': _locationController.text.trim(),
@@ -165,9 +214,13 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'Create Supermarket',
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Colors.green[700], // Matched Login Page title color
+          ),
         ),
         centerTitle: true,
       ),
@@ -176,41 +229,46 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
         child: Form(
           key: _formKey,
           child: Column(
+            crossAxisAlignment:
+                CrossAxisAlignment.stretch, // Stretch for full width
             children: [
               const SizedBox(height: 20),
-              const Text(
-                "Create an account for your supermarket",
-                style: TextStyle(fontSize: 18),
+              const Center(
+                child: Text(
+                  "Create an account for your supermarket",
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: Colors.black87,
+                  ), // Matched Login Page text style
+                  textAlign: TextAlign.center,
+                ),
               ),
               const SizedBox(height: 30.0),
 
               // Supermarket Name Field
-              TextFormField(
+              IconTextField(
+                hintText: 'Supermarket Name',
+                icon: Icons.store,
                 controller: _supermarketNameController,
-                decoration: InputDecoration(
-                  labelText: 'Supermarket Name',
-                  prefixIcon: const Icon(Icons.store),
-                  errorText: !_isSupermarketValid
-                      ? 'A supermarket with this name already exists at this location'
-                      : null,
-                ),
                 onChanged: (_) => _validateSupermarket(),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return 'Supermarket name is required';
                   }
+                  if (!_isSupermarketValid &&
+                      _supermarketNameController.text.trim().isNotEmpty &&
+                      _locationController.text.trim().isNotEmpty) {
+                    return 'A supermarket with this name already exists at this location';
+                  }
                   return null;
                 },
               ),
-              const SizedBox(height: 24.0),
-
+              const SizedBox(height: 16.0), // Consistent spacing
               // Supermarket Location Field
-              TextFormField(
+              IconTextField(
+                hintText: 'Supermarket Location',
+                icon: Icons.location_on,
                 controller: _locationController,
-                decoration: const InputDecoration(
-                  labelText: 'Supermarket Location',
-                  prefixIcon: Icon(Icons.location_on),
-                ),
                 onChanged: (_) => _validateSupermarket(),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
@@ -219,21 +277,25 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
                   return null;
                 },
               ),
-              const SizedBox(height: 16.0),
+              const SizedBox(height: 24.0), // Spacing before manager details
 
-              const Text(
-                'Manager details:',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16.0),
-
-              // First Name Field
-              TextFormField(
-                controller: _firstNameController,
-                decoration: const InputDecoration(
-                  labelText: 'First Name',
-                  prefixIcon: Icon(Icons.person),
+              const Center(
+                child: Text(
+                  'Manager Details',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ), // Styled like Login title
+                  textAlign: TextAlign.center,
                 ),
+              ),
+              const SizedBox(height: 20.0), // Consistent spacing
+              // First Name Field
+              IconTextField(
+                hintText: 'First Name',
+                icon: Icons.person,
+                controller: _firstNameController,
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return 'First name is required';
@@ -244,12 +306,10 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
               const SizedBox(height: 16.0),
 
               // Last Name Field
-              TextFormField(
+              IconTextField(
+                hintText: 'Last Name',
+                icon: Icons.person_outline,
                 controller: _lastNameController,
-                decoration: const InputDecoration(
-                  labelText: 'Last Name',
-                  prefixIcon: Icon(Icons.person_outline),
-                ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return 'Last name is required';
@@ -260,13 +320,10 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
               const SizedBox(height: 16.0),
 
               // Email Field
-              TextFormField(
+              IconTextField(
+                hintText: 'Email',
+                icon: Icons.email,
                 controller: _emailController,
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                  prefixIcon: Icon(Icons.email),
-                ),
-                keyboardType: TextInputType.emailAddress,
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return 'Email is required';
@@ -280,13 +337,11 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
               const SizedBox(height: 16.0),
 
               // Password Field
-              TextFormField(
+              IconTextField(
+                hintText: 'Password',
+                icon: Icons.lock,
+                isPassword: true,
                 controller: _passwordController,
-                decoration: const InputDecoration(
-                  labelText: 'Password',
-                  prefixIcon: Icon(Icons.lock),
-                ),
-                obscureText: true,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Password is required';
@@ -300,13 +355,11 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
               const SizedBox(height: 16.0),
 
               // Confirm Password Field
-              TextFormField(
+              IconTextField(
+                hintText: 'Confirm Password',
+                icon: Icons.lock_outline,
+                isPassword: true,
                 controller: _confirmPasswordController,
-                decoration: const InputDecoration(
-                  labelText: 'Confirm Password',
-                  prefixIcon: Icon(Icons.lock_outline),
-                ),
-                obscureText: true,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Confirm password is required';
@@ -335,11 +388,9 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
                     : _createAccount,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green[600],
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  maximumSize: const Size(double.infinity, 50),
-                  minimumSize: const Size(double.infinity, 50),
+                  padding: const EdgeInsets.symmetric(vertical: 16.0),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(10.0),
                   ),
                 ),
                 child: _isLoading
@@ -355,51 +406,10 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
               ),
               const SizedBox(height: 20.0),
 
-              // Social login options and existing account link
-              // ... (keep your existing social login and sign-in button code)
+              // Removed social login and existing account link as they
+              // are not part of the Create Supermarket flow.
             ],
           ),
-        ),
-      ),
-    );
-  }
-}
-
-// 👇 Helper widget for consistent text fields
-class IconTextField extends StatelessWidget {
-  final String hintText;
-  final IconData icon;
-  final TextEditingController controller;
-  final FormFieldValidator<String>? validator;
-  final bool isPassword;
-
-  const IconTextField({
-    super.key,
-    required this.hintText,
-    required this.icon,
-    required this.controller,
-    this.validator,
-    this.isPassword = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return TextFormField(
-      controller: controller,
-      obscureText: isPassword,
-      validator: validator,
-      decoration: InputDecoration(
-        prefixIcon: Icon(icon),
-        hintText: hintText,
-        filled: true,
-        fillColor: Colors.grey[200],
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10),
-          borderSide: BorderSide.none,
-        ),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 14,
         ),
       ),
     );

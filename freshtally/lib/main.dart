@@ -47,15 +47,21 @@ class FreshTallyApp extends StatelessWidget {
           case '/':
             return MaterialPageRoute(builder: (_) => const LoginPage());
           case '/customerHome':
-            return MaterialPageRoute(builder: (_) => const CustomerHomePage());
+            return MaterialPageRoute(
+              builder: (_) => const CustomerHomePage(supermarketId: ''),
+            );
           case '/customerSearch':
             return MaterialPageRoute(builder: (_) => const ProductSearchPage());
           case '/shoppingList':
             return MaterialPageRoute(builder: (_) => const ShoppingListPage());
           case '/shelfMapping':
-            return MaterialPageRoute(builder: (_) => const ShelfMappingPage());
+            return MaterialPageRoute(
+              builder: (_) => const ShelfMappingPage(supermarketId: ''),
+            );
           case '/shelfStaffHome':
-            return MaterialPageRoute(builder: (_) => const ShelfMappingPage());
+            return MaterialPageRoute(
+              builder: (_) => const ShelfMappingPage(supermarketId: ''),
+            );
           case '/managerHome':
             return MaterialPageRoute(
               builder: (_) {
@@ -86,20 +92,13 @@ class FreshTallyApp extends StatelessWidget {
               builder: (_) => ShelfStaffDashboard(
                 supermarketName: args['supermarketName'],
                 location: args['location'],
+                supermarketId: '',
               ),
             );
           case '/customerSignup':
             return MaterialPageRoute(
               builder: (_) {
                 return const CustomerSignupPage();
-              },
-            );
-          // case '/staff/home':
-          //   return MaterialPageRoute(builder: (_) { return const HomeScreen(); });
-          case '/staff/shelfStaffHome':
-            return MaterialPageRoute(
-              builder: (_) {
-                return const ShelfStaffDashboard();
               },
             );
           case '/staff/managerHome':

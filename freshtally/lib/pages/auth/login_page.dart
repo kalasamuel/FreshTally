@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:freshtally/pages/auth/create_supermarket_page.dart';
-import 'package:freshtally/pages/customer/home/customer_home_page.dart';
+import 'package:freshtally/pages/auth/customer_signup_page.dart';
 import 'package:freshtally/pages/auth/staff_signup_page.dart';
+import 'package:freshtally/pages/customer/home/customer_home_page.dart';
 import 'package:freshtally/pages/manager/home/manager_home_screen.dart';
 import 'package:freshtally/pages/shelfStaff/home/shelf_staff_home_screen.dart';
+import 'package:freshtally/pages/storeManager/home/home_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class IconTextField extends StatelessWidget {
   final String hintText;
@@ -60,15 +63,41 @@ class _LoginPageState extends State<LoginPage> {
   final _passwordController = TextEditingController();
   bool _isLoading = false;
   String? _errorMessage;
+  bool _rememberMe = false; // State for "Remember Me" checkbox
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   @override
-  void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    _loadRememberMePreferences();
+  }
+
+  // Loads saved email and rememberMe state from SharedPreferences
+  Future<void> _loadRememberMePreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedEmail = prefs.getString('rememberedEmail');
+    final rememberMeFlag = prefs.getBool('rememberMe') ?? false;
+
+    if (savedEmail != null && rememberMeFlag) {
+      setState(() {
+        _emailController.text = savedEmail;
+        _rememberMe = rememberMeFlag;
+      });
+    }
+  }
+
+  // Saves or clears email and rememberMe state in SharedPreferences
+  Future<void> _saveRememberMePreferences(String email) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (_rememberMe) {
+      await prefs.setString('rememberedEmail', email);
+      await prefs.setBool('rememberMe', true);
+    } else {
+      await prefs.remove('rememberedEmail');
+      await prefs.remove('rememberMe');
+    }
   }
 
   Future<void> _login() async {
@@ -80,25 +109,53 @@ class _LoginPageState extends State<LoginPage> {
     });
 
     try {
+      // Authenticate with Firebase Auth
       final UserCredential userCredential = await _auth
           .signInWithEmailAndPassword(
             email: _emailController.text.trim(),
             password: _passwordController.text.trim(),
           );
 
-      // Get user role from Firestore
-      final userDoc = await _firestore
-          .collection('users')
-          .doc(userCredential.user?.uid)
+      final userId = userCredential.user?.uid;
+      if (userId == null) throw Exception("User ID not found");
+
+      // Search all supermarkets for this user
+      QuerySnapshot supermarketsSnapshot = await _firestore
+          .collection('supermarkets')
           .get();
 
-      if (!userDoc.exists) {
-        throw Exception('User document not found');
+      DocumentSnapshot? userDoc;
+      String? supermarketId;
+
+      for (final supermarket in supermarketsSnapshot.docs) {
+        final doc = await _firestore
+            .collection('supermarkets')
+            .doc(supermarket.id)
+            .collection('users')
+            .doc(userId)
+            .get();
+
+        if (doc.exists) {
+          userDoc = doc;
+          supermarketId = supermarket.id;
+          break;
+        }
       }
 
-      final role = userDoc.data()?['role'] ?? 'customer';
-      final supermarketId = userDoc.data()?['supermarketId'];
-      final supermarketName = userDoc.data()?['supermarketName'] ?? '';
+      if (userDoc == null || supermarketId == null) {
+        throw Exception(
+          'User document not found in any supermarket. Contact support.',
+        );
+      }
+      final userData = userDoc.data() as Map<String, dynamic>?;
+
+      final role = userData?['role'] as String? ?? 'customer';
+      final supermarketName = userData?['supermarketName'] as String? ?? '';
+      final location = userData?['location'] as String? ?? '';
+
+      await _saveRememberMePreferences(_emailController.text.trim());
+
+      if (!mounted) return;
 
       // Navigate based on role
       switch (role) {
@@ -108,7 +165,18 @@ class _LoginPageState extends State<LoginPage> {
             MaterialPageRoute(
               builder: (context) => ManagerDashboardPage(
                 supermarketName: supermarketName,
-                location: '', // Fetch from supermarket doc if needed
+                location: location,
+              ),
+            ),
+          );
+        case 'storeManager':
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => StoreManagerDashboard(
+                supermarketId: supermarketId!,
+                supermarketName: supermarketName,
+                location: location,
               ),
             ),
           );
@@ -118,8 +186,9 @@ class _LoginPageState extends State<LoginPage> {
             context,
             MaterialPageRoute(
               builder: (context) => ShelfStaffDashboard(
+                supermarketId: supermarketId!,
                 supermarketName: supermarketName,
-                location: '', // Fetch from supermarket doc if needed
+                location: location,
               ),
             ),
           );
@@ -127,11 +196,17 @@ class _LoginPageState extends State<LoginPage> {
         case 'customer':
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const CustomerHomePage()),
+            MaterialPageRoute(
+              builder: (context) => CustomerHomePage(
+                supermarketId: supermarketId!,
+                supermarketName: supermarketName,
+                location: location,
+              ),
+            ),
           );
           break;
         default:
-          throw Exception('Unknown user role');
+          throw Exception("Unknown user role: $role. Contact support.");
       }
     } on FirebaseAuthException catch (e) {
       setState(() {
@@ -139,7 +214,49 @@ class _LoginPageState extends State<LoginPage> {
       });
     } catch (e) {
       setState(() {
-        _errorMessage = 'Login failed. Please try again.';
+        _errorMessage = 'Login failed: ${e.toString()}';
+      });
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  // Method to handle password reset
+  Future<void> _forgotPassword() async {
+    final email = _emailController.text.trim();
+    if (email.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter your email to reset password.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      await _auth.sendPasswordResetEmail(email: email);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Password reset email sent to $email. Check your inbox.',
+          ),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } on FirebaseAuthException catch (e) {
+      setState(() {
+        _errorMessage = _getAuthErrorMessage(e.code);
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Failed to send password reset email: ${e.toString()}';
       });
     } finally {
       setState(() => _isLoading = false);
@@ -151,14 +268,47 @@ class _LoginPageState extends State<LoginPage> {
       case 'user-not-found':
         return 'No user found with this email.';
       case 'wrong-password':
-        return 'Incorrect password.';
+        return 'Incorrect password. Please try again.';
       case 'invalid-email':
         return 'Please enter a valid email address.';
       case 'user-disabled':
-        return 'This account has been disabled.';
+        return 'This account has been disabled. Please contact support.';
+      case 'too-many-requests':
+        return 'Too many login attempts. Please try again later.';
       default:
-        return 'Login failed. Please try again.';
+        return 'An unexpected error occurred. Please try again.';
     }
+  }
+
+  // Placeholder for social sign-in methods
+  Future<void> _signInWithGoogle() async {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Google Sign-In not fully implemented yet.'),
+      ),
+    );
+    // TODO: Implement Google Sign-In using google_sign_in package
+    // After successful sign-in, you would typically:
+    // 1. Get user credentials from Google.
+    // 2. Use FirebaseAuth.instance.signInWithCredential(GoogleAuthProvider.credential(...)).
+    // 3. Check/create user document in Firestore.
+    // 4. Navigate based on role.
+  }
+
+  Future<void> _signInWithFacebook() async {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Facebook Sign-In not fully implemented yet.'),
+      ),
+    );
+    // TODO: Implement Facebook Sign-In using flutter_facebook_auth package
+  }
+
+  Future<void> _signInWithApple() async {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Apple Sign-In not fully implemented yet.')),
+    );
+    // TODO: Implement Apple Sign-In using sign_in_with_apple package
   }
 
   @override
@@ -227,11 +377,48 @@ class _LoginPageState extends State<LoginPage> {
                   if (value == null || value.isEmpty) {
                     return 'Password is required';
                   }
+                  // Basic password length validation
+                  if (value.length < 6) {
+                    return 'Password must be at least 6 characters long';
+                  }
                   return null;
                 },
               ),
               const SizedBox(height: 10.0),
 
+              // Remember Me and Forgot Password
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: CheckboxListTile(
+                      title: const Text(
+                        "Remember me",
+                        style: TextStyle(fontSize: 14.0),
+                      ),
+                      value: _rememberMe,
+                      onChanged: (newValue) {
+                        setState(() {
+                          _rememberMe = newValue!;
+                        });
+                      },
+                      controlAffinity: ListTileControlAffinity
+                          .leading, // Checkbox on the left
+                      contentPadding: EdgeInsets.zero, // Remove extra padding
+                      dense: true, // Make it more compact
+                    ),
+                  ),
+                  TextButton(
+                    onPressed:
+                        _forgotPassword, // Calls the new forgot password logic
+                    child: Text(
+                      "Forgot Password?",
+                      style: TextStyle(color: Colors.grey[600], fontSize: 14.0),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20.0), // Adjusted spacing
               // Error Message
               if (_errorMessage != null)
                 Padding(
@@ -243,28 +430,47 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
 
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: () {
-                    // Implement password reset
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Password reset email sent!'),
-                      ),
-                    );
-                  },
-                  child: Text(
-                    "Forgot Password?",
-                    style: TextStyle(color: Colors.grey[600], fontSize: 14.0),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 30.0),
-
               // Login Button
               ElevatedButton(
-                onPressed: _isLoading ? null : _login,
+                onPressed: () async {
+                  final email = _emailController.text.trim();
+                  final password = _passwordController.text.trim();
+
+                  try {
+                    final userCredential = await FirebaseAuth.instance
+                        .signInWithEmailAndPassword(
+                          email: email,
+                          password: password,
+                        );
+
+                    if (context.mounted) {
+                      // Navigate based on your app logic; here we go to CustomerHomePage
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              const CustomerHomePage(supermarketId: ''),
+                        ),
+                      );
+                    }
+                  } on FirebaseAuthException catch (e) {
+                    String message = 'Login failed.';
+                    if (e.code == 'user-not-found') {
+                      message = 'No user found with this email.';
+                    } else if (e.code == 'wrong-password') {
+                      message = 'Incorrect password.';
+                    }
+
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(message),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  }
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green[600],
                   padding: const EdgeInsets.symmetric(vertical: 16.0),
@@ -272,17 +478,16 @@ class _LoginPageState extends State<LoginPage> {
                     borderRadius: BorderRadius.circular(10.0),
                   ),
                 ),
-                child: _isLoading
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text(
-                        "Login",
-                        style: TextStyle(
-                          fontSize: 18.0,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
+                child: const Text(
+                  "Login",
+                  style: TextStyle(
+                    fontSize: 18.0,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
               ),
+
               const SizedBox(height: 20.0),
 
               // Social Login Options
@@ -325,64 +530,95 @@ class _LoginPageState extends State<LoginPage> {
               // Alternative Options
               Column(
                 children: [
-                  OutlinedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const CreateSupermarketPage(),
+                  SizedBox(
+                    width: double.infinity, // Make button full width
+                    child: OutlinedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const CreateSupermarketPage(),
+                          ),
+                        );
+                      },
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Colors.green),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                      );
-                    },
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Colors.green),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 12.0,
+                        ), // Added padding
                       ),
-                    ),
-                    child: const Text(
-                      "New Supermarket?",
-                      style: TextStyle(color: Colors.green),
+                      child: const Text(
+                        "New Supermarket?",
+                        style: TextStyle(
+                          color: Colors.green,
+                          fontSize: 16.0,
+                        ), // Adjusted font size
+                      ),
                     ),
                   ),
-                  OutlinedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const StaffRegistrationPage(),
+                  const SizedBox(height: 10.0), // Spacing between buttons
+                  SizedBox(
+                    width: double.infinity, // Make button full width
+                    child: OutlinedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const StaffSignupPage(
+                              role: '',
+                            ), // Assuming this is the correct page
+                          ),
+                        );
+                      },
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Colors.orange),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                      );
-                    },
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Colors.orange),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 12.0,
+                        ), // Added padding
                       ),
-                    ),
-                    child: const Text(
-                      "Joining Staff?",
-                      style: TextStyle(color: Colors.orange),
+                      child: const Text(
+                        "Joining Staff?",
+                        style: TextStyle(
+                          color: Colors.orange,
+                          fontSize: 16.0,
+                        ), // Adjusted font size
+                      ),
                     ),
                   ),
-                  OutlinedButton(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const CustomerHomePage(),
+                  const SizedBox(height: 10.0), // Spacing between buttons
+                  SizedBox(
+                    width: double.infinity, // Make button full width
+                    child: OutlinedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const CustomerSignupPage(),
+                          ),
+                        );
+                      },
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: Colors.blue.shade700),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                      );
-                    },
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: Colors.blue.shade700),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 12.0,
+                        ), // Added padding
                       ),
-                    ),
-                    child: Text(
-                      "I am Customer",
-                      style: TextStyle(color: Colors.blue[700]),
+                      child: Text(
+                        "I am Customer",
+                        style: TextStyle(
+                          color: Colors.blue[700],
+                          fontSize: 16.0,
+                        ), // Adjusted font size
+                      ),
                     ),
                   ),
                 ],
@@ -392,26 +628,5 @@ class _LoginPageState extends State<LoginPage> {
         ),
       ),
     );
-  }
-
-  Future<void> _signInWithGoogle() async {
-    // Implement Google Sign-In
-    try {
-      // Add Google Sign-In implementation here
-      // After successful sign-in, create/update user document in Firestore
-      // Then navigate based on role as done in _login()
-    } catch (e) {
-      setState(() {
-        _errorMessage = 'Google sign-in failed. Please try again.';
-      });
-    }
-  }
-
-  Future<void> _signInWithFacebook() async {
-    // Implement Facebook Sign-In
-  }
-
-  Future<void> _signInWithApple() async {
-    // Implement Apple Sign-In
   }
 }
