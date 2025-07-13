@@ -6,7 +6,6 @@ import 'package:freshtally/pages/shelfStaff/shelves/shelf_mapping_page.dart';
 import 'package:freshtally/pages/auth/create_supermarket_page.dart';
 import 'package:freshtally/pages/auth/join_supermarket_page.dart';
 import 'package:freshtally/pages/auth/role_selection_page.dart';
-import 'package:freshtally/pages/auth/staff_signup_page.dart';
 import 'package:freshtally/pages/auth/customer_signup_page.dart';
 import 'package:freshtally/pages/shelfStaff/home/shelf_staff_home_screen.dart';
 import 'firebase_options.dart';
@@ -46,10 +45,7 @@ class FreshTallyApp extends StatelessWidget {
       onGenerateRoute: (settings) {
         switch (settings.name) {
           case '/':
-            return MaterialPageRoute(
-              builder: (_) =>
-                  const LoginPage(supermarketName: '', location: ''),
-            );
+            return MaterialPageRoute(builder: (_) => const LoginPage());
           case '/customerHome':
             return MaterialPageRoute(builder: (_) => const CustomerHomePage());
           case '/customerSearch':
@@ -63,10 +59,7 @@ class FreshTallyApp extends StatelessWidget {
           case '/managerHome':
             return MaterialPageRoute(
               builder: (_) {
-                return const LoginPage(
-                  supermarketName: '', // Provide empty string or actual value
-                  location: '',
-                );
+                return const LoginPage();
               },
             );
           case '/createSupermarket':

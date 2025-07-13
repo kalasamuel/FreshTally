@@ -11,12 +11,14 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class ManagerDashboardPage extends StatelessWidget {
   final String supermarketName;
   final String location;
+  final String? managerId;
 
   const ManagerDashboardPage({
-    Key? key,
+    super.key,
     required this.supermarketName,
     required this.location,
-  }) : super(key: key);
+    this.managerId,
+  });
 
   @override
   Widget build(BuildContext context) {

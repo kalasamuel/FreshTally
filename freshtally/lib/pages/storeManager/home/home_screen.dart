@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:freshtally/pages/shelfStaff/settings/settings_page.dart';
-import 'package:freshtally/pages/storeManager/batches/batch_entry_page.dart';
 import 'package:freshtally/pages/storeManager/batches/supplier_batch_entry_page.dart';
 import 'package:freshtally/pages/storeManager/notifications/notification_center_page.dart';
-import 'package:freshtally/pages/storeManager/products/product_entry_page.dart';
 import 'package:freshtally/pages/storeManager/sync/sync_status_page.dart';
 
 class StoreManagerDashboard extends StatelessWidget {

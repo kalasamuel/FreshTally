@@ -1,6 +1,5 @@
-import 'dart:math';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 
 class ManagerNotificationCenterPage extends StatefulWidget {
@@ -9,7 +8,6 @@ class ManagerNotificationCenterPage extends StatefulWidget {
     required this.managerSupermarketName,
   });
 
-  /// The supermarket this manager belongs to
   final String managerSupermarketName;
 
   @override
@@ -19,12 +17,9 @@ class ManagerNotificationCenterPage extends StatefulWidget {
 
 class _ManagerNotificationCenterPageState
     extends State<ManagerNotificationCenterPage> {
-  // Convenience getter
   String get _mySupermarket => widget.managerSupermarketName;
-
-  // Filter state
   String _selectedFilter = 'All';
-  final _filters = const ['All', 'Staff', 'Expiry'];
+  final _filters = const ['All', 'Staff', 'Promotions'];
 
   Stream<QuerySnapshot<Map<String, dynamic>>> _stream() {
     final base = FirebaseFirestore.instance
@@ -33,40 +28,25 @@ class _ManagerNotificationCenterPageState
 
     switch (_selectedFilter) {
       case 'Staff':
-        // Only staff sign‑ups for THIS supermarket
         return base
             .where('type', isEqualTo: 'staff_signup')
             .where('supermarketName', isEqualTo: _mySupermarket)
             .snapshots();
-      case 'Expiry':
+      case 'Promotions':
         return base.where('type', isEqualTo: 'promo_expiry').snapshots();
-      case 'Supplier':
-        return base.where('type', isEqualTo: 'supplier').snapshots();
-      case 'Batch':
-        return base.where('type', isEqualTo: 'batch').snapshots();
-      case 'Sync':
-        return base.where('type', isEqualTo: 'sync').snapshots();
-      case 'Suggestion':
-        return base.where('type', isEqualTo: 'suggestion').snapshots();
       default:
         return base.snapshots();
     }
   }
 
-  /* ──────────────────────────── UI BUILD ─────────────────────────────── */
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Notifications',
-          style: TextStyle(color: Colors.black87),
-        ),
+        title: const Text('Notifications'),
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
-        iconTheme: const IconThemeData(color: Colors.black87),
       ),
       body: SafeArea(
         child: Column(
@@ -84,12 +64,16 @@ class _ManagerNotificationCenterPageState
                   if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                     return const Center(child: Text('No notifications yet.'));
                   }
-                  final docs = snapshot.data!.docs;
                   return ListView.builder(
                     padding: const EdgeInsets.all(16),
-                    itemCount: docs.length,
-                    itemBuilder: (context, index) =>
-                        _buildNotificationCard(docs[index]),
+                    itemCount: snapshot.data!.docs.length,
+                    itemBuilder: (context, index) => InkWell(
+                      onTap: () => _showNotificationDetails(
+                        context,
+                        snapshot.data!.docs[index],
+                      ),
+                      child: _buildNotificationCard(snapshot.data!.docs[index]),
+                    ),
                   );
                 },
               ),
@@ -99,8 +83,6 @@ class _ManagerNotificationCenterPageState
       ),
     );
   }
-
-  /* ────────────────────────── FILTER WIDGETS ─────────────────────────── */
 
   Widget _filterRow() => SingleChildScrollView(
     scrollDirection: Axis.horizontal,
@@ -123,89 +105,48 @@ class _ManagerNotificationCenterPageState
         avatar: selected
             ? const Icon(Icons.check_circle, color: Colors.white, size: 18)
             : null,
-        elevation: 0.1,
       ),
     );
   }
 
-  /* ───────────────────────── NOTIFICATION CARD ───────────────────────── */
-
   Widget _buildNotificationCard(DocumentSnapshot doc) {
     final data = doc.data() as Map<String, dynamic>;
     final type = (data['type'] ?? '').toLowerCase();
-    final supermarketName = data['supermarketName'] as String? ?? '';
-
-    // Generate/persist 6‑digit code for matching sign‑ups
-    String? signupCode = data['signupCode'] as String?;
-    if (type == 'staff_signup' &&
-        supermarketName == _mySupermarket &&
-        signupCode == null) {
-      signupCode = _generate6DigitCode();
-      doc.reference.update({'signupCode': signupCode});
-    }
-
     final title = data['title'] ?? '';
-    final details = List<String>.from(data['details'] ?? []);
-
-    // Show the code at the top, if present
-    if (signupCode != null) {
-      details.insert(0, '🆔 6‑digit code: $signupCode');
-    }
-
-    final timestamp = data['timestamp'] as Timestamp?;
+    final message = data['message'] ?? '';
+    final timestamp = data['createdAt'] as Timestamp?;
     final formattedTime = timestamp != null
         ? DateFormat('MMM d, h:mm a').format(timestamp.toDate())
         : '';
 
-    /* ---------- Visual config per notification type ---------- */
-    Color cardColor = Colors.white;
-    Color borderColor = Colors.transparent;
-    IconData icon = Icons.info_outline;
-    Color iconColor = Colors.blue;
+    // For staff signup, include verification code in details
+    List<String> details = [];
+    if (type == 'staff_signup') {
+      final payload = data['payload'] as Map<String, dynamic>? ?? {};
+      final staffName = payload['staffName'] ?? data['staffName'] ?? '';
+      final code =
+          payload['verificationCode'] ?? data['verificationCode'] ?? '';
 
-    switch (type) {
-      case 'promo_expiry':
-        icon = Icons.error_outline;
-        iconColor = Colors.red;
-        cardColor = const Color(0xFFFFF0F0);
-        borderColor = const Color(0xFFFFCCCC);
-        break;
-      case 'supplier':
-      case 'batch':
-        icon = Icons.store;
-        iconColor = Colors.green;
-        cardColor = const Color(0xFFE8F5E9);
-        borderColor = const Color(0xFFC8E6C9);
-        break;
-      case 'staff_signup':
-        icon = Icons.person_add;
-        iconColor = Colors.purple;
-        cardColor = const Color(0xFFF3E5F5);
-        borderColor = const Color(0xFFE1BEE7);
-        break;
-      case 'sync':
-        icon = Icons.sync;
-        iconColor = Colors.orange;
-        cardColor = const Color(0xFFFFF3E0);
-        borderColor = const Color(0xFFFFCC80);
-        break;
-      case 'suggestion':
-        icon = Icons.lightbulb_outline;
-        iconColor = Colors.teal;
-        cardColor = const Color(0xFFE0F2F7);
-        borderColor = const Color(0xFFB3E5FC);
-        break;
+      details.addAll([
+        message,
+        if (staffName.isNotEmpty) 'Staff: $staffName',
+        if (code.isNotEmpty) 'Code: $code',
+      ]);
+    } else {
+      details = List<String>.from(data['details'] ?? []);
     }
 
-    /* ----------------------------- Card ----------------------------- */
+    // Visual styling based on type
+    final style = _getNotificationStyle(type);
+
     return Card(
       elevation: 0.1,
       margin: const EdgeInsets.only(bottom: 16),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: borderColor),
+        side: BorderSide(color: style.borderColor),
       ),
-      color: cardColor,
+      color: style.cardColor,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -213,7 +154,7 @@ class _ManagerNotificationCenterPageState
           children: [
             Row(
               children: [
-                Icon(icon, color: iconColor),
+                Icon(style.icon, color: style.iconColor),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -227,42 +168,26 @@ class _ManagerNotificationCenterPageState
               ],
             ),
             const SizedBox(height: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: details
-                  .map(
-                    (detail) => Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 2),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Icon(
-                            Icons.info_outline,
-                            color: detail.toLowerCase().contains('day')
-                                ? Colors.red
-                                : Colors.black54,
-                            size: 18,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              detail,
-                              style: TextStyle(
-                                color: detail.toLowerCase().contains('day')
-                                    ? Colors.red
-                                    : Colors.black87,
-                                fontSize: 15,
-                                fontWeight: detail.toLowerCase().contains('day')
-                                    ? FontWeight.bold
-                                    : FontWeight.normal,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  )
-                  .toList(),
+            ...details.map(
+              (detail) => Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Text(
+                  '• $detail',
+                  style: TextStyle(
+                    color:
+                        detail.toLowerCase().contains('expire') ||
+                            detail.toLowerCase().contains('hour') ||
+                            detail.toLowerCase().contains('code')
+                        ? Colors.blue
+                        : Colors.black87,
+                    fontWeight:
+                        detail.toLowerCase().contains('hour') ||
+                            detail.toLowerCase().contains('code')
+                        ? FontWeight.bold
+                        : FontWeight.normal,
+                  ),
+                ),
+              ),
             ),
             const SizedBox(height: 12),
             Align(
@@ -278,10 +203,212 @@ class _ManagerNotificationCenterPageState
     );
   }
 
-  /* ────────────────────── 6‑DIGIT CODE GENERATOR ────────────────────── */
+  void _showNotificationDetails(BuildContext context, DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    final type = data['type'] ?? '';
+    final title = data['title'] ?? 'Notification Details';
+    final details = List<String>.from(data['details'] ?? []);
 
-  String _generate6DigitCode() {
-    final random = Random.secure();
-    return (100000 + random.nextInt(900000)).toString(); // 100000‑999999
+    // Special handling for staff signup notifications
+    if (type == 'staff_signup') {
+      _showStaffSignupDialog(context, doc);
+      return;
+    }
+
+    // Default dialog for other notifications
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(title),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ...details.map(
+                (detail) => Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Text(detail),
+                ),
+              ),
+              if (data['discountExpiry'] != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    'Expires: ${DateFormat('MMM d, y h:mm a').format((data['discountExpiry'] as Timestamp).toDate())}',
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
   }
+
+  void _showStaffSignupDialog(
+    BuildContext context,
+    DocumentSnapshot doc,
+  ) async {
+    final data = doc.data() as Map<String, dynamic>;
+    final payload = data['payload'] as Map<String, dynamic>? ?? {};
+
+    // Get verification details from payload or directly from data
+    final verificationCode =
+        payload['verificationCode'] ?? data['verificationCode'] ?? '';
+    final staffName =
+        payload['staffName'] ?? data['staffName'] ?? 'New Staff Member';
+    final supermarketName =
+        payload['supermarketName'] ??
+        data['supermarketName'] ??
+        'Your Supermarket';
+    final createdAt = (data['createdAt'] as Timestamp?)?.toDate();
+    final expiresAt =
+        (payload['expiresAt'] as Timestamp?)?.toDate() ??
+        (data['expiresAt'] as Timestamp?)?.toDate();
+    final isUsed = payload['isUsed'] ?? data['isUsed'] ?? false;
+
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Staff Signup Verification'),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                data['message'] ?? 'New staff member requires verification:',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              _buildDetailRow('Staff Name:', staffName),
+              _buildDetailRow('Supermarket:', supermarketName),
+              const SizedBox(height: 16),
+              _buildDetailRow(
+                'Verification Code:',
+                verificationCode,
+                isImportant: true,
+              ),
+              const SizedBox(height: 8),
+              _buildDetailRow(
+                'Status:',
+                isUsed ? 'Used (Expired)' : 'Active',
+                isImportant: true,
+                color: isUsed ? Colors.red : Colors.green,
+              ),
+              const SizedBox(height: 16),
+              _buildDetailRow(
+                'Created:',
+                createdAt != null
+                    ? DateFormat('MMM d, h:mm a').format(createdAt)
+                    : 'N/A',
+              ),
+              _buildDetailRow(
+                'Expires:',
+                expiresAt != null
+                    ? DateFormat('MMM d, h:mm a').format(expiresAt)
+                    : 'N/A',
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Please provide this code to the staff member for verification.',
+                style: TextStyle(fontStyle: FontStyle.italic),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+
+    // Mark as read when dialog is closed if not already read
+    if (!(data['read'] ?? false)) {
+      await doc.reference.update({'read': true});
+    }
+  }
+
+  Widget _buildDetailRow(
+    String label,
+    String value, {
+    bool isImportant = false,
+    Color? color,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: isImportant ? (color ?? Colors.blue) : Colors.black87,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              value,
+              style: TextStyle(
+                fontWeight: isImportant ? FontWeight.bold : FontWeight.normal,
+                color: isImportant ? (color ?? Colors.blue) : Colors.black87,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  NotificationStyle _getNotificationStyle(String type) {
+    switch (type) {
+      case 'promo_expiry':
+        return NotificationStyle(
+          icon: Icons.local_offer,
+          iconColor: Colors.red,
+          cardColor: const Color(0xFFFFF0F0),
+          borderColor: const Color(0xFFFFCCCC),
+        );
+      case 'staff_signup':
+        return NotificationStyle(
+          icon: Icons.person_add,
+          iconColor: Colors.purple,
+          cardColor: const Color(0xFFF3E5F5),
+          borderColor: const Color(0xFFE1BEE7),
+        );
+      default:
+        return NotificationStyle(
+          icon: Icons.info_outline,
+          iconColor: Colors.blue,
+          cardColor: Colors.white,
+          borderColor: Colors.transparent,
+        );
+    }
+  }
+}
+
+class NotificationStyle {
+  final IconData icon;
+  final Color iconColor;
+  final Color cardColor;
+  final Color borderColor;
+
+  NotificationStyle({
+    required this.icon,
+    required this.iconColor,
+    required this.cardColor,
+    required this.borderColor,
+  });
 }
