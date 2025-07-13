@@ -5,7 +5,14 @@ import 'package:freshtally/pages/storeManager/notifications/notification_center_
 import 'package:freshtally/pages/storeManager/sync/sync_status_page.dart';
 
 class StoreManagerDashboard extends StatelessWidget {
-  const StoreManagerDashboard({super.key});
+  final String? supermarketName;
+  final String supermarketId;
+  const StoreManagerDashboard({
+    super.key,
+    this.supermarketName,
+    required this.supermarketId,
+    required String location,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -62,7 +69,8 @@ class StoreManagerDashboard extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const SettingsPage(),
+                            builder: (context) =>
+                                const SettingsPage(supermarketId: ''),
                           ),
                         );
                       },

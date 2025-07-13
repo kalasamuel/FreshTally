@@ -135,7 +135,13 @@ class _StaffVerificationPageState extends State<StaffVerificationPage> {
 
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const ShelfStaffDashboard()),
+        MaterialPageRoute(
+          builder: (context) => const ShelfStaffDashboard(
+            supermarketId: '',
+            supermarketName: null,
+            location: '',
+          ),
+        ),
       );
     } catch (e) {
       setState(() {
@@ -262,7 +268,7 @@ class _StaffVerificationPageState extends State<StaffVerificationPage> {
                   _buildTextField(
                     'Enter Join Code',
                     _verificationCodeController,
-                    keyboardType: TextInputType.number,
+                    // keyboardType: TextInputType.number,
                     maxLength: 6,
                     // errorText: _verificationError, // This line is now removed
                   ),
