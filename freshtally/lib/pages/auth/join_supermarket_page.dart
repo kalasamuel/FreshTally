@@ -117,7 +117,7 @@ class _JoinSupermarketPageState extends State<JoinSupermarketPage> {
                           context,
                           MaterialPageRoute(
                             builder: (context) {
-                              return const StaffRegistrationPage();
+                              return const StaffSignupPage(role: '');
                             },
                           ),
                         );

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class SmartShelfSuggestionsPage extends StatelessWidget {
-  const SmartShelfSuggestionsPage({super.key});
+  const SmartShelfSuggestionsPage({super.key, required String supermarketId});
 
   @override
   Widget build(BuildContext context) {

@@ -8,7 +8,7 @@ import 'package:image_picker/image_picker.dart';
 enum ShelfPosition { top, middle, bottom }
 
 class ShelfMappingPage extends StatefulWidget {
-  const ShelfMappingPage({super.key});
+  const ShelfMappingPage({super.key, required String supermarketId});
 
   @override
   State<ShelfMappingPage> createState() => _ShelfMappingPageState();

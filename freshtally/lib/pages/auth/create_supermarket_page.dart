@@ -1,3 +1,5 @@
+import 'dart:math';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -165,11 +167,7 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
         ),
         title: const Text(
           'Create Supermarket',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
-          ),
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
       ),
@@ -178,18 +176,11 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
         child: Form(
           key: _formKey,
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const SizedBox(height: 40.0),
-              const Center(
-                child: Text(
-                  "Create an account for your supermarket",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.normal,
-                    color: Colors.black87,
-                  ),
-                ),
+              const SizedBox(height: 20),
+              const Text(
+                "Create an account for your supermarket",
+                style: TextStyle(fontSize: 18),
               ),
               const SizedBox(height: 30.0),
 
@@ -232,11 +223,7 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
 
               const Text(
                 'Manager details:',
-                style: TextStyle(
-                  fontSize: 16.0,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16.0),
 
@@ -348,9 +335,11 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
                     : _createAccount,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green[600],
-                  padding: const EdgeInsets.symmetric(vertical: 16.0),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  maximumSize: const Size(double.infinity, 50),
+                  minimumSize: const Size(double.infinity, 50),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10.0),
+                    borderRadius: BorderRadius.circular(10),
                   ),
                 ),
                 child: _isLoading
@@ -370,6 +359,47 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
               // ... (keep your existing social login and sign-in button code)
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+// 👇 Helper widget for consistent text fields
+class IconTextField extends StatelessWidget {
+  final String hintText;
+  final IconData icon;
+  final TextEditingController controller;
+  final FormFieldValidator<String>? validator;
+  final bool isPassword;
+
+  const IconTextField({
+    super.key,
+    required this.hintText,
+    required this.icon,
+    required this.controller,
+    this.validator,
+    this.isPassword = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TextFormField(
+      controller: controller,
+      obscureText: isPassword,
+      validator: validator,
+      decoration: InputDecoration(
+        prefixIcon: Icon(icon),
+        hintText: hintText,
+        filled: true,
+        fillColor: Colors.grey[200],
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide.none,
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
         ),
       ),
     );

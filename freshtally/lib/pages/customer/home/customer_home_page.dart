@@ -243,7 +243,7 @@ class _HomeBody extends StatelessWidget {
               .collection('products')
               .where('discountPercentage', isGreaterThan: 0)
               .orderBy('discountExpiry')
-              .limit(5)
+              .limit(4)
               .snapshots(),
           builder: (context, snapshot) {
             if (snapshot.hasError) {

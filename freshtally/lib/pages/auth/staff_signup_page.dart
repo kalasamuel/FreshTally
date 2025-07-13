@@ -1,16 +1,33 @@
-// staff_registration_page.dart
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:freshtally/pages/auth/staffcode.dart';
+import 'package:freshtally/pages/auth/role_selection_page.dart';
 
-class StaffRegistrationPage extends StatefulWidget {
-  const StaffRegistrationPage({super.key});
-
-  @override
-  State<StaffRegistrationPage> createState() => _StaffRegistrationPageState();
+void main() {
+  runApp(const MyApp());
 }
 
-class _StaffRegistrationPageState extends State<StaffRegistrationPage> {
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Create Staff Account',
+      theme: ThemeData(primarySwatch: Colors.green, fontFamily: 'Inter'),
+      home: const StaffSignupPage(role: ''),
+      debugShowCheckedModeBanner: false,
+    );
+  }
+}
+
+class StaffSignupPage extends StatefulWidget {
+  const StaffSignupPage({super.key, required String role});
+
+  @override
+  State<StaffSignupPage> createState() => _StaffSignupPageState();
+}
+
+class _StaffSignupPageState extends State<StaffSignupPage> {
+  // Text editing controllers for each input field
   final TextEditingController _firstNameController = TextEditingController();
   final TextEditingController _lastNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
@@ -18,171 +35,238 @@ class _StaffRegistrationPageState extends State<StaffRegistrationPage> {
   final TextEditingController _confirmPasswordController =
       TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
-  final TextEditingController _supermarketNameController =
-      TextEditingController();
 
-  bool _isLoading = false;
-
-  Future<void> _requestVerificationCode() async {
-    if (_firstNameController.text.trim().isEmpty ||
-        _lastNameController.text.trim().isEmpty ||
-        _emailController.text.trim().isEmpty ||
-        _passwordController.text.isEmpty ||
-        _confirmPasswordController.text.isEmpty ||
-        _supermarketNameController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please fill in all required fields'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    if (_passwordController.text != _confirmPasswordController.text) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Passwords do not match'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      // Generate and send verification code
-      await requestStaffSignup(
-        supermarketName: _supermarketNameController.text.trim(),
-        staffName:
-            '${_firstNameController.text.trim()} ${_lastNameController.text.trim()}',
-      );
-
-      // Navigate to verification page with all the collected data
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => StaffVerificationPage(
-            firstName: _firstNameController.text.trim(),
-            lastName: _lastNameController.text.trim(),
-            email: _emailController.text.trim(),
-            password: _passwordController.text,
-            phone: _phoneController.text.trim(),
-            supermarketName: _supermarketNameController.text.trim(),
-          ),
-        ),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error requesting verification: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
-    }
+  @override
+  void dispose() {
+    // Dispose controllers to free up resources
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    _phoneController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Staff Registration')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            _buildTextField('First Name', _firstNameController),
-            _buildTextField('Last Name', _lastNameController),
-            _buildTextField(
-              'Email',
-              _emailController,
-              keyboardType: TextInputType.emailAddress,
-            ),
-            _buildTextField('Password', _passwordController, obscureText: true),
-            _buildTextField(
-              'Confirm Password',
-              _confirmPasswordController,
-              obscureText: true,
-            ),
-            _buildTextField(
-              'Phone (Optional)',
-              _phoneController,
-              keyboardType: TextInputType.phone,
-            ),
-            _buildTextField('Supermarket Name', _supermarketNameController),
+      backgroundColor: const Color(0xFFFFFFFF), // Light green background
+      appBar: AppBar(
+        title: Text(
+          'Create Your Staff Account',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.black,
+          ),
+        ),
+      ),
+      body: SafeArea(
+        child: Center(
+          child: Container(
+            margin: const EdgeInsets.all(
+              20.0,
+            ), // Margin around the main content area
+            padding: const EdgeInsets.all(16.0), // Padding inside the main card
+            child: SingleChildScrollView(
+              // Make content scrollable if keyboard appears
+              child: Column(
+                crossAxisAlignment:
+                    CrossAxisAlignment.start, // Align content to the start
+                mainAxisSize: MainAxisSize.min, // Take minimum space
+                children: [
+                  // App Bar Section
+                  Padding(
+                    padding: const EdgeInsets.only(
+                      bottom: 20.0,
+                    ), // More space below app bar
+                    child: Row(
+                      children: [
+                        const SizedBox(width: 8), // Spacer
+                      ],
+                    ),
+                  ),
+                  // Input Fields
+                  _buildTextField('Supermarket Name', _firstNameController),
+                  _buildTextField('First Name', _firstNameController),
+                  _buildTextField('Last Name', _lastNameController),
+                  _buildTextField(
+                    'Email',
+                    _emailController,
+                    keyboardType: TextInputType.emailAddress,
+                  ),
+                  _buildTextField(
+                    'Password',
+                    _passwordController,
+                    obscureText: true,
+                  ),
+                  _buildTextField(
+                    'Confirm Password',
+                    _confirmPasswordController,
+                    obscureText: true,
+                  ),
+                  _buildTextField(
+                    'Phone no. (Optional)',
+                    _phoneController,
+                    keyboardType: TextInputType.phone,
+                  ),
+                  const SizedBox(height: 24), // Space before button
+                  // Create Account Button
+                  SizedBox(
+                    width: double.infinity, // Button takes full width
+                    child: ElevatedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) {
+                              return RoleSelectionPage(role: '');
+                            },
+                          ),
+                        );
 
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _isLoading ? null : _requestVerificationCode,
-              child: _isLoading
-                  ? const CircularProgressIndicator()
-                  : const Text('Request Verification Code'),
+                        // Handle create account button press
+                        print('Create Account pressed!');
+                        print('First Name: ${_firstNameController.text}');
+                        print('Last Name: ${_lastNameController.text}');
+                        print('Email: ${_emailController.text}');
+                        print('Password: ${_passwordController.text}');
+                        print(
+                          'Confirm Password: ${_confirmPasswordController.text}',
+                        );
+                        print('Phone No: ${_phoneController.text}');
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(
+                          0xFF4CAF50,
+                        ), // Green button color
+                        padding: const EdgeInsets.symmetric(vertical: 16.0),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(
+                            10.0,
+                          ), // Rounded corners
+                        ),
+                        elevation: 1, // Add a subtle shadow
+                      ),
+                      child: const Text(
+                        'Create Account',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24), // Space below button
+                  // Or Sign In with:
+                  Center(
+                    child: Text(
+                      "Or Sign In with:",
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                  ),
+                  const SizedBox(height: 15.0),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      IconButton(
+                        icon: const Icon(
+                          Icons.facebook,
+                          size: 40,
+                          color: Colors.blue,
+                        ),
+                        onPressed: () {},
+                      ),
+                      const SizedBox(width: 20),
+                      IconButton(
+                        icon: Image.asset(
+                          'assets/icons/google.png',
+                          height: 35,
+                        ),
+                        onPressed: () {},
+                      ),
+                      const SizedBox(width: 20),
+                      IconButton(
+                        icon: const Icon(
+                          Icons.apple,
+                          size: 40,
+                          color: Colors.black,
+                        ),
+                        onPressed: () {},
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24), // Space below icons
+                  // Already have an account? Sign In
+                  Center(
+                    child: GestureDetector(
+                      onTap: () {
+                        print('Sign In tapped!');
+                        // Navigate to sign-in page
+                      },
+                      child: RichText(
+                        text: TextSpan(
+                          text: 'Already have an account? ',
+                          style: TextStyle(
+                            color: Colors.grey[800],
+                            fontSize: 15,
+                          ),
+                          children: const [
+                            TextSpan(
+                              text: 'Sign In',
+                              style: TextStyle(
+                                color: Colors.green, // Green for "Sign In"
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ],
+          ),
         ),
       ),
     );
   }
 
+  // Helper method to build a styled text input field
   Widget _buildTextField(
-    String label,
+    String hintText,
     TextEditingController controller, {
     TextInputType keyboardType = TextInputType.text,
     bool obscureText = false,
   }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: TextField(
-        controller: controller,
-        keyboardType: keyboardType,
-        obscureText: obscureText,
-        decoration: InputDecoration(
-          labelText: label,
-          border: const OutlineInputBorder(),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.grey[200], // Light grey background
+          borderRadius: BorderRadius.circular(10.0), // Rounded corners
+          border: Border.all(color: Colors.grey[300]!), // Light border
+        ),
+        child: TextField(
+          controller: controller,
+          keyboardType: keyboardType,
+          obscureText: obscureText,
+          decoration: InputDecoration(
+            hintText: hintText,
+            hintStyle: TextStyle(color: Colors.grey[600]),
+            border: InputBorder.none, // No border for the text field itself
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 14.0,
+            ),
+          ),
         ),
       ),
     );
   }
-}
 
-Future<void> requestStaffSignup({
-  required String supermarketName,
-  required String staffName,
-}) async {
-  // Generate a 6-digit code
-  String code = (100000 + (DateTime.now().millisecondsSinceEpoch % 900000))
-      .toString();
-
-  // Create a notification for the manager
-  await FirebaseFirestore.instance.collection('notifications').add({
-    'type': 'staff_signup',
-    'title': 'Staff Signup Request',
-    'message':
-        'A new staff member ($staffName) wants to join your supermarket "$supermarketName". Share the code below with them.',
-    'payload': {
-      'verificationCode': code,
-      'staffName': staffName,
-      'supermarketName': supermarketName,
-    },
-    'createdAt': FieldValue.serverTimestamp(),
-    'isRead': false,
-  });
-
-  // Store the verification code
-  await FirebaseFirestore.instance.collection('verification_codes').add({
-    'code': code,
-    'supermarketName': supermarketName,
-    'staffName': staffName,
-    'isUsed': false,
-    'createdAt': FieldValue.serverTimestamp(),
-    'expiresAt': Timestamp.fromDate(
-      DateTime.now().add(const Duration(days: 1)),
-    ),
-  });
+  // Helper method to build a social media icon button
 }

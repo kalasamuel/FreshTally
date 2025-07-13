@@ -7,7 +7,11 @@ class SyncStatusPage extends StatefulWidget {
   // Change the callback type to accept BuildContext.
   final void Function(BuildContext context)? onSyncNowPressed;
 
-  const SyncStatusPage({super.key, this.onSyncNowPressed});
+  const SyncStatusPage({
+    super.key,
+    this.onSyncNowPressed,
+    required String supermarketId,
+  });
 
   @override
   State<SyncStatusPage> createState() => _SyncStatusPageState();
@@ -95,7 +99,9 @@ class _SyncStatusPageState extends State<SyncStatusPage> {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const SettingsPage()),
+                MaterialPageRoute(
+                  builder: (context) => const SettingsPage(supermarketId: ''),
+                ),
               );
             },
           ),

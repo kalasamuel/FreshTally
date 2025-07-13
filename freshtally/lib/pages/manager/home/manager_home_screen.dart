@@ -4,6 +4,7 @@ import 'package:freshtally/pages/manager/managerNotifications/notifications.dart
 import 'package:freshtally/pages/shelfStaff/settings/settings_page.dart';
 import 'package:freshtally/pages/manager/productAllocationView/product_allocation_view.dart';
 import 'package:freshtally/pages/manager/promotions/smart_promotions_suggestions.dart';
+import 'package:freshtally/pages/manager/staffManagement/staff_management&join_code.dart';
 import 'package:freshtally/pages/shelfStaff/sync/sync_status_page.dart';
 import 'package:freshtally/pages/manager/promotions/promotions.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -17,7 +18,6 @@ class ManagerDashboardPage extends StatelessWidget {
     super.key,
     required this.supermarketName,
     required this.location,
-    this.managerId,
   });
 
   @override
@@ -185,6 +185,21 @@ class ManagerDashboardPage extends StatelessWidget {
                           MaterialPageRoute(
                             builder: (context) {
                               return ProductAllocationView();
+                            },
+                          ),
+                        );
+                      },
+                    ),
+                    _buildDashboardTile(
+                      title: 'Staff Management',
+                      icon: Icons.sync,
+                      color: const Color(0xFFE0F2F1), // Light green color
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) {
+                              return ManageStaffPage(supermarketId: '');
                             },
                           ),
                         );
