@@ -5,10 +5,10 @@ import 'package:intl/intl.dart';
 class ManagerNotificationCenterPage extends StatefulWidget {
   const ManagerNotificationCenterPage({
     super.key,
-    required this.managerSupermarketName,
+    required this.supermarketName,
   });
 
-  final String managerSupermarketName;
+  final String supermarketName;
 
   @override
   State<ManagerNotificationCenterPage> createState() =>
@@ -17,26 +17,50 @@ class ManagerNotificationCenterPage extends StatefulWidget {
 
 class _ManagerNotificationCenterPageState
     extends State<ManagerNotificationCenterPage> {
-  String get _mySupermarket => widget.managerSupermarketName;
   String _selectedFilter = 'All';
   final _filters = const ['All', 'Staff', 'Promotions'];
+  bool _hasIndexError = false;
+  bool _isLoading = true;
 
-  Stream<QuerySnapshot<Map<String, dynamic>>> _stream() {
-    final base = FirebaseFirestore.instance
-        .collection('notifications')
-        .orderBy('createdAt', descending: true);
+  Stream<QuerySnapshot> _createStream() {
+    try {
+      Query query = FirebaseFirestore.instance
+          .collection('notifications')
+          .where('supermarketName', isEqualTo: widget.supermarketName)
+          .orderBy('createdAt', descending: true);
 
-    switch (_selectedFilter) {
-      case 'Staff':
-        return base
-            .where('type', isEqualTo: 'staff_signup')
-            .where('supermarketName', isEqualTo: _mySupermarket)
-            .snapshots();
-      case 'Promotions':
-        return base.where('type', isEqualTo: 'promo_expiry').snapshots();
-      default:
-        return base.snapshots();
+      if (_selectedFilter == 'Staff') {
+        query = query.where('type', isEqualTo: 'staff_signup');
+      } else if (_selectedFilter == 'Promotions') {
+        query = query.where('type', isEqualTo: 'promo_expiry');
+      }
+
+      return query.snapshots().handleError((error) {
+        if (error.toString().contains('index')) {
+          if (mounted) {
+            setState(() {
+              _hasIndexError = true;
+              _isLoading = false;
+            });
+          }
+        }
+        return Stream.empty();
+      });
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _hasIndexError = true;
+          _isLoading = false;
+        });
+      }
+      return Stream.empty();
     }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _isLoading = true;
   }
 
   @override
@@ -52,91 +76,169 @@ class _ManagerNotificationCenterPageState
         child: Column(
           children: [
             const SizedBox(height: 16),
-            _filterRow(),
+            _buildFilterRow(),
             const SizedBox(height: 16),
-            Expanded(
-              child: StreamBuilder<QuerySnapshot>(
-                stream: _stream(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                    return const Center(child: Text('No notifications yet.'));
-                  }
-                  return ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: snapshot.data!.docs.length,
-                    itemBuilder: (context, index) => InkWell(
-                      onTap: () => _showNotificationDetails(
-                        context,
-                        snapshot.data!.docs[index],
-                      ),
-                      child: _buildNotificationCard(snapshot.data!.docs[index]),
-                    ),
-                  );
-                },
+            if (_isLoading)
+              const Expanded(child: Center(child: CircularProgressIndicator()))
+            else if (_hasIndexError)
+              _buildIndexErrorWidget()
+            else
+              Expanded(
+                child: StreamBuilder<QuerySnapshot>(
+                  stream: _createStream(),
+                  builder: (context, snapshot) {
+                    if (snapshot.hasError) {
+                      return Center(child: Text('Error: ${snapshot.error}'));
+                    }
+
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+
+                    if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                      return const Center(
+                        child: Text('No notifications available'),
+                      );
+                    }
+
+                    return ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: snapshot.data!.docs.length,
+                      itemBuilder: (context, index) {
+                        final doc = snapshot.data!.docs[index];
+                        return _buildNotificationCard(doc);
+                      },
+                    );
+                  },
+                ),
               ),
-            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _filterRow() => SingleChildScrollView(
-    scrollDirection: Axis.horizontal,
-    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-    child: Row(children: _filters.map(_buildFilterChip).toList()),
-  );
+  Widget _buildFilterRow() {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: _filters.map((filter) {
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: ChoiceChip(
+              label: Text(filter),
+              selected: _selectedFilter == filter,
+              selectedColor: const Color(0xFF4CAF50),
+              backgroundColor: const Color(0xFFF5F6FA),
+              onSelected: (selected) {
+                if (selected) {
+                  setState(() {
+                    _selectedFilter = filter;
+                    _isLoading = true;
+                    _hasIndexError = false;
+                  });
+                }
+              },
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              labelPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 4,
+              ),
+              avatar: _selectedFilter == filter
+                  ? const Icon(
+                      Icons.check_circle,
+                      color: Colors.white,
+                      size: 18,
+                    )
+                  : null,
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
 
-  Widget _buildFilterChip(String label) {
-    final selected = _selectedFilter == label;
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: ChoiceChip(
-        label: Text(label),
-        selected: selected,
-        selectedColor: const Color(0xFF4CAF50),
-        backgroundColor: const Color(0xFFF5F6FA),
-        onSelected: (_) => setState(() => _selectedFilter = label),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        labelPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        avatar: selected
-            ? const Icon(Icons.check_circle, color: Colors.white, size: 18)
-            : null,
+  Widget _buildIndexErrorWidget() {
+    return Expanded(
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline, color: Colors.red, size: 48),
+              const SizedBox(height: 16),
+              const Text(
+                'Index Required',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'This query requires a Firestore index to work properly.',
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () async {
+                  // This would typically use url_launcher package
+                  debugPrint('Redirect to Firebase console to create index');
+                },
+                child: const Text('Create Index'),
+              ),
+              const SizedBox(height: 16),
+              TextButton(
+                onPressed: () {
+                  setState(() {
+                    _isLoading = true;
+                    _hasIndexError = false;
+                  });
+                },
+                child: const Text('Try Again'),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
 
   Widget _buildNotificationCard(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
-    final type = (data['type'] ?? '').toLowerCase();
-    final title = data['title'] ?? '';
+    if (!doc.exists) return const SizedBox();
+
+    final data = doc.data() as Map<String, dynamic>? ?? {};
+    final type = (data['type'] ?? '').toString().toLowerCase();
+    final title = data['title'] ?? 'Notification';
     final message = data['message'] ?? '';
     final timestamp = data['createdAt'] as Timestamp?;
     final formattedTime = timestamp != null
         ? DateFormat('MMM d, h:mm a').format(timestamp.toDate())
         : '';
 
-    // For staff signup, include verification code in details
-    List<String> details = [];
-    if (type == 'staff_signup') {
-      final payload = data['payload'] as Map<String, dynamic>? ?? {};
-      final staffName = payload['staffName'] ?? data['staffName'] ?? '';
-      final code =
-          payload['verificationCode'] ?? data['verificationCode'] ?? '';
+    final payload = data['payload'] as Map<String, dynamic>? ?? {};
+    final staffName = payload['staffName'] ?? '';
+    final code = payload['verificationCode'] ?? '';
+    final supermarket = payload['supermarketName'] ?? '';
 
+    final List<String> details = [];
+    if (type == 'staff_signup') {
       details.addAll([
         message,
         if (staffName.isNotEmpty) 'Staff: $staffName',
-        if (code.isNotEmpty) 'Code: $code',
+        if (code.isNotEmpty) 'Verification Code: $code',
+        if (supermarket.isNotEmpty) 'Supermarket: $supermarket',
       ]);
     } else {
-      details = List<String>.from(data['details'] ?? []);
+      details.add(message);
+      if (data['expiryDate'] != null) {
+        details.add(
+          'Expires: ${DateFormat('MMM d, y').format((data['expiryDate'] as Timestamp).toDate())}',
+        );
+      }
     }
 
-    // Visual styling based on type
     final style = _getNotificationStyle(type);
 
     return Card(
@@ -147,179 +249,147 @@ class _ManagerNotificationCenterPageState
         side: BorderSide(color: style.borderColor),
       ),
       color: style.cardColor,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(style.icon, color: style.iconColor),
-                const SizedBox(width: 8),
-                Expanded(
+      child: InkWell(
+        onTap: () => _showNotificationDetails(context, doc),
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(style.icon, color: style.iconColor),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                  if (data['read'] == false)
+                    Container(
+                      width: 12,
+                      height: 12,
+                      decoration: const BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              ...details.map(
+                (detail) => Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
                   child: Text(
-                    title,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
+                    '• $detail',
+                    style: TextStyle(
+                      color: detail.toLowerCase().contains('code')
+                          ? Colors.blue
+                          : Colors.black87,
+                      fontWeight: detail.toLowerCase().contains('code')
+                          ? FontWeight.bold
+                          : FontWeight.normal,
                     ),
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            ...details.map(
-              (detail) => Padding(
-                padding: const EdgeInsets.only(bottom: 4),
+              ),
+              const SizedBox(height: 12),
+              Align(
+                alignment: Alignment.bottomRight,
                 child: Text(
-                  '• $detail',
-                  style: TextStyle(
-                    color:
-                        detail.toLowerCase().contains('expire') ||
-                            detail.toLowerCase().contains('hour') ||
-                            detail.toLowerCase().contains('code')
-                        ? Colors.blue
-                        : Colors.black87,
-                    fontWeight:
-                        detail.toLowerCase().contains('hour') ||
-                            detail.toLowerCase().contains('code')
-                        ? FontWeight.bold
-                        : FontWeight.normal,
-                  ),
+                  formattedTime,
+                  style: const TextStyle(color: Colors.grey, fontSize: 12),
                 ),
               ),
-            ),
-            const SizedBox(height: 12),
-            Align(
-              alignment: Alignment.bottomRight,
-              child: Text(
-                formattedTime,
-                style: const TextStyle(color: Colors.grey, fontSize: 12),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 
   void _showNotificationDetails(BuildContext context, DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
-    final type = data['type'] ?? '';
-    final title = data['title'] ?? 'Notification Details';
-    final details = List<String>.from(data['details'] ?? []);
+    if (!doc.exists) return;
 
-    // Special handling for staff signup notifications
+    final data = doc.data() as Map<String, dynamic>? ?? {};
+    final type = (data['type'] ?? '').toString().toLowerCase();
+
     if (type == 'staff_signup') {
       _showStaffSignupDialog(context, doc);
-      return;
+    } else {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(data['title'] ?? 'Notification Details'),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(data['message'] ?? ''),
+                if (data['expiryDate'] != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text(
+                      'Expires: ${DateFormat('MMM d, y h:mm a').format((data['expiryDate'] as Timestamp).toDate())}',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Close'),
+            ),
+          ],
+        ),
+      );
     }
 
-    // Default dialog for other notifications
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(title),
-        content: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ...details.map(
-                (detail) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4),
-                  child: Text(detail),
-                ),
-              ),
-              if (data['discountExpiry'] != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Text(
-                    'Expires: ${DateFormat('MMM d, y h:mm a').format((data['discountExpiry'] as Timestamp).toDate())}',
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
-    );
+    if (data['read'] == false) {
+      doc.reference.update({'read': true});
+    }
   }
 
-  void _showStaffSignupDialog(
+  Future<void> _showStaffSignupDialog(
     BuildContext context,
     DocumentSnapshot doc,
   ) async {
-    final data = doc.data() as Map<String, dynamic>;
+    final data = doc.data() as Map<String, dynamic>? ?? {};
     final payload = data['payload'] as Map<String, dynamic>? ?? {};
-
-    // Get verification details from payload or directly from data
-    final verificationCode =
-        payload['verificationCode'] ?? data['verificationCode'] ?? '';
-    final staffName =
-        payload['staffName'] ?? data['staffName'] ?? 'New Staff Member';
-    final supermarketName =
-        payload['supermarketName'] ??
-        data['supermarketName'] ??
-        'Your Supermarket';
-    final createdAt = (data['createdAt'] as Timestamp?)?.toDate();
-    final expiresAt =
-        (payload['expiresAt'] as Timestamp?)?.toDate() ??
-        (data['expiresAt'] as Timestamp?)?.toDate();
-    final isUsed = payload['isUsed'] ?? data['isUsed'] ?? false;
 
     await showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Staff Signup Verification'),
+        title: const Text('Staff Signup Details'),
         content: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                data['message'] ?? 'New staff member requires verification:',
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
+              _buildDetailRow('Message:', data['message'] ?? ''),
               const SizedBox(height: 16),
-              _buildDetailRow('Staff Name:', staffName),
-              _buildDetailRow('Supermarket:', supermarketName),
+              _buildDetailRow('Staff Name:', payload['staffName'] ?? ''),
+              _buildDetailRow('Supermarket:', payload['supermarketName'] ?? ''),
               const SizedBox(height: 16),
               _buildDetailRow(
                 'Verification Code:',
-                verificationCode,
+                payload['verificationCode'] ?? '',
                 isImportant: true,
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 16),
               _buildDetailRow(
                 'Status:',
-                isUsed ? 'Used (Expired)' : 'Active',
+                (data['read'] ?? false) ? 'Viewed' : 'New',
                 isImportant: true,
-                color: isUsed ? Colors.red : Colors.green,
-              ),
-              const SizedBox(height: 16),
-              _buildDetailRow(
-                'Created:',
-                createdAt != null
-                    ? DateFormat('MMM d, h:mm a').format(createdAt)
-                    : 'N/A',
-              ),
-              _buildDetailRow(
-                'Expires:',
-                expiresAt != null
-                    ? DateFormat('MMM d, h:mm a').format(expiresAt)
-                    : 'N/A',
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Please provide this code to the staff member for verification.',
-                style: TextStyle(fontStyle: FontStyle.italic),
+                color: (data['read'] ?? false) ? Colors.grey : Colors.green,
               ),
             ],
           ),
@@ -332,11 +402,6 @@ class _ManagerNotificationCenterPageState
         ],
       ),
     );
-
-    // Mark as read when dialog is closed if not already read
-    if (!(data['read'] ?? false)) {
-      await doc.reference.update({'read': true});
-    }
   }
 
   Widget _buildDetailRow(
@@ -351,18 +416,16 @@ class _ManagerNotificationCenterPageState
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            label,
+            '$label ',
             style: TextStyle(
               fontWeight: FontWeight.bold,
               color: isImportant ? (color ?? Colors.blue) : Colors.black87,
             ),
           ),
-          const SizedBox(width: 8),
           Expanded(
             child: Text(
               value,
               style: TextStyle(
-                fontWeight: isImportant ? FontWeight.bold : FontWeight.normal,
                 color: isImportant ? (color ?? Colors.blue) : Colors.black87,
               ),
             ),
@@ -393,7 +456,7 @@ class _ManagerNotificationCenterPageState
           icon: Icons.info_outline,
           iconColor: Colors.blue,
           cardColor: Colors.white,
-          borderColor: Colors.transparent,
+          borderColor: Colors.grey.shade200,
         );
     }
   }

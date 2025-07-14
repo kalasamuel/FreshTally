@@ -80,7 +80,7 @@ class ManagerDashboardPage extends StatelessWidget {
                           MaterialPageRoute(
                             builder: (context) {
                               return ManagerNotificationCenterPage(
-                                managerSupermarketName: supermarketName,
+                                supermarketName: supermarketName,
                               );
                             },
                           ),
