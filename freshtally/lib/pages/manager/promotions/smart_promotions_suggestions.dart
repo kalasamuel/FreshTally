@@ -3,11 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 class SmartPromotionsSuggestionsPage extends StatefulWidget {
-  final String supermarketId;
+  final String supermarketName;
 
   const SmartPromotionsSuggestionsPage({
     super.key,
-    required this.supermarketId,
+    required this.supermarketName,
   });
 
   @override
@@ -25,7 +25,7 @@ class _SmartPromotionsSuggestionsPageState
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('AI-Powered Discount Suggestions'),
+        title: const Text('Discount Suggestions'),
         actions: [
           IconButton(
             icon: _isLoadingAi
@@ -38,7 +38,7 @@ class _SmartPromotionsSuggestionsPageState
       body: StreamBuilder<QuerySnapshot>(
         stream: _firestore
             .collection('supermarkets')
-            .doc(widget.supermarketId)
+            .doc(widget.supermarketName)
             .collection('products')
             .where('stock', isGreaterThan: 0) // Only products in stock
             .snapshots(),
@@ -266,7 +266,7 @@ class _SmartPromotionsSuggestionsPageState
       // This is a simulation that updates all products with AI suggestions
       final products = await _firestore
           .collection('supermarkets')
-          .doc(widget.supermarketId)
+          .doc(widget.supermarketName)
           .collection('products')
           .get();
 

@@ -12,6 +12,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class ManagerDashboardPage extends StatelessWidget {
   final String supermarketName;
   final String location;
+  final String? supermarketId;
   final String? managerId;
 
   const ManagerDashboardPage({
@@ -19,6 +20,7 @@ class ManagerDashboardPage extends StatelessWidget {
     required this.supermarketName,
     required this.location,
     this.managerId,
+    this.supermarketId,
   });
 
   @override
@@ -171,7 +173,7 @@ class ManagerDashboardPage extends StatelessWidget {
                           MaterialPageRoute(
                             builder: (context) {
                               return SmartPromotionsSuggestionsPage(
-                                supermarketId: '',
+                                supermarketName: supermarketName,
                               );
                             },
                           ),
