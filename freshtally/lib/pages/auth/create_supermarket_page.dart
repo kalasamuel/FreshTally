@@ -2,17 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-// Assuming this helper widget is in a commonly accessible place
-// or you can define it within this file as well.
-// For the purpose of this solution, I'll include it here
-// as it was provided in the LoginPage code.
 class IconTextField extends StatelessWidget {
   final String hintText;
   final IconData icon;
   final bool isPassword;
   final TextEditingController? controller;
   final String? Function(String?)? validator;
-  final void Function(String)? onChanged; // Added for onChanged callback
+  final void Function(String)? onChanged;
 
   const IconTextField({
     super.key,
@@ -21,7 +17,7 @@ class IconTextField extends StatelessWidget {
     this.isPassword = false,
     this.controller,
     this.validator,
-    this.onChanged, // Initialize onChanged
+    this.onChanged,
   });
 
   @override
@@ -30,7 +26,7 @@ class IconTextField extends StatelessWidget {
       controller: controller,
       obscureText: isPassword,
       validator: validator,
-      onChanged: onChanged, // Pass onChanged to TextFormField
+      onChanged: onChanged,
       decoration: InputDecoration(
         hintText: hintText,
         prefixIcon: Icon(icon, color: Colors.grey),
@@ -109,16 +105,13 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
       });
     } catch (e) {
       setState(() {
-        _isSupermarketValid = true; // Assume valid on error to allow submission
+        _isSupermarketValid = true;
       });
     }
   }
 
   Future<void> _createAccount() async {
-    // Validate all fields first
     if (!(_formKey.currentState?.validate() ?? false)) return;
-
-    // Check supermarket uniqueness after all other fields are validated
     await _validateSupermarket();
     if (!_isSupermarketValid) return;
 
@@ -128,19 +121,21 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
     });
 
     try {
-      // 1. Create user account
       final UserCredential userCredential = await _auth
           .createUserWithEmailAndPassword(
             email: _emailController.text.trim(),
             password: _passwordController.text.trim(),
           );
 
-      // 2. Create supermarket document with uniqueness check
+      // ---- BEGIN minimal fix -------------------------------------------------
+      final String uid = userCredential.user!.uid; // non‑null UID
+      // -----------------------------------------------------------------------
+
       final supermarketData = {
         'name': _supermarketNameController.text.trim(),
         'location': _locationController.text.trim(),
         'manager': {
-          'uid': userCredential.user?.uid,
+          'uid': uid,
           'firstName': _firstNameController.text.trim(),
           'lastName': _lastNameController.text.trim(),
           'email': _emailController.text.trim(),
@@ -149,27 +144,27 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
         'staffCount': 1,
       };
 
+      await _firestore.collection('supermarkets').doc(uid).set(supermarketData);
+
       await _firestore
           .collection('supermarkets')
-          .doc(userCredential.user?.uid)
-          .set(supermarketData);
+          .doc(uid)
+          .collection('users')
+          .doc(uid) // same UID, guaranteed non‑empty
+          .set({
+            'firstName': _firstNameController.text.trim(),
+            'lastName': _lastNameController.text.trim(),
+            'email': _emailController.text.trim(),
+            'role': 'manager',
+            'supermarketId': uid,
+            'supermarketName': _supermarketNameController.text.trim(),
+            'createdAt': FieldValue.serverTimestamp(),
+          });
 
-      // 3. Create user profile
-      await _firestore.collection('users').doc(userCredential.user?.uid).set({
-        'firstName': _firstNameController.text.trim(),
-        'lastName': _lastNameController.text.trim(),
-        'email': _emailController.text.trim(),
-        'role': 'manager',
-        'supermarketId': userCredential.user?.uid,
-        'supermarketName': _supermarketNameController.text.trim(),
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-
-      // Navigate to manager home
       if (!mounted) return;
       Navigator.pushReplacementNamed(
         context,
-        '/staff/managerHome', // Ensure this route is defined in your main.dart
+        '/staff/managerHome',
         arguments: {
           'supermarketName': _supermarketNameController.text.trim(),
           'location': _locationController.text.trim(),

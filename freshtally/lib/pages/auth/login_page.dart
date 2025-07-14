@@ -63,7 +63,7 @@ class _LoginPageState extends State<LoginPage> {
   final _passwordController = TextEditingController();
   bool _isLoading = false;
   String? _errorMessage;
-  bool _rememberMe = false; // State for "Remember Me" checkbox
+  bool _rememberMe = false;
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -74,7 +74,6 @@ class _LoginPageState extends State<LoginPage> {
     _loadRememberMePreferences();
   }
 
-  // Loads saved email and rememberMe state from SharedPreferences
   Future<void> _loadRememberMePreferences() async {
     final prefs = await SharedPreferences.getInstance();
     final savedEmail = prefs.getString('rememberedEmail');
@@ -88,7 +87,6 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  // Saves or clears email and rememberMe state in SharedPreferences
   Future<void> _saveRememberMePreferences(String email) async {
     final prefs = await SharedPreferences.getInstance();
     if (_rememberMe) {
@@ -109,18 +107,14 @@ class _LoginPageState extends State<LoginPage> {
     });
 
     try {
-      // Authenticate with Firebase Auth
-      final UserCredential userCredential = await _auth
-          .signInWithEmailAndPassword(
-            email: _emailController.text.trim(),
-            password: _passwordController.text.trim(),
-          );
-
+      final userCredential = await _auth.signInWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
       final userId = userCredential.user?.uid;
       if (userId == null) throw Exception("User ID not found");
 
-      // Search all supermarkets for this user
-      QuerySnapshot supermarketsSnapshot = await _firestore
+      final supermarketsSnapshot = await _firestore
           .collection('supermarkets')
           .get();
 
@@ -147,33 +141,41 @@ class _LoginPageState extends State<LoginPage> {
           'User document not found in any supermarket. Contact support.',
         );
       }
-      final userData = userDoc.data() as Map<String, dynamic>?;
 
+      final userData = userDoc.data() as Map<String, dynamic>?;
       final role = userData?['role'] as String? ?? 'customer';
-      final supermarketName = userData?['supermarketName'] as String? ?? '';
-      final location = userData?['location'] as String? ?? '';
+
+      final supermarketDoc = await _firestore
+          .collection('supermarkets')
+          .doc(supermarketId)
+          .get();
+      final supermarketData = supermarketDoc.data() as Map<String, dynamic>?;
+
+      final supermarketName = supermarketData?['name'] as String? ?? 'Unknown';
+      final location = supermarketData?['location'] as String? ?? 'Unknown';
 
       await _saveRememberMePreferences(_emailController.text.trim());
 
       if (!mounted) return;
 
-      // Navigate based on role
       switch (role) {
         case 'manager':
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (context) => ManagerDashboardPage(
+              builder: (_) => ManagerDashboardPage(
                 supermarketName: supermarketName,
                 location: location,
               ),
             ),
           );
+          break;
+
         case 'storeManager':
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (context) => StoreManagerDashboard(
+              builder: (_) => StoreManagerDashboard(
                 supermarketId: supermarketId!,
                 supermarketName: supermarketName,
                 location: location,
@@ -181,11 +183,12 @@ class _LoginPageState extends State<LoginPage> {
             ),
           );
           break;
+
         case 'staff':
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (context) => ShelfStaffDashboard(
+              builder: (_) => ShelfStaffDashboard(
                 supermarketId: supermarketId!,
                 supermarketName: supermarketName,
                 location: location,
@@ -193,18 +196,20 @@ class _LoginPageState extends State<LoginPage> {
             ),
           );
           break;
+
         case 'customer':
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (context) => CustomerHomePage(
-                supermarketId: supermarketId!,
+              builder: (_) => CustomerHomePage(
+                supermarketId: supermarketId,
                 supermarketName: supermarketName,
                 location: location,
               ),
             ),
           );
           break;
+
         default:
           throw Exception("Unknown user role: $role. Contact support.");
       }
@@ -217,11 +222,12 @@ class _LoginPageState extends State<LoginPage> {
         _errorMessage = 'Login failed: ${e.toString()}';
       });
     } finally {
-      setState(() => _isLoading = false);
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
-  // Method to handle password reset
   Future<void> _forgotPassword() async {
     final email = _emailController.text.trim();
     if (email.isEmpty) {
@@ -244,9 +250,7 @@ class _LoginPageState extends State<LoginPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            'Password reset email sent to $email. Check your inbox.',
-          ),
+          content: Text('Password reset email sent to $email.'),
           backgroundColor: Colors.green,
         ),
       );
@@ -259,7 +263,9 @@ class _LoginPageState extends State<LoginPage> {
         _errorMessage = 'Failed to send password reset email: ${e.toString()}';
       });
     } finally {
-      setState(() => _isLoading = false);
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
@@ -280,19 +286,12 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  // Placeholder for social sign-in methods
   Future<void> _signInWithGoogle() async {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Google Sign-In not fully implemented yet.'),
       ),
     );
-    // TODO: Implement Google Sign-In using google_sign_in package
-    // After successful sign-in, you would typically:
-    // 1. Get user credentials from Google.
-    // 2. Use FirebaseAuth.instance.signInWithCredential(GoogleAuthProvider.credential(...)).
-    // 3. Check/create user document in Firestore.
-    // 4. Navigate based on role.
   }
 
   Future<void> _signInWithFacebook() async {
@@ -301,14 +300,12 @@ class _LoginPageState extends State<LoginPage> {
         content: Text('Facebook Sign-In not fully implemented yet.'),
       ),
     );
-    // TODO: Implement Facebook Sign-In using flutter_facebook_auth package
   }
 
   Future<void> _signInWithApple() async {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Apple Sign-In not fully implemented yet.')),
     );
-    // TODO: Implement Apple Sign-In using sign_in_with_apple package
   }
 
   @override
@@ -349,8 +346,6 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ),
               const SizedBox(height: 30.0),
-
-              // Email Field using IconTextField
               IconTextField(
                 hintText: "Email",
                 icon: Icons.email,
@@ -366,8 +361,6 @@ class _LoginPageState extends State<LoginPage> {
                 },
               ),
               const SizedBox(height: 16.0),
-
-              // Password Field using IconTextField
               IconTextField(
                 hintText: "Password",
                 icon: Icons.lock,
@@ -377,7 +370,6 @@ class _LoginPageState extends State<LoginPage> {
                   if (value == null || value.isEmpty) {
                     return 'Password is required';
                   }
-                  // Basic password length validation
                   if (value.length < 6) {
                     return 'Password must be at least 6 characters long';
                   }
@@ -385,8 +377,6 @@ class _LoginPageState extends State<LoginPage> {
                 },
               ),
               const SizedBox(height: 10.0),
-
-              // Remember Me and Forgot Password
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -402,15 +392,13 @@ class _LoginPageState extends State<LoginPage> {
                           _rememberMe = newValue!;
                         });
                       },
-                      controlAffinity: ListTileControlAffinity
-                          .leading, // Checkbox on the left
-                      contentPadding: EdgeInsets.zero, // Remove extra padding
-                      dense: true, // Make it more compact
+                      controlAffinity: ListTileControlAffinity.leading,
+                      contentPadding: EdgeInsets.zero,
+                      dense: true,
                     ),
                   ),
                   TextButton(
-                    onPressed:
-                        _forgotPassword, // Calls the new forgot password logic
+                    onPressed: _forgotPassword,
                     child: Text(
                       "Forgot Password?",
                       style: TextStyle(color: Colors.grey[600], fontSize: 14.0),
@@ -418,8 +406,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ],
               ),
-              const SizedBox(height: 20.0), // Adjusted spacing
-              // Error Message
+              const SizedBox(height: 20.0),
               if (_errorMessage != null)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 16.0),
@@ -429,48 +416,8 @@ class _LoginPageState extends State<LoginPage> {
                     textAlign: TextAlign.center,
                   ),
                 ),
-
-              // Login Button
               ElevatedButton(
-                onPressed: () async {
-                  final email = _emailController.text.trim();
-                  final password = _passwordController.text.trim();
-
-                  try {
-                    final userCredential = await FirebaseAuth.instance
-                        .signInWithEmailAndPassword(
-                          email: email,
-                          password: password,
-                        );
-
-                    if (context.mounted) {
-                      // Navigate based on your app logic; here we go to CustomerHomePage
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) =>
-                              const CustomerHomePage(supermarketId: ''),
-                        ),
-                      );
-                    }
-                  } on FirebaseAuthException catch (e) {
-                    String message = 'Login failed.';
-                    if (e.code == 'user-not-found') {
-                      message = 'No user found with this email.';
-                    } else if (e.code == 'wrong-password') {
-                      message = 'Incorrect password.';
-                    }
-
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(message),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                    }
-                  }
-                },
+                onPressed: _isLoading ? null : _login,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green[600],
                   padding: const EdgeInsets.symmetric(vertical: 16.0),
@@ -487,10 +434,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 20.0),
-
-              // Social Login Options
               const Center(
                 child: Text(
                   "Or Sign In with:",
@@ -507,12 +451,12 @@ class _LoginPageState extends State<LoginPage> {
                       size: 40,
                       color: Colors.blue,
                     ),
-                    onPressed: () => _signInWithFacebook(),
+                    onPressed: _signInWithFacebook,
                   ),
                   const SizedBox(width: 20),
                   IconButton(
                     icon: Image.asset('assets/icons/google.png', height: 35),
-                    onPressed: () => _signInWithGoogle(),
+                    onPressed: _signInWithGoogle,
                   ),
                   const SizedBox(width: 20),
                   IconButton(
@@ -521,23 +465,21 @@ class _LoginPageState extends State<LoginPage> {
                       size: 40,
                       color: Colors.black,
                     ),
-                    onPressed: () => _signInWithApple(),
+                    onPressed: _signInWithApple,
                   ),
                 ],
               ),
               const SizedBox(height: 30.0),
-
-              // Alternative Options
               Column(
                 children: [
                   SizedBox(
-                    width: double.infinity, // Make button full width
+                    width: double.infinity,
                     child: OutlinedButton(
                       onPressed: () {
-                        Navigator.push(
+                        Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const CreateSupermarketPage(),
+                            builder: (_) => const CreateSupermarketPage(),
                           ),
                         );
                       },
@@ -546,30 +488,23 @@ class _LoginPageState extends State<LoginPage> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 12.0,
-                        ), // Added padding
+                        padding: const EdgeInsets.symmetric(vertical: 12.0),
                       ),
                       child: const Text(
                         "New Supermarket?",
-                        style: TextStyle(
-                          color: Colors.green,
-                          fontSize: 16.0,
-                        ), // Adjusted font size
+                        style: TextStyle(color: Colors.green, fontSize: 16.0),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 10.0), // Spacing between buttons
+                  const SizedBox(height: 10.0),
                   SizedBox(
-                    width: double.infinity, // Make button full width
+                    width: double.infinity,
                     child: OutlinedButton(
                       onPressed: () {
-                        Navigator.push(
+                        Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const StaffSignupPage(
-                              role: '',
-                            ), // Assuming this is the correct page
+                            builder: (_) => const StaffSignupPage(role: ''),
                           ),
                         );
                       },
@@ -578,28 +513,23 @@ class _LoginPageState extends State<LoginPage> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 12.0,
-                        ), // Added padding
+                        padding: const EdgeInsets.symmetric(vertical: 12.0),
                       ),
                       child: const Text(
                         "Joining Staff?",
-                        style: TextStyle(
-                          color: Colors.orange,
-                          fontSize: 16.0,
-                        ), // Adjusted font size
+                        style: TextStyle(color: Colors.orange, fontSize: 16.0),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 10.0), // Spacing between buttons
+                  const SizedBox(height: 10.0),
                   SizedBox(
-                    width: double.infinity, // Make button full width
+                    width: double.infinity,
                     child: OutlinedButton(
                       onPressed: () {
-                        Navigator.push(
+                        Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const CustomerSignupPage(),
+                            builder: (_) => const CustomerSignupPage(),
                           ),
                         );
                       },
@@ -608,16 +538,14 @@ class _LoginPageState extends State<LoginPage> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 12.0,
-                        ), // Added padding
+                        padding: const EdgeInsets.symmetric(vertical: 12.0),
                       ),
                       child: Text(
                         "I am Customer",
                         style: TextStyle(
                           color: Colors.blue[700],
                           fontSize: 16.0,
-                        ), // Adjusted font size
+                        ),
                       ),
                     ),
                   ),
