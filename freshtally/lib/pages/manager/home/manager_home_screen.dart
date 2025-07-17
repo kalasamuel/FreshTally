@@ -1,14 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:freshtally/pages/manager/analytics/analytics_dashbaord_page.dart';
-import 'package:freshtally/pages/shelfStaff/notifications/notifications_shelfstaff.dart';
+import 'package:freshtally/pages/manager/managerNotifications/notifications.dart';
 import 'package:freshtally/pages/shelfStaff/settings/settings_page.dart';
 import 'package:freshtally/pages/manager/productAllocationView/product_allocation_view.dart';
 import 'package:freshtally/pages/manager/promotions/smart_promotions_suggestions.dart';
+
 import 'package:freshtally/pages/shelfStaff/sync/sync_status_page.dart';
 import 'package:freshtally/pages/manager/promotions/promotions.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ManagerDashboardPage extends StatelessWidget {
-  const ManagerDashboardPage({super.key});
+  final String supermarketName;
+  final String location;
+  final String? supermarketId;
+  final String? managerId;
+
+  const ManagerDashboardPage({
+    super.key,
+    required this.supermarketName,
+    required this.location,
+    this.managerId,
+    this.supermarketId,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -37,15 +50,44 @@ class ManagerDashboardPage extends StatelessWidget {
                     ),
                     const SizedBox(width: 12),
                     // Supermarket Name
-                    const Text(
-                      'Mega Supermarket - Kampala',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          supermarketName,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        Text(
+                          location,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Colors.black54,
+                          ),
+                        ),
+                      ],
                     ),
                     const Spacer(),
+                    // Notifications Icon
+                    IconButton(
+                      icon: const Icon(Icons.notifications, size: 30),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) {
+                              return ManagerNotificationCenterPage(
+                                supermarketName: supermarketName,
+                              );
+                            },
+                          ),
+                        );
+                        // Handle settings tap
+                      },
+                    ),
                     // Settings Icon
                     IconButton(
                       icon: const Icon(Icons.settings, size: 30),
@@ -54,7 +96,7 @@ class ManagerDashboardPage extends StatelessWidget {
                           context,
                           MaterialPageRoute(
                             builder: (context) {
-                              return SettingsPage();
+                              return SettingsPage(supermarketId: '');
                             },
                           ),
                         );
@@ -99,7 +141,7 @@ class ManagerDashboardPage extends StatelessWidget {
                           context,
                           MaterialPageRoute(
                             builder: (context) {
-                              return const AnalyticsDashboardPage();
+                              return AnalyticsDashboardPage();
                             },
                           ),
                         );
@@ -120,21 +162,6 @@ class ManagerDashboardPage extends StatelessWidget {
                         );
                       },
                     ),
-                    _buildDashboardTile(
-                      title: 'Notifications',
-                      icon: Icons.notifications,
-                      color: const Color(0xFFFFF3E0), // Beige/Yellow color
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) {
-                              return NotificationCenterPage();
-                            },
-                          ),
-                        );
-                      },
-                    ),
 
                     _buildDashboardTile(
                       title: 'Smart promotions',
@@ -145,7 +172,9 @@ class ManagerDashboardPage extends StatelessWidget {
                           context,
                           MaterialPageRoute(
                             builder: (context) {
-                              return SmartPromotionsSuggestionsPage();
+                              return SmartPromotionsSuggestionsPage(
+                                supermarketName: supermarketName,
+                              );
                             },
                           ),
                         );
@@ -166,6 +195,7 @@ class ManagerDashboardPage extends StatelessWidget {
                         );
                       },
                     ),
+
                     _buildDashboardTile(
                       title: 'Sync Status',
                       icon: Icons.sync,
@@ -175,7 +205,7 @@ class ManagerDashboardPage extends StatelessWidget {
                           context,
                           MaterialPageRoute(
                             builder: (context) {
-                              return SyncStatusPage();
+                              return SyncStatusPage(supermarketId: '');
                             },
                           ),
                         );
@@ -217,6 +247,40 @@ class ManagerDashboardPage extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+Future<void> checkPromotionExpiries() async {
+  final now = DateTime.now();
+  final twoDaysFromNow = now.add(const Duration(days: 2));
+  final promos = await FirebaseFirestore.instance
+      .collection('promotions')
+      .get();
+
+  for (var doc in promos.docs) {
+    final expiryTimestamp = doc['expiryDate'];
+    if (expiryTimestamp == null) continue;
+    final expiry = (expiryTimestamp as Timestamp).toDate();
+
+    if (expiry.isAfter(now) && expiry.isBefore(twoDaysFromNow)) {
+      // Check if notification already exists for this promo
+      final existing = await FirebaseFirestore.instance
+          .collection('notifications')
+          .where('type', isEqualTo: 'promo_expiry')
+          .where('payload.promotionId', isEqualTo: doc.id)
+          .get();
+
+      if (existing.docs.isEmpty) {
+        await FirebaseFirestore.instance.collection('notifications').add({
+          'type': 'promo_expiry',
+          'title': 'Promotion Expiring Soon',
+          'message': 'The promotion "${doc['title']}" is expiring in 2 days.',
+          'payload': {'promotionId': doc.id, 'expiryDate': doc['expiryDate']},
+          'createdAt': FieldValue.serverTimestamp(),
+          'isRead': false,
+        });
+      }
+    }
   }
 }
 

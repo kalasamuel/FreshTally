@@ -1,12 +1,24 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:freshtally/pages/customer/product/products_details_page.dart';
 import 'package:freshtally/pages/customer/search/product_search_page.dart';
 import 'package:freshtally/pages/customer/list/shopping_list_page.dart';
 import 'package:freshtally/pages/customer/discounts/discounts_and_promotions.dart';
 import 'package:freshtally/pages/customer/customerNotifications/customer_notifications.dart';
 import 'package:freshtally/pages/shelfStaff/settings/settings_page.dart';
+import 'package:intl/intl.dart';
+import 'package:flutter_typeahead/flutter_typeahead.dart';
 
 class CustomerHomePage extends StatefulWidget {
-  const CustomerHomePage({super.key});
+  final String? supermarketName;
+  final String? location;
+  final String? supermarketId;
+  const CustomerHomePage({
+    super.key,
+    this.supermarketName,
+    this.location,
+    required this.supermarketId,
+  });
 
   @override
   State<CustomerHomePage> createState() => _CustomerHomePageState();
@@ -15,10 +27,8 @@ class CustomerHomePage extends StatefulWidget {
 class _CustomerHomePageState extends State<CustomerHomePage> {
   int _selectedIndex = 0;
 
-  // Define the pages for the bottom navigation bar.
   late final List<Widget> _pages;
 
-  // Define the titles for the app bar.
   static const List<String> _titles = [
     'Home',
     'Search Products',
@@ -29,9 +39,8 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
   @override
   void initState() {
     super.initState();
-    // Initialize _pages here, passing the callback to _HomeBody.
     _pages = <Widget>[
-      _HomeBody(onNavigateToOffers: _navigateToOffersTab), // Pass the callback
+      _HomeBody(onNavigateToOffers: _navigateToOffersTab),
       const ProductSearchPage(),
       const ShoppingListPage(),
       const DiscountsAndPromotionsPage(),
@@ -39,14 +48,12 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
     ];
   }
 
-  // Callback function to change the selected index to the Offers tab.
   void _navigateToOffersTab() {
     setState(() {
-      _selectedIndex = 3; // Index for 'Offers' tab
+      _selectedIndex = 3;
     });
   }
 
-  // Handler for when a navigation bar item is tapped.
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
@@ -57,20 +64,123 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        automaticallyImplyLeading: false,
-        title: Center(
-          child: Text(
-            _titles[_selectedIndex],
-            style: const TextStyle(
-              fontSize: 24, // Consistent font size for app bar titles.
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
+        automaticallyImplyLeading:
+            false, // Ensures no back button is automatically added
+        backgroundColor: const Color(0xFFFFFFFF),
+        elevation: 0.0,
+        titleSpacing: 0, // Remove default spacing around title
+        title: Row(
+          children: [
+            // Supermarket Name and Location (Left side)
+            Expanded(
+              flex: 2,
+              child: Padding(
+                padding: const EdgeInsets.only(left: 16.0), // Add left padding
+                child: FutureBuilder<DocumentSnapshot>(
+                  future: FirebaseFirestore.instance
+                      .collection('supermarkets')
+                      .doc(widget.supermarketId) // Use widget.supermarketId
+                      .get(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Loading...',
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          Text(
+                            '',
+                            style: TextStyle(fontSize: 14, color: Colors.grey),
+                          ),
+                        ],
+                      );
+                    }
+                    if (snapshot.hasError) {
+                      return const Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Error',
+                            style: TextStyle(fontSize: 18, color: Colors.red),
+                          ),
+                          Text(
+                            'Failed to load',
+                            style: TextStyle(fontSize: 14, color: Colors.red),
+                          ),
+                        ],
+                      );
+                    }
+                    if (!snapshot.hasData || !snapshot.data!.exists) {
+                      return const Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Supermarket',
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: Colors.black87,
+                            ),
+                          ),
+                          Text(
+                            'Unknown Location',
+                            style: TextStyle(fontSize: 14, color: Colors.grey),
+                          ),
+                        ],
+                      );
+                    }
+                    final data = snapshot.data!.data() as Map<String, dynamic>;
+                    final name = data['name'] ?? 'Supermarket';
+                    final location = data['location'] ?? 'Unknown Location';
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          name,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                          overflow: TextOverflow.ellipsis, // Handle long names
+                        ),
+                        Text(
+                          location,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey,
+                          ),
+                          overflow:
+                              TextOverflow.ellipsis, // Handle long locations
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
             ),
-          ),
+            // Centered Page Title
+            Expanded(
+              flex: 2,
+              child: Center(
+                child: Text(
+                  _titles[_selectedIndex],
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
-        backgroundColor: const Color(0xFFFFFFFF), // App bar background color.
-        elevation: 0.0, // No shadow for a clean look.
         actions: [
+          // Notifications Icon (Right side)
           IconButton(
             onPressed: () {
               Navigator.push(
@@ -84,24 +194,24 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
               Icons.notifications,
               size: 30,
               color: Colors.black87,
-            ), // Consistent icon size and color.
+            ),
           ),
+          // Settings Icon (Right side)
           IconButton(
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const SettingsPage()),
+                MaterialPageRoute(
+                  builder: (context) => const SettingsPage(supermarketId: ''),
+                ),
               );
             },
-            icon: const Icon(
-              Icons.settings,
-              size: 30,
-              color: Colors.black87,
-            ), // Consistent icon size and color.
+            icon: const Icon(Icons.settings, size: 30, color: Colors.black87),
           ),
+          const SizedBox(width: 8),
         ],
       ),
-      body: _pages[_selectedIndex], // Display the selected page.
+      body: _pages[_selectedIndex],
       bottomNavigationBar: NavigationBar(
         destinations: const [
           NavigationDestination(icon: Icon(Icons.home), label: 'Home'),
@@ -111,22 +221,15 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
         ],
         selectedIndex: _selectedIndex,
         onDestinationSelected: _onItemTapped,
-        backgroundColor: const Color(
-          0xFFFFFFFF,
-        ), // Navigation bar background color.
-        indicatorColor: const Color(
-          0xFFC8E6C9,
-        ), // Indicator color for selected item.
-        labelBehavior: NavigationDestinationLabelBehavior
-            .alwaysShow, // Always show labels.
+        backgroundColor: const Color(0xFFFFFFFF),
+        indicatorColor: const Color(0xFFC8E6C9),
+        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
       ),
     );
   }
 }
 
-// _HomeBody is now a StatefulWidget to manage its own state (e.g., filter chips).
 class _HomeBody extends StatelessWidget {
-  // Callback to notify the parent to change the tab.
   final VoidCallback onNavigateToOffers;
 
   const _HomeBody({required this.onNavigateToOffers});
@@ -136,40 +239,79 @@ class _HomeBody extends StatelessWidget {
     final categories = ['Groceries', 'Dairy', 'Snacks', 'Fresh', 'Drinks'];
 
     return ListView(
-      padding: const EdgeInsets.symmetric(
-        horizontal: 24.0,
-        vertical: 24.0,
-      ), // Consistent padding.
+      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
       children: [
-        // Search Bar
-        TextField(
-          decoration: InputDecoration(
-            hintText: 'Search products...',
-            hintStyle: const TextStyle(
-              color: Colors.black54,
-            ), // Consistent hint style.
-            prefixIcon: const Icon(
-              Icons.search,
-              color: Colors.black87,
-            ), // Consistent icon color.
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(
-                12,
-              ), // Consistent rounded corners.
-              borderSide: BorderSide.none, // No border.
-            ),
-            filled: true,
-            fillColor: const Color(0xFFF5F6FA), // Consistent fill color.
-          ),
-          style: const TextStyle(
-            fontSize: 16,
-            color: Colors.black87,
-          ), // Consistent text style.
+        TypeAheadField<Map<String, dynamic>>(
+          builder: (context, controller, focusNode) {
+            return TextFormField(
+              controller: controller,
+              focusNode: focusNode,
+              decoration: InputDecoration(
+                hintText: 'Search products...',
+                hintStyle: const TextStyle(color: Colors.black54),
+                prefixIcon: const Icon(Icons.search, color: Colors.black87),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                filled: true,
+                fillColor: const Color(0xFFF5F6FA),
+              ),
+              style: const TextStyle(fontSize: 16, color: Colors.black87),
+            );
+          },
+          suggestionsCallback: (pattern) async {
+            if (pattern.isEmpty) return [];
+            final querySnapshot = await FirebaseFirestore.instance
+                .collection('products')
+                .where('name', isGreaterThanOrEqualTo: pattern)
+                .where('name', isLessThanOrEqualTo: '$pattern\uf8ff')
+                .limit(10)
+                .get();
+
+            return querySnapshot.docs.map((doc) {
+              final data = doc.data();
+              data['id'] = doc.id; // Ensure ID is part of the data
+              return data;
+            }).toList();
+          },
+          itemBuilder: (context, suggestion) {
+            final name = suggestion['name'] ?? 'Unnamed';
+            final price = suggestion['price'] ?? 0;
+            final imageUrl = suggestion['image_url'] ?? '';
+
+            return ListTile(
+              leading: imageUrl.isNotEmpty
+                  ? Image.network(
+                      imageUrl,
+                      width: 40,
+                      height: 40,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) =>
+                          const Icon(Icons.image, size: 40),
+                    )
+                  : const Icon(Icons.image, size: 40),
+              title: Text(name),
+              subtitle: Text('UGX $price'),
+            );
+          },
+          onSelected: (suggestion) {
+            // Renamed from onSuggestionSelected to onSelected
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) =>
+                    ProductDetailsPage(productId: suggestion['id']),
+              ),
+            );
+          },
         ),
-        const SizedBox(height: 20), // Increased space.
-        // Horizontal Category Chips
+
+        const SizedBox(height: 20),
+
+        /// Categories
         SizedBox(
-          height: 44, // Adjusted height for better visual.
+          height: 44,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
             itemCount: categories.length,
@@ -183,73 +325,73 @@ class _HomeBody extends StatelessWidget {
                   color: Colors.black87,
                 ),
               ),
-              backgroundColor: const Color(
-                0xFFF5F6FA,
-              ), // Consistent chip background.
+              backgroundColor: const Color(0xFFF5F6FA),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(
-                  12.0,
-                ), // Consistent rounded corners.
-                side: BorderSide.none, // No border.
+                borderRadius: BorderRadius.circular(12.0),
+                side: BorderSide.none,
               ),
               padding: const EdgeInsets.symmetric(
                 horizontal: 12.0,
                 vertical: 8.0,
-              ), // Adjusted padding.
+              ),
             ),
           ),
         ),
-        const SizedBox(height: 24), // Increased space.
-        // Hot Discounts Section Title
+
+        const SizedBox(height: 24),
         const Text(
           'Hot Discounts',
           style: TextStyle(
-            fontSize: 20, // Consistent section title font size.
+            fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: Colors.black87, // Consistent text color.
+            color: Colors.black87,
           ),
         ),
-        const SizedBox(height: 12), // Space below title.
-        // Hot Discounts Cards
-        DiscountCard(
-          title: '50% OFF Chocolate',
-          cardColor: const Color(0xFFFFE0E6), // Light pink.
-          iconColor: const Color(0xFFE91E63), // Darker pink.
-          onTap:
-              onNavigateToOffers, // Call the callback to navigate to Offers tab.
+        const SizedBox(height: 12),
+
+        /// Hot Discounts
+        StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance
+              .collection('products')
+              .where('discountPercentage', isGreaterThan: 0)
+              .orderBy('discountExpiry')
+              .limit(4)
+              .snapshots(),
+          builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return const Center(child: Text('Failed to load discounts'));
+            }
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            final docs = snapshot.data!.docs;
+
+            if (docs.isEmpty) {
+              return const Center(child: Text('No active discounts'));
+            }
+
+            return Column(
+              children: docs.map((doc) {
+                final data = doc.data() as Map<String, dynamic>;
+                final name = data['name'] ?? '';
+                final discountedPrice = (data['discountedPrice'] ?? 0)
+                    .toDouble();
+                final originalPrice = (data['price'] ?? 0).toDouble();
+                final expiry = (data['discountExpiry'] as Timestamp?)?.toDate();
+
+                return DiscountCard(
+                  title: '$name: UGX ${discountedPrice.toStringAsFixed(0)}',
+                  subtitle:
+                      'Was UGX ${originalPrice.toStringAsFixed(0)} • Expires: ${expiry != null ? DateFormat('yyyy-MM-dd').format(expiry) : 'N/A'}',
+                  cardColor: const Color(0xFFFFE0E6),
+                  iconColor: const Color(0xFFE91E63),
+                  onTap: onNavigateToOffers,
+                );
+              }).toList(),
+            );
+          },
         ),
-        const SizedBox(height: 12), // Space between cards.
-        DiscountCard(
-          title: 'Buy 1 Get 1 Free – Milk',
-          cardColor: const Color(0xFFFFE0E6),
-          iconColor: const Color(0xFFE91E63),
-          onTap:
-              onNavigateToOffers, // Call the callback to navigate to Offers tab.
-        ),
-        const SizedBox(height: 24), // Increased space.
-        // Suggested Combos Section Title
-        const Text(
-          'Suggested Combos',
-          style: TextStyle(
-            fontSize: 20, // Consistent section title font size.
-            fontWeight: FontWeight.bold,
-            color: Colors.black87, // Consistent text color.
-          ),
-        ),
-        const SizedBox(height: 12), // Space below title.
-        // Suggested Combos Cards
-        const DiscountCard(
-          title: 'Rice + Beans Combo',
-          cardColor: Color(0xFFE3F2FD), // Light blue.
-          iconColor: Color(0xFF1976D2), // Blue.
-        ),
-        const SizedBox(height: 12), // Space between cards.
-        const DiscountCard(
-          title: 'Tea + Sugar + Biscuits',
-          cardColor: Color(0xFFE3F2FD),
-          iconColor: Color(0xFF1976D2),
-        ),
-        const SizedBox(height: 24), // Space at the bottom.
       ],
     );
   }
@@ -257,6 +399,7 @@ class _HomeBody extends StatelessWidget {
 
 class DiscountCard extends StatelessWidget {
   final String title;
+  final String? subtitle;
   final Color cardColor;
   final Color iconColor;
   final VoidCallback? onTap;
@@ -264,48 +407,52 @@ class DiscountCard extends StatelessWidget {
   const DiscountCard({
     super.key,
     required this.title,
-    this.cardColor = const Color(0xFFF5F6FA), // Default to a light background.
-    this.iconColor = Colors.black87, // Default icon color.
+    this.subtitle,
+    this.cardColor = const Color(0xFFF5F6FA),
+    this.iconColor = Colors.black87,
     this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     return Card(
-      elevation: 0.1, // Consistent subtle elevation.
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ), // Consistent rounded corners.
+      elevation: 0.1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       color: cardColor,
+      margin: const EdgeInsets.symmetric(vertical: 6),
       child: InkWell(
-        onTap: onTap, // Use the provided onTap callback.
+        onTap: onTap,
         borderRadius: BorderRadius.circular(16),
         child: Padding(
-          padding: const EdgeInsets.all(16.0), // Consistent padding.
+          padding: const EdgeInsets.all(16.0),
           child: Row(
             children: [
-              Icon(
-                Icons.local_offer,
-                color: iconColor,
-                size: 28,
-              ), // Consistent icon size.
-              const SizedBox(width: 16), // Space between icon and text.
+              Icon(Icons.local_offer, color: iconColor, size: 28),
+              const SizedBox(width: 16),
               Expanded(
-                // Ensures text wraps if too long.
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 16, // Consistent text size.
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black87, // Consistent text color.
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    if (subtitle != null)
+                      Text(
+                        subtitle!,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Colors.black54,
+                        ),
+                      ),
+                  ],
                 ),
               ),
-              const Icon(
-                Icons.chevron_right,
-                color: Colors.black87,
-                size: 24,
-              ), // Consistent icon size and color.
+              const Icon(Icons.chevron_right, color: Colors.black87, size: 24),
             ],
           ),
         ),

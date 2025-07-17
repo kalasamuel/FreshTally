@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart'; // Keep Firestore import if it's used
-import 'package:freshtally/pages/shelfStaff/settings/settings_page.dart'; // Assuming settings page is shared or similar
+// Assuming settings page is shared or similar
 
 // PriceEntryPage is now a StatefulWidget to manage its TextEditingControllers.
 class PriceEntryPage extends StatefulWidget {
-  const PriceEntryPage({super.key});
+  const PriceEntryPage({super.key, required String supermarketId});
 
   @override
   State<PriceEntryPage> createState() => _PriceEntryPageState();

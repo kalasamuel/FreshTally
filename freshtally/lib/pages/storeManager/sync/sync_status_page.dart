@@ -1,29 +1,15 @@
 import 'package:flutter/material.dart';
 
-void main() {
-  runApp(const MyApp());
-}
+class SyncStatusPage extends StatefulWidget {
+  final void Function(BuildContext context)? onSyncNowPressed;
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  const SyncStatusPage({super.key, this.onSyncNowPressed});
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Sync Status UI',
-      theme: ThemeData(
-        primarySwatch: Colors.green,
-        fontFamily: 'Inter', // Assuming Inter font for a modern look
-      ),
-      home: const SyncStatusPage(),
-      debugShowCheckedModeBanner: false, // Hide the debug banner
-    );
-  }
+  State<SyncStatusPage> createState() => _SyncStatusPageState();
 }
 
-class SyncStatusPage extends StatelessWidget {
-  const SyncStatusPage({super.key});
-
+class _SyncStatusPageState extends State<SyncStatusPage> {
   void _showSyncResultSnackbar(
     BuildContext context, {
     required bool success,
@@ -31,7 +17,7 @@ class SyncStatusPage extends StatelessWidget {
   }) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        backgroundColor: Colors.grey[90],
+        backgroundColor: Colors.grey[900],
         content: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -50,15 +36,14 @@ class SyncStatusPage extends StatelessWidget {
             if (!success)
               TextButton(
                 onPressed: () {
-                  // Retry logic here
                   ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                  print('RETRY pressed!');
+                  debugPrint('RETRY pressed!');
                 },
                 child: const Text(
                   'RETRY',
                   style: TextStyle(
                     fontSize: 14,
-                    color: Colors.green,
+                    color: Color(0xFF4CAF50),
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -77,74 +62,53 @@ class SyncStatusPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFFFFFFF),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFFFFFFFF),
+        elevation: 0.0,
+        title: const Text(
+          'Sync Status',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+          ),
+        ),
+        centerTitle: true,
+      ),
       body: SafeArea(
-        child: Center(
-          child: Container(
-            margin: const EdgeInsets.all(20.0),
+        child: SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 24.0,
+              vertical: 24.0,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // App Bar Section
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      // Back arrow icon
-                      IconButton(
-                        icon: const Icon(
-                          Icons.arrow_back_ios,
-                          color: Colors.black,
-                        ),
-                        onPressed: () {
-                          // Handle back button press
-                          Navigator.pop(context);
-                        },
-                      ),
-                      // "Sync Status" title
-                      const Text(
-                        'Sync Status',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black,
-                        ),
-                      ),
-                      // Refresh icon
-                      IconButton(
-                        icon: const Icon(Icons.refresh, color: Colors.black),
-                        onPressed: () {
-                          // Handle refresh button press
-                          print('Refresh sync status!');
-                        },
-                      ),
-                    ],
+                const Text(
+                  'Sync Overview',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
                   ),
                 ),
-                // Last Synced Status Card
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16.0,
-                    vertical: 8.0,
+                const SizedBox(height: 24),
+                Card(
+                  elevation: 0.1,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                  child: Container(
+                  color: const Color(0xFFF1F8E9),
+                  child: Padding(
                     padding: const EdgeInsets.all(16.0),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[100], // Light grey background
-                      borderRadius: BorderRadius.circular(
-                        10.0,
-                      ), // Rounded corners
-                      border: Border.all(
-                        color: Colors.grey[300]!,
-                      ), // Light border
-                    ),
                     child: Row(
                       children: [
                         const Icon(
                           Icons.cloud_queue,
-                          color: Colors.grey,
+                          color: Colors.black87,
                           size: 30,
-                        ), // Cloud icon
+                        ),
                         const SizedBox(width: 12),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -152,7 +116,7 @@ class SyncStatusPage extends StatelessWidget {
                             Text(
                               'Last Synced:',
                               style: TextStyle(
-                                color: Colors.grey[700],
+                                color: Colors.black54,
                                 fontSize: 15,
                               ),
                             ),
@@ -166,7 +130,7 @@ class SyncStatusPage extends StatelessWidget {
                             ),
                           ],
                         ),
-                        const Spacer(), // Pushes "Online" and "Sync Now" to the right
+                        const Spacer(),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
@@ -175,42 +139,47 @@ class SyncStatusPage extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w600,
-                                color: Colors.green,
+                                color: Color(0xFF4CAF50),
                               ),
                             ),
                             const SizedBox(height: 4),
-                            // Sync Now Button
-                            ElevatedButton(
-                              onPressed: () {
-                                // Simulate sync result
-                                bool syncSuccess =
-                                    false; // Change to true to test success
-                                int failedCount = 3;
-                                _showSyncResultSnackbar(
-                                  context,
-                                  success: syncSuccess,
-                                  failedCount: failedCount,
-                                );
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF4CAF50),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 6,
+                            SizedBox(
+                              height: 36,
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  if (widget.onSyncNowPressed != null) {
+                                    widget.onSyncNowPressed!(context);
+                                  } else {
+                                    bool syncSuccess = false;
+                                    int failedCount = 3;
+                                    _showSyncResultSnackbar(
+                                      context,
+                                      success: syncSuccess,
+                                      failedCount: failedCount,
+                                    );
+                                  }
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFFC8E6C9),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 6,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  elevation: 0.1,
+                                  minimumSize: Size.zero,
+                                  tapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
                                 ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8.0),
-                                ),
-                                elevation: 1,
-                                minimumSize: Size.zero,
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              ),
-                              child: const Text(
-                                'Sync Now',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
+                                child: const Text(
+                                  'Sync Now',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.black87,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
                             ),
@@ -220,18 +189,15 @@ class SyncStatusPage extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(height: 20), // Space below sync status card
-                // Unsynced Entries Section
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Container(
-                    width: double.infinity,
+                const SizedBox(height: 20),
+                Card(
+                  elevation: 0.1,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  color: const Color(0xFFF5F6FA),
+                  child: Padding(
                     padding: const EdgeInsets.all(16.0),
-                    decoration: BoxDecoration(
-                      color: Colors.grey[100], // Light grey background
-                      borderRadius: BorderRadius.circular(10.0),
-                      border: Border.all(color: Colors.grey[300]!),
-                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -244,7 +210,6 @@ class SyncStatusPage extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 12),
-                        // List of unsynced items
                         _buildUnsyncedItem(
                           'Product: "Rice (12kg)" → Not yet uploaded',
                         ),
@@ -259,8 +224,6 @@ class SyncStatusPage extends StatelessWidget {
                     ),
                   ),
                 ),
-                const Spacer(), // Pushes the status buttons to the bottom
-                // Bottom Status Buttons
               ],
             ),
           ),
@@ -269,23 +232,18 @@ class SyncStatusPage extends StatelessWidget {
     );
   }
 
-  // Helper method to build an unsynced item with a red info icon
   Widget _buildUnsyncedItem(String text) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(
-            Icons.info_outline,
-            color: Colors.red,
-            size: 18,
-          ), // Red info icon
+          const Icon(Icons.info_outline, color: Colors.red, size: 18),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               text,
-              style: TextStyle(color: Colors.grey[800], fontSize: 15),
+              style: TextStyle(color: Colors.black87, fontSize: 15),
             ),
           ),
         ],

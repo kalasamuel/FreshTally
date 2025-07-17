@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class ProductLocationsPage extends StatelessWidget {
-  ProductLocationsPage({Key? key}) : super(key: key);
+  ProductLocationsPage({super.key});
 
   // Mock data for demonstration
   final List<Map<String, dynamic>> products = [
@@ -53,17 +53,34 @@ class ProductLocationsPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(product['name'], style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                  Text(
+                    product['name'],
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
+                  ),
                   const SizedBox(height: 8),
-                  Text('Price: ${product['price']} UGX', style: const TextStyle(fontSize: 16)),
+                  Text(
+                    'Price: ${product['price']} UGX',
+                    style: const TextStyle(fontSize: 16),
+                  ),
                   if (product['discount'] != null)
-                    Text('Discount: ${product['discount']}%', style: const TextStyle(color: Colors.red, fontSize: 16)),
+                    Text(
+                      'Discount: ${product['discount']}%',
+                      style: const TextStyle(color: Colors.red, fontSize: 16),
+                    ),
                   const SizedBox(height: 8),
-                  const Text('Locations:', style: TextStyle(fontWeight: FontWeight.bold)),
-                  ...locations.map((loc) => Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 2.0),
-                        child: Text(_locationString(loc)),
-                      )),
+                  const Text(
+                    'Locations:',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  ...locations.map(
+                    (loc) => Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 2.0),
+                      child: Text(_locationString(loc)),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -72,4 +89,4 @@ class ProductLocationsPage extends StatelessWidget {
       ),
     );
   }
-} 
+}

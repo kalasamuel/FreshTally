@@ -2,7 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class SettingsPage extends StatelessWidget {
-  const SettingsPage({super.key});
+  const SettingsPage({super.key, required String supermarketId});
 
   Future<void> _logout(BuildContext context) async {
     await FirebaseAuth.instance.signOut();

@@ -1,307 +1,477 @@
 import 'package:flutter/material.dart';
-import 'package:freshtally/pages/shelfStaff/settings/settings_page.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 
-class NotificationCenterPage extends StatefulWidget {
-  const NotificationCenterPage({super.key});
+class ManagerNotificationCenterPage extends StatefulWidget {
+  const ManagerNotificationCenterPage({
+    super.key,
+    required this.supermarketName,
+  });
+
+  final String supermarketName;
 
   @override
-  State<NotificationCenterPage> createState() => _NotificationCenterPageState();
+  State<ManagerNotificationCenterPage> createState() =>
+      _ManagerNotificationCenterPageState();
 }
 
-class _NotificationCenterPageState extends State<NotificationCenterPage> {
+class _ManagerNotificationCenterPageState
+    extends State<ManagerNotificationCenterPage> {
   String _selectedFilter = 'All';
+  final _filters = const ['All', 'Staff', 'Promotions'];
+  bool _hasIndexError = false;
+  bool _isLoading = true;
+
+  Stream<QuerySnapshot> _createStream() {
+    try {
+      Query query = FirebaseFirestore.instance
+          .collection('notifications')
+          .where('supermarketName', isEqualTo: widget.supermarketName)
+          .orderBy('createdAt', descending: true);
+
+      if (_selectedFilter == 'Staff') {
+        query = query.where('type', isEqualTo: 'staff_signup');
+      } else if (_selectedFilter == 'Promotions') {
+        query = query.where('type', isEqualTo: 'promo_expiry');
+      }
+
+      return query.snapshots().handleError((error) {
+        if (error.toString().contains('index')) {
+          if (mounted) {
+            setState(() {
+              _hasIndexError = true;
+              _isLoading = false;
+            });
+          }
+        }
+        return Stream.empty();
+      });
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _hasIndexError = true;
+          _isLoading = false;
+        });
+      }
+      return Stream.empty();
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _isLoading = true;
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFFFFFF),
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFFFFFF),
-        elevation: 0.0,
-        title: const Text(
-          'Notifications',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
-          ),
-        ),
+        title: const Text('Notifications'),
+        backgroundColor: Colors.white,
+        elevation: 0,
         centerTitle: true,
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 24.0,
-              vertical: 24.0,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Notifications',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 0.0,
-                    vertical: 8.0,
-                  ),
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: [
-                        _buildFilterChip('All'),
-                        _buildFilterChip('Expiry'),
-                        _buildFilterChip('Restock'),
-                        _buildFilterChip('Sync'),
-                        _buildFilterChip('Suggestions'),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                _buildNotificationCard(
-                  context,
-                  title: 'Fresh Milk 500ml',
-                  icon: Icons.error_outline,
-                  iconColor: Colors.red,
-                  details: [
-                    'Expires in 1 day. Qty: 15 units',
-                    'Recovery: UGX 25,000',
-                  ],
-                  actionButtons: [
-                    _buildActionButton(
-                      'Snooze',
-                      const Color(0xFFE0E0E0),
-                      Colors.black87,
-                      () => debugPrint('Snooze pressed'),
-                    ),
-                    _buildActionButton(
-                      'Mark Done',
-                      const Color(0xFFFFCC80),
-                      Colors.black87,
-                      () => debugPrint('Mark Done pressed'),
-                    ),
-                    _buildActionButton(
-                      'Dismiss',
-                      const Color(0xFFC8E6C9),
-                      Colors.black87,
-                      () => debugPrint('Dismiss pressed'),
-                    ),
-                  ],
-                  time: 'Today, 8:30 AM',
-                  cardColor: const Color(0xFFFFF0F0),
-                  borderColor: const Color(0xFFFFCCCC),
-                ),
-                const SizedBox(height: 16),
-                _buildNotificationCard(
-                  context,
-                  title: 'Sync Reminder',
-                  icon: Icons.sync,
-                  iconColor: Colors.black87,
-                  details: ['3 items pending sync'],
-                  actionButtons: [
-                    _buildActionButton(
-                      'Sync Now',
-                      const Color(0xFFC8E6C9),
-                      Colors.black87,
-                      () => debugPrint('Sync Now pressed'),
-                    ),
-                    _buildActionButton(
-                      'Snooze',
-                      const Color(0xFFE0E0E0),
-                      Colors.black87,
-                      () => debugPrint('Snooze pressed'),
-                    ),
-                    _buildActionButton(
-                      'Dismiss',
-                      const Color(0xFFFFCC80),
-                      Colors.black87,
-                      () => debugPrint('Dismiss pressed'),
-                    ),
-                  ],
-                  time: 'Today, 7:45 AM',
-                  cardColor: const Color(0xFFF5F6FA),
-                  borderColor: Colors.transparent,
-                ),
-                const SizedBox(height: 16),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFilterChip(String text) {
-    final bool isSelected = _selectedFilter == text;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4.0),
-      child: ChoiceChip(
-        label: Text(
-          text,
-          style: TextStyle(
-            color: isSelected ? Colors.white : Colors.black87,
-            fontWeight: FontWeight.w600,
-            fontSize: 15,
-          ),
-        ),
-        selected: isSelected,
-        selectedColor: const Color(0xFF4CAF50),
-        backgroundColor: const Color(0xFFF5F6FA),
-        onSelected: (bool selected) {
-          setState(() {
-            _selectedFilter = text;
-          });
-        },
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12.0),
-          side: BorderSide(
-            color: isSelected ? const Color(0xFF4CAF50) : Colors.transparent,
-          ),
-        ),
-        labelPadding: const EdgeInsets.symmetric(
-          horizontal: 12.0,
-          vertical: 4.0,
-        ),
-        avatar: isSelected
-            ? const Icon(Icons.check_circle, color: Colors.white, size: 18)
-            : null,
-        elevation: 0.1,
-      ),
-    );
-  }
-
-  Widget _buildNotificationCard(
-    BuildContext context, {
-    required String title,
-    required IconData icon,
-    required Color iconColor,
-    required List<String> details,
-    required List<Widget> actionButtons,
-    required String time,
-    required Color cardColor,
-    required Color borderColor,
-  }) {
-    return Card(
-      elevation: 0.1,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: borderColor),
-      ),
-      color: cardColor,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Icon(icon, color: iconColor, size: 24),
-                const SizedBox(width: 8),
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: details
-                  .map(
-                    (detail) => Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 2.0),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Icon(Icons.info_outline, color: Colors.red, size: 18),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              detail,
-                              style: const TextStyle(
-                                color: Colors.black87,
-                                fontSize: 15,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  )
-                  .toList(),
-            ),
             const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Row(
-                      children: actionButtons
-                          .map(
-                            (button) => Padding(
-                              padding: const EdgeInsets.only(right: 8.0),
-                              child: button,
-                            ),
-                          )
-                          .toList(),
-                    ),
-                  ),
+            _buildFilterRow(),
+            const SizedBox(height: 16),
+            if (_isLoading)
+              const Expanded(child: Center(child: CircularProgressIndicator()))
+            else if (_hasIndexError)
+              _buildIndexErrorWidget()
+            else
+              Expanded(
+                child: StreamBuilder<QuerySnapshot>(
+                  stream: _createStream(),
+                  builder: (context, snapshot) {
+                    if (snapshot.hasError) {
+                      return Center(child: Text('Error: ${snapshot.error}'));
+                    }
+
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+
+                    if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                      return const Center(
+                        child: Text('No notifications available'),
+                      );
+                    }
+
+                    return ListView.builder(
+                      padding: const EdgeInsets.all(16),
+                      itemCount: snapshot.data!.docs.length,
+                      itemBuilder: (context, index) {
+                        final doc = snapshot.data!.docs[index];
+                        return _buildNotificationCard(doc);
+                      },
+                    );
+                  },
                 ),
-                Text(
-                  time,
-                  style: const TextStyle(color: Colors.grey, fontSize: 13),
-                ),
-              ],
-            ),
+              ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildActionButton(
-    String text,
-    Color backgroundColor,
-    Color textColor,
-    VoidCallback onPressed,
-  ) {
-    return SizedBox(
-      height: 36,
-      child: ElevatedButton(
-        onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: backgroundColor,
-          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12.0),
-          ),
-          elevation: 0.1,
-          minimumSize: Size.zero,
-          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        ),
-        child: Text(
-          text,
-          style: TextStyle(
-            fontSize: 14,
-            color: textColor,
-            fontWeight: FontWeight.w600,
+  Widget _buildFilterRow() {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: _filters.map((filter) {
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: ChoiceChip(
+              label: Text(filter),
+              selected: _selectedFilter == filter,
+              selectedColor: const Color(0xFF4CAF50),
+              backgroundColor: const Color(0xFFF5F6FA),
+              onSelected: (selected) {
+                if (selected) {
+                  setState(() {
+                    _selectedFilter = filter;
+                    _isLoading = true;
+                    _hasIndexError = false;
+                  });
+                }
+              },
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              labelPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 4,
+              ),
+              avatar: _selectedFilter == filter
+                  ? const Icon(
+                      Icons.check_circle,
+                      color: Colors.white,
+                      size: 18,
+                    )
+                  : null,
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildIndexErrorWidget() {
+    return Expanded(
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline, color: Colors.red, size: 48),
+              const SizedBox(height: 16),
+              const Text(
+                'Index Required',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'This query requires a Firestore index to work properly.',
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () async {
+                  // This would typically use url_launcher package
+                  debugPrint('Redirect to Firebase console to create index');
+                },
+                child: const Text('Create Index'),
+              ),
+              const SizedBox(height: 16),
+              TextButton(
+                onPressed: () {
+                  setState(() {
+                    _isLoading = true;
+                    _hasIndexError = false;
+                  });
+                },
+                child: const Text('Try Again'),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
+
+  Widget _buildNotificationCard(DocumentSnapshot doc) {
+    if (!doc.exists) return const SizedBox();
+
+    final data = doc.data() as Map<String, dynamic>? ?? {};
+    final type = (data['type'] ?? '').toString().toLowerCase();
+    final title = data['title'] ?? 'Notification';
+    final message = data['message'] ?? '';
+    final timestamp = data['createdAt'] as Timestamp?;
+    final formattedTime = timestamp != null
+        ? DateFormat('MMM d, h:mm a').format(timestamp.toDate())
+        : '';
+
+    final payload = data['payload'] as Map<String, dynamic>? ?? {};
+    final staffName = payload['staffName'] ?? '';
+    final code = payload['verificationCode'] ?? '';
+    final supermarket = payload['supermarketName'] ?? '';
+
+    final List<String> details = [];
+    if (type == 'staff_signup') {
+      details.addAll([
+        message,
+        if (staffName.isNotEmpty) 'Staff: $staffName',
+        if (code.isNotEmpty) 'Verification Code: $code',
+        if (supermarket.isNotEmpty) 'Supermarket: $supermarket',
+      ]);
+    } else {
+      details.add(message);
+      if (data['expiryDate'] != null) {
+        details.add(
+          'Expires: ${DateFormat('MMM d, y').format((data['expiryDate'] as Timestamp).toDate())}',
+        );
+      }
+    }
+
+    final style = _getNotificationStyle(type);
+
+    return Card(
+      elevation: 0.1,
+      margin: const EdgeInsets.only(bottom: 16),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: style.borderColor),
+      ),
+      color: style.cardColor,
+      child: InkWell(
+        onTap: () => _showNotificationDetails(context, doc),
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(style.icon, color: style.iconColor),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      title,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                  if (data['read'] == false)
+                    Container(
+                      width: 12,
+                      height: 12,
+                      decoration: const BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              ...details.map(
+                (detail) => Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Text(
+                    '• $detail',
+                    style: TextStyle(
+                      color: detail.toLowerCase().contains('code')
+                          ? Colors.blue
+                          : Colors.black87,
+                      fontWeight: detail.toLowerCase().contains('code')
+                          ? FontWeight.bold
+                          : FontWeight.normal,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Align(
+                alignment: Alignment.bottomRight,
+                child: Text(
+                  formattedTime,
+                  style: const TextStyle(color: Colors.grey, fontSize: 12),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showNotificationDetails(BuildContext context, DocumentSnapshot doc) {
+    if (!doc.exists) return;
+
+    final data = doc.data() as Map<String, dynamic>? ?? {};
+    final type = (data['type'] ?? '').toString().toLowerCase();
+
+    if (type == 'staff_signup') {
+      _showStaffSignupDialog(context, doc);
+    } else {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text(data['title'] ?? 'Notification Details'),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(data['message'] ?? ''),
+                if (data['expiryDate'] != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Text(
+                      'Expires: ${DateFormat('MMM d, y h:mm a').format((data['expiryDate'] as Timestamp).toDate())}',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Close'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (data['read'] == false) {
+      doc.reference.update({'read': true});
+    }
+  }
+
+  Future<void> _showStaffSignupDialog(
+    BuildContext context,
+    DocumentSnapshot doc,
+  ) async {
+    final data = doc.data() as Map<String, dynamic>? ?? {};
+    final payload = data['payload'] as Map<String, dynamic>? ?? {};
+
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Staff Signup Details'),
+        content: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildDetailRow('Message:', data['message'] ?? ''),
+              const SizedBox(height: 16),
+              _buildDetailRow('Staff Name:', payload['staffName'] ?? ''),
+              _buildDetailRow('Supermarket:', payload['supermarketName'] ?? ''),
+              const SizedBox(height: 16),
+              _buildDetailRow(
+                'Verification Code:',
+                payload['verificationCode'] ?? '',
+                isImportant: true,
+              ),
+              const SizedBox(height: 16),
+              _buildDetailRow(
+                'Status:',
+                (data['read'] ?? false) ? 'Viewed' : 'New',
+                isImportant: true,
+                color: (data['read'] ?? false) ? Colors.grey : Colors.green,
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDetailRow(
+    String label,
+    String value, {
+    bool isImportant = false,
+    Color? color,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '$label ',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: isImportant ? (color ?? Colors.blue) : Colors.black87,
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: TextStyle(
+                color: isImportant ? (color ?? Colors.blue) : Colors.black87,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  NotificationStyle _getNotificationStyle(String type) {
+    switch (type) {
+      case 'promo_expiry':
+        return NotificationStyle(
+          icon: Icons.local_offer,
+          iconColor: Colors.red,
+          cardColor: const Color(0xFFFFF0F0),
+          borderColor: const Color(0xFFFFCCCC),
+        );
+      case 'staff_signup':
+        return NotificationStyle(
+          icon: Icons.person_add,
+          iconColor: Colors.purple,
+          cardColor: const Color(0xFFF3E5F5),
+          borderColor: const Color(0xFFE1BEE7),
+        );
+      default:
+        return NotificationStyle(
+          icon: Icons.info_outline,
+          iconColor: Colors.blue,
+          cardColor: Colors.white,
+          borderColor: Colors.grey.shade200,
+        );
+    }
+  }
+}
+
+class NotificationStyle {
+  final IconData icon;
+  final Color iconColor;
+  final Color cardColor;
+  final Color borderColor;
+
+  NotificationStyle({
+    required this.icon,
+    required this.iconColor,
+    required this.cardColor,
+    required this.borderColor,
+  });
 }

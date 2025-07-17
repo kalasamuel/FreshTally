@@ -1,3 +1,4 @@
+// NOTE: This is not the main analytics dashboard. See analytics_dashboard.dart for sales analytics.
 import 'package:flutter/material.dart';
 
 class ExpiredProductDetailsPage extends StatelessWidget {

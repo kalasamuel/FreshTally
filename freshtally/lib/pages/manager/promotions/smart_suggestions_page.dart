@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class SmartSuggestionsPage extends StatelessWidget {
-  SmartSuggestionsPage({Key? key}) : super(key: key);
+  SmartSuggestionsPage({super.key});
 
   // Mock data for demonstration
   final List<Map<String, dynamic>> suggestions = [

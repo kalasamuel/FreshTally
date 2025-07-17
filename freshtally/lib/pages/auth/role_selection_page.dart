@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
 import 'package:freshtally/pages/shelfStaff/home/shelf_staff_home_screen.dart';
 import 'package:freshtally/pages/storeManager/home/home_screen.dart';
 
@@ -10,13 +13,77 @@ class RoleSelectionPage extends StatefulWidget {
 }
 
 class _RoleSelectionPageState extends State<RoleSelectionPage> {
-  String selectedRole = '';
+  String? selectedRole;
+  String? errorMessage;
+  bool isLoading = false;
 
-  void navigateToRolePage() {
-    if (selectedRole == 'Cashier') {
-      Navigator.pushNamed(context, '/cashier');
-    } else if (selectedRole == 'Shelf Staff') {
-      Navigator.pushNamed(context, '/shelf_staff');
+  /// Fetch role & supermarketId from Firestore & navigate
+  Future<void> joinRole() async {
+    if (selectedRole == null) return;
+
+    setState(() {
+      isLoading = true;
+      errorMessage = null;
+    });
+
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) throw Exception("User not signed in");
+
+      // Fetch staff doc
+      final staffDoc = await FirebaseFirestore.instance
+          .collection('staff')
+          .doc(user.uid)
+          .get();
+
+      if (!staffDoc.exists) throw Exception("Staff document not found");
+
+      final staffData = staffDoc.data()!;
+      final supermarketId = staffData['supermarketId'];
+      final role = staffData['role'];
+
+      if (role != selectedRole) {
+        setState(() {
+          errorMessage = "Your assigned role is '$role', not '$selectedRole'";
+          isLoading = false;
+        });
+        return;
+      }
+
+      if (role == 'Store Manager') {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => StoreManagerDashboard(
+              supermarketId: supermarketId,
+              location: '',
+            ),
+          ),
+        );
+      } else if (role == 'Shelf Staff') {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ShelfStaffDashboard(
+              supermarketId: supermarketId,
+              supermarketName: null,
+              location: '',
+            ),
+          ),
+        );
+      } else {
+        setState(() {
+          errorMessage = "Unknown role: $role";
+        });
+      }
+    } catch (e) {
+      setState(() {
+        errorMessage = e.toString();
+      });
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
     }
   }
 
@@ -84,7 +151,6 @@ class _RoleSelectionPageState extends State<RoleSelectionPage> {
         leading: const BackButton(color: Colors.black),
         backgroundColor: Colors.white,
         elevation: 0,
-        foregroundColor: Colors.black,
       ),
       body: SafeArea(
         child: Center(
@@ -103,30 +169,19 @@ class _RoleSelectionPageState extends State<RoleSelectionPage> {
                     Image.asset('assets/icons/shelf-attendant.png', width: 100),
                   ),
                   const SizedBox(height: 30),
+                  if (errorMessage != null)
+                    Text(
+                      errorMessage!,
+                      style: const TextStyle(color: Colors.red),
+                      textAlign: TextAlign.center,
+                    ),
+                  const SizedBox(height: 10),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: selectedRole.isEmpty
+                      onPressed: selectedRole == null || isLoading
                           ? null
-                          : () {
-                              if (selectedRole == 'Store Manager') {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        const StoreManagerDashboard(),
-                                  ),
-                                );
-                              } else if (selectedRole == 'Shelf Staff') {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        const ShelfStaffDashboard(),
-                                  ),
-                                );
-                              }
-                            },
+                          : joinRole,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF4CAF50),
                         padding: const EdgeInsets.symmetric(vertical: 16.0),
@@ -140,15 +195,17 @@ class _RoleSelectionPageState extends State<RoleSelectionPage> {
                           fontFamily: 'Inter',
                         ),
                       ),
-                      child: const Text(
-                        'Join',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                          fontFamily: 'Inter',
-                        ),
-                      ),
+                      child: isLoading
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : const Text(
+                              'Join',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                                fontFamily: 'Inter',
+                              ),
+                            ),
                     ),
                   ),
                 ],

@@ -1,9 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:freshtally/pages/shelfStaff/settings/settings_page.dart'; // Assuming settings page is shared or similar
+import 'package:freshtally/pages/shelfStaff/settings/settings_page.dart';
+// Remove the import below as SyncStatusPage is defined in this file
+// import 'package:freshtally/pages/storeManager/sync/sync_status_page.dart';
 
-class SyncStatusPage extends StatelessWidget {
-  const SyncStatusPage({super.key});
+class SyncStatusPage extends StatefulWidget {
+  // Change the callback type to accept BuildContext.
+  final void Function(BuildContext context)? onSyncNowPressed;
 
+  const SyncStatusPage({
+    super.key,
+    this.onSyncNowPressed,
+    required String supermarketId,
+  });
+
+  @override
+  State<SyncStatusPage> createState() => _SyncStatusPageState();
+}
+
+class _SyncStatusPageState extends State<SyncStatusPage> {
   // Helper method to show a snackbar with sync results.
   void _showSyncResultSnackbar(
     BuildContext context, {
@@ -79,6 +93,19 @@ class SyncStatusPage extends StatelessWidget {
           ),
         ),
         centerTitle: true, // Centers the title in the app bar.
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.settings, size: 30, color: Colors.black87),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const SettingsPage(supermarketId: ''),
+                ),
+              );
+            },
+          ),
+        ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -163,15 +190,20 @@ class SyncStatusPage extends StatelessWidget {
                                   36, // Adjusted height for a smaller button.
                               child: ElevatedButton(
                                 onPressed: () {
-                                  // Simulate sync result.
-                                  bool syncSuccess =
-                                      false; // Change to true to test success.
-                                  int failedCount = 3;
-                                  _showSyncResultSnackbar(
-                                    context,
-                                    success: syncSuccess,
-                                    failedCount: failedCount,
-                                  );
+                                  if (widget.onSyncNowPressed != null) {
+                                    widget.onSyncNowPressed!(
+                                      context,
+                                    ); // Pass context here
+                                  } else {
+                                    // Default behavior if no callback is provided.
+                                    bool syncSuccess = false;
+                                    int failedCount = 3;
+                                    _showSyncResultSnackbar(
+                                      context,
+                                      success: syncSuccess,
+                                      failedCount: failedCount,
+                                    );
+                                  }
                                 },
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: const Color(
