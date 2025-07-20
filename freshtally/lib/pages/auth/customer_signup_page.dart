@@ -224,10 +224,7 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
                   ),
                   const SizedBox(width: 20),
                   IconButton(
-                    icon: Image.asset(
-                      'assets/icons/google_icon.png',
-                      height: 35,
-                    ),
+                    icon: Image.asset('assets/icons/google.png', height: 35),
                     onPressed: () {},
                   ),
                   const SizedBox(width: 20),

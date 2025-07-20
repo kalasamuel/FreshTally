@@ -8,6 +8,9 @@ class StaffVerificationPage extends StatefulWidget {
   final String email;
   final String password;
   final String phone;
+  final String supermarketName;
+  final String location;
+  final String? supermarketId;
 
   const StaffVerificationPage({
     super.key,
@@ -16,6 +19,9 @@ class StaffVerificationPage extends StatefulWidget {
     required this.email,
     required this.password,
     required this.phone,
+    required this.supermarketName,
+    required this.location,
+    this.supermarketId,
   });
 
   @override
@@ -85,7 +91,13 @@ class _StaffVerificationPageState extends State<StaffVerificationPage> {
 
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const ShelfStaffDashboard()),
+        MaterialPageRoute(
+          builder: (context) => ShelfStaffDashboard(
+            supermarketId: supermarketId,
+            supermarketName: null,
+            location: '',
+          ),
+        ),
       );
     } catch (e) {
       setState(() {
