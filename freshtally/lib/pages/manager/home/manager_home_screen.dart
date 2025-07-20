@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:freshtally/pages/manager/analytics/analytics_dashbaord_page.dart';
 import 'package:freshtally/pages/manager/managerNotifications/notifications.dart';
-import 'package:freshtally/pages/manager/staffManagement/staff_management&join_code.dart';
+import 'package:freshtally/pages/manager/staffManagement/staff_managementJoin_code.dart';
 import 'package:freshtally/pages/shelfStaff/settings/settings_page.dart';
 import 'package:freshtally/pages/manager/productAllocationView/product_allocation_view.dart';
 import 'package:freshtally/pages/manager/promotions/smart_promotions_suggestions.dart';
