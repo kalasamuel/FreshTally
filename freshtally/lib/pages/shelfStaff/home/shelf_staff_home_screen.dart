@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:freshtally/pages/shelfStaff/notifications/notifications_shelfstaff.dart';
 import 'package:freshtally/pages/shelfStaff/settings/settings_page.dart';
-import 'package:freshtally/pages/shelfStaff/products/price_entry.dart';
+import 'package:freshtally/pages/shelfStaff/products/discounted_products_screen.dart';
 import 'package:freshtally/pages/shelfStaff/shelves/shelf_mapping_page.dart';
 import 'package:freshtally/pages/shelfStaff/shelves/smart_suggestions_page.dart';
 import 'package:freshtally/pages/shelfStaff/sync/sync_status_page.dart';
@@ -128,15 +128,16 @@ class ShelfStaffDashboard extends StatelessWidget {
                       },
                     ),
                     _buildDashboardTile(
-                      title: 'Price Entry',
+                      title: 'Discounted Products',
                       icon: Icons.price_change,
                       color: const Color(0xFFFDECEB),
                       onTap: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) =>
-                                PriceEntryPage(supermarketId: supermarketId),
+                            builder: (context) => DiscountedProductsScreen(
+                              supermarketId: supermarketId,
+                            ),
                           ),
                         );
                       },
