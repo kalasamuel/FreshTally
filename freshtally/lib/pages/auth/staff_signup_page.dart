@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:freshtally/pages/auth/role_selection_page.dart';
 import 'package:freshtally/pages/auth/login_page.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:freshtally/pages/auth/staffcode.dart';
 
 void main() {
   runApp(const MyApp());
@@ -83,7 +82,6 @@ class _StaffSignupPageState extends State<StaffSignupPage> {
   bool _isLoading = false;
   String? _errorMessage;
 
-  // Text editing controllers for each input field
   final TextEditingController _firstNameController = TextEditingController();
   final TextEditingController _lastNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
@@ -92,7 +90,8 @@ class _StaffSignupPageState extends State<StaffSignupPage> {
       TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
 
-  String? get supermarketId => null;
+  // Remove the problematic 'supermarketId' getter here as it's handled later
+  // String? get supermarketId => null;
 
   @override
   void dispose() {
@@ -105,7 +104,6 @@ class _StaffSignupPageState extends State<StaffSignupPage> {
     super.dispose();
   }
 
-  // Placeholder for account creation logic
   Future<void> _createAccount() async {
     if (!_formKey.currentState!.validate()) {
       setState(() {
@@ -131,39 +129,30 @@ class _StaffSignupPageState extends State<StaffSignupPage> {
           .createUserWithEmailAndPassword(email: email, password: password);
 
       final uid = authResult.user?.uid;
-      if (uid == null) throw Exception("Failed to create user account.");
+      if (uid == null) {
+        throw Exception("Failed to create user account. Please try again.");
+      }
 
-      // Save staff data in Firestore
-      await FirebaseFirestore.instance
-          .collection('supermarkets')
-          .doc(supermarketId)
-          .collection('staff')
-          .doc(uid)
-          .set({
-            'firstName': firstName,
-            'lastName': lastName,
-            'email': email,
-            'phone': phone,
-            'role': 'staff',
-            'createdAt': FieldValue.serverTimestamp(),
-            'isActive': true,
-            'uid': uid,
-          });
+      // No Firestore write here yet! We navigate to verification.
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Staff account created successfully!'),
-          backgroundColor: Colors.green,
-        ),
-      );
-
-      // Navigate to RoleSelectionPage or dashboard
+      // Navigate to StaffVerificationPage, passing user details
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (context) => RoleSelectionPage(role: 'staff'),
+          builder: (context) => StaffVerificationPage(
+            firstName: firstName,
+            lastName: lastName,
+            email: email,
+            password:
+                password, // Pass password if needed for re-auth or similar, though typically not
+            phone: phone,
+            // These will be determined in StaffVerificationPage
+            supermarketName: '', // Will be selected later
+            location: '', // Will be determined later
+            supermarketId: null, // Will be determined later
+          ),
         ),
       );
     } on FirebaseAuthException catch (e) {

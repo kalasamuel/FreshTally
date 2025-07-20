@@ -6,7 +6,14 @@ import 'package:freshtally/pages/shelfStaff/home/shelf_staff_home_screen.dart';
 import 'package:freshtally/pages/storeManager/home/home_screen.dart';
 
 class RoleSelectionPage extends StatefulWidget {
-  const RoleSelectionPage({super.key, required String role});
+  final String? supermarketId; // This is now correctly passed and used
+  final String role; // This 'role' is just a placeholder for the constructor
+
+  const RoleSelectionPage({
+    super.key,
+    this.supermarketId,
+    required this.role, // Changed to 'this.role' to match field
+  });
 
   @override
   State<RoleSelectionPage> createState() => _RoleSelectionPageState();
@@ -17,9 +24,30 @@ class _RoleSelectionPageState extends State<RoleSelectionPage> {
   String? errorMessage;
   bool isLoading = false;
 
-  /// Fetch role & supermarketId from Firestore & navigate
+  @override
+  void initState() {
+    super.initState();
+    // No need to initialize selectedRole from widget.role here, as it's selected by user.
+    // The widget.role in constructor is just a dummy to satisfy the old StaffSignupPage nav.
+  }
+
+  /// Update staff document with selected role & navigate
   Future<void> joinRole() async {
-    if (selectedRole == null) return;
+    if (selectedRole == null) {
+      setState(() {
+        errorMessage = "Please select a role.";
+      });
+      return;
+    }
+
+    // Ensure you have a supermarketId before proceeding.
+    if (widget.supermarketId == null) {
+      setState(() {
+        errorMessage =
+            "Supermarket ID is missing. Cannot assign role. Please restart signup.";
+      });
+      return;
+    }
 
     setState(() {
       isLoading = true;
@@ -28,57 +56,63 @@ class _RoleSelectionPageState extends State<RoleSelectionPage> {
 
     try {
       final user = FirebaseAuth.instance.currentUser;
-      if (user == null) throw Exception("User not signed in");
-
-      // Fetch staff doc
-      final staffDoc = await FirebaseFirestore.instance
-          .collection('staff')
-          .doc(user.uid)
-          .get();
-
-      if (!staffDoc.exists) throw Exception("Staff document not found");
-
-      final staffData = staffDoc.data()!;
-      final supermarketId = staffData['supermarketId'];
-      final role = staffData['role'];
-
-      if (role != selectedRole) {
-        setState(() {
-          errorMessage = "Your assigned role is '$role', not '$selectedRole'";
-          isLoading = false;
-        });
-        return;
+      if (user == null) {
+        throw Exception("User not signed in. Please sign up or log in again.");
       }
 
-      if (role == 'Store Manager') {
+      // Update the staff document created previously in StaffVerificationPage
+      // This path is `supermarkets/{supermarketId}/staff/{user.uid}`
+      final staffDocRef = FirebaseFirestore.instance
+          .collection('supermarkets')
+          .doc(widget.supermarketId!)
+          .collection('staff')
+          .doc(user.uid);
+
+      await staffDocRef.update({
+        'role': selectedRole,
+        // No need to set supermarketId, email, createdAt again as they are already there
+        // from StaffVerificationPage's creation logic.
+      });
+
+      // Now that the document is updated, you can proceed with navigation
+      if (!mounted) return; // Check if the widget is still mounted
+
+      if (selectedRole == 'Store Manager') {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
             builder: (_) => StoreManagerDashboard(
-              supermarketId: supermarketId,
-              location: '',
+              supermarketId: widget.supermarketId!,
+              location:
+                  '', // Consider fetching actual location from the supermarket document
             ),
           ),
         );
-      } else if (role == 'Shelf Staff') {
+      } else if (selectedRole == 'Shelf Staff') {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
             builder: (_) => ShelfStaffDashboard(
-              supermarketId: supermarketId,
-              supermarketName: null,
-              location: '',
+              supermarketId: widget.supermarketId!,
+              supermarketName:
+                  null, // You'll need to fetch this from Firestore based on supermarketId
+              location:
+                  '', // Consider fetching actual location from the supermarket document
             ),
           ),
         );
       } else {
         setState(() {
-          errorMessage = "Unknown role: $role";
+          errorMessage = "Selected role is invalid: $selectedRole";
         });
       }
+    } on FirebaseException catch (e) {
+      setState(() {
+        errorMessage = "Firestore error: ${e.message}";
+      });
     } catch (e) {
       setState(() {
-        errorMessage = e.toString();
+        errorMessage = "Failed to assign role: ${e.toString()}";
       });
     } finally {
       setState(() {
@@ -160,6 +194,12 @@ class _RoleSelectionPageState extends State<RoleSelectionPage> {
             child: SingleChildScrollView(
               child: Column(
                 children: [
+                  Text(
+                    'You are joining: ${widget.supermarketId != null ? "Supermarket ID: ${widget.supermarketId}" : "..."}',
+                    style: TextStyle(fontSize: 16, color: Colors.grey[700]),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 10),
                   buildRoleCard(
                     'Store Manager',
                     Image.asset('assets/icons/cashier.png', width: 100),

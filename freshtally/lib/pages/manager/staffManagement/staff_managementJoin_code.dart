@@ -49,9 +49,11 @@ class _ManageStaffPageState extends State<ManageStaffPage> {
     await joinCodeRef.set({
       'code': code,
       'createdAt': now,
-      'expiresAt': expiresAt,
+      'expiresAt':
+          expiresAt, // This ensures 'expiresAt' is always set when generating a new code
     });
 
+    if (!mounted) return;
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text('New join code generated: $code')));
@@ -62,9 +64,16 @@ class _ManageStaffPageState extends State<ManageStaffPage> {
   Future<bool> _canGenerateNewCode(DocumentSnapshot? data) async {
     if (data == null || !data.exists) return true;
 
-    final expiresAtTimestamp = data['expiresAt'];
-    if (expiresAtTimestamp == null) return true;
+    final Map<String, dynamic>? docData = data.data() as Map<String, dynamic>?;
 
+    // Safely check if the 'expiresAt' field exists and is not null
+    if (docData == null ||
+        !docData.containsKey('expiresAt') ||
+        docData['expiresAt'] == null) {
+      return true; // If the field is missing or null, a new code can be generated
+    }
+
+    final expiresAtTimestamp = docData['expiresAt'];
     final expiresAt = (expiresAtTimestamp as Timestamp).toDate();
     return DateTime.now().isAfter(expiresAt);
   }
@@ -102,6 +111,7 @@ class _ManageStaffPageState extends State<ManageStaffPage> {
                           snapshot.data,
                         );
                         if (!canGenerate) {
+                          if (!mounted) return;
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Text(
@@ -128,13 +138,24 @@ class _ManageStaffPageState extends State<ManageStaffPage> {
                   return const CircularProgressIndicator();
                 }
                 if (!snapshot.hasData || !snapshot.data!.exists) {
-                  return const Text('No join code found.');
+                  return const Text(
+                    'No join code found. Generate one to start.',
+                  );
                 }
 
-                final data = snapshot.data!;
-                final code = data['code'] ?? 'N/A';
-                final expiresAt = data['expiresAt'] != null
-                    ? (data['expiresAt'] as Timestamp).toDate()
+                // Safely get the data map from the DocumentSnapshot
+                final Map<String, dynamic>? docData =
+                    snapshot.data?.data() as Map<String, dynamic>?;
+
+                // Provide default values if docData is null or fields are missing
+                final code = docData?['code'] ?? 'N/A';
+
+                // Safely access 'expiresAt' only if the field exists and is not null
+                final expiresAt =
+                    docData != null &&
+                        docData.containsKey('expiresAt') &&
+                        docData['expiresAt'] != null
+                    ? (docData['expiresAt'] as Timestamp).toDate()
                     : null;
 
                 final isExpired =
@@ -170,7 +191,9 @@ class _ManageStaffPageState extends State<ManageStaffPage> {
                           ),
                         ),
                       const SizedBox(height: 12),
-                      if (!isExpired)
+                      if (!isExpired &&
+                          code !=
+                              'N/A') // Only show QR if code is valid and not 'N/A'
                         QrImageView(
                           data: code,
                           size: 120,
@@ -204,6 +227,7 @@ class _ManageStaffPageState extends State<ManageStaffPage> {
                     itemCount: staffDocs.length,
                     itemBuilder: (context, index) {
                       final staff = staffDocs[index];
+                      // Cast data safely to Map<String, dynamic>
                       final data = staff.data() as Map<String, dynamic>;
                       final name = data['name'] ?? 'Unnamed';
                       final role = data['role'] ?? 'Unknown';

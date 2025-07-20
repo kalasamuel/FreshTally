@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:freshtally/pages/auth/create_supermarket_page.dart';
 import 'package:freshtally/pages/auth/customer_signup_page.dart';
 import 'package:freshtally/pages/auth/staff_signup_page.dart';
+import 'package:freshtally/pages/auth/staffcode.dart';
 import 'package:freshtally/pages/customer/home/customer_home_page.dart';
 import 'package:freshtally/pages/manager/home/manager_home_screen.dart';
 import 'package:freshtally/pages/shelfStaff/home/shelf_staff_home_screen.dart';
