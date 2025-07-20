@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:freshtally/pages/customer/product/products_details_page.dart';
-import 'package:intl/intl.dart';
 
 class DiscountsAndPromotionsPage extends StatelessWidget {
   final String? highlightProductName;

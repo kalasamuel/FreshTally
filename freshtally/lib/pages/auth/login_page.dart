@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+// import 'package:freshtally/associationRules/dashboard_screen.dart';
 import 'package:freshtally/pages/auth/create_supermarket_page.dart';
 import 'package:freshtally/pages/auth/customer_signup_page.dart';
 import 'package:freshtally/pages/auth/staff_signup_page.dart';
@@ -149,7 +150,7 @@ class _LoginPageState extends State<LoginPage> {
           .collection('supermarkets')
           .doc(supermarketId)
           .get();
-      final supermarketData = supermarketDoc.data() as Map<String, dynamic>?;
+      final supermarketData = supermarketDoc.data();
 
       final supermarketName = supermarketData?['name'] as String? ?? 'Unknown';
       final location = supermarketData?['location'] as String? ?? 'Unknown';
@@ -202,9 +203,9 @@ class _LoginPageState extends State<LoginPage> {
             context,
             MaterialPageRoute(
               builder: (_) => CustomerHomePage(
-                supermarketId: supermarketId,
                 supermarketName: supermarketName,
                 location: location,
+                supermarketId: supermarketId!,
               ),
             ),
           );
@@ -480,6 +481,7 @@ class _LoginPageState extends State<LoginPage> {
                           context,
                           MaterialPageRoute(
                             builder: (_) => const CreateSupermarketPage(),
+                            // builder: (_) => const DashboardScreen(),
                           ),
                         );
                       },
