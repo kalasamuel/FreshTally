@@ -126,6 +126,24 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
             email: _emailController.text.trim(),
             password: _passwordController.text.trim(),
           );
+      final user = userCredential.user;
+      if (user != null) {
+        await FirebaseFirestore.instance
+            .collection('supermarkets')
+            .doc(user.uid) // or your supermarketId variable
+            .set({
+              'name': _supermarketNameController.text.trim(),
+              'location': _locationController.text.trim(),
+              'manager': {
+                'uid': user.uid,
+                'firstName': _firstNameController.text.trim(),
+                'lastName': _lastNameController.text.trim(),
+                'email': _emailController.text.trim(),
+              },
+              'createdAt': FieldValue.serverTimestamp(),
+              'staffCount': 1,
+            });
+      }
 
       if (!mounted) return;
 

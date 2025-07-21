@@ -36,24 +36,24 @@ class _ManagerNotificationCenterPageState
       }
 
       return query.snapshots().handleError((error) {
-        if (error.toString().contains('index')) {
-          if (mounted) {
-            setState(() {
-              _hasIndexError = true;
-              _isLoading = false;
-            });
-          }
+        debugPrint("Notification stream error: $error");
+        if (mounted) {
+          setState(() {
+            _hasIndexError = error.toString().contains('index');
+            _isLoading = false;
+          });
         }
-        return Stream.empty();
+        return Stream.error(error);
       });
     } catch (e) {
+      debugPrint("Error creating stream: $e");
       if (mounted) {
         setState(() {
           _hasIndexError = true;
           _isLoading = false;
         });
       }
-      return Stream.empty();
+      return Stream.error(e);
     }
   }
 
@@ -78,7 +78,7 @@ class _ManagerNotificationCenterPageState
             const SizedBox(height: 16),
             _buildFilterRow(),
             const SizedBox(height: 16),
-            if (_isLoading)
+            if (_isLoading && !_hasIndexError)
               const Expanded(child: Center(child: CircularProgressIndicator()))
             else if (_hasIndexError)
               _buildIndexErrorWidget()
@@ -91,7 +91,8 @@ class _ManagerNotificationCenterPageState
                       return Center(child: Text('Error: ${snapshot.error}'));
                     }
 
-                    if (snapshot.connectionState == ConnectionState.waiting) {
+                    if (snapshot.connectionState == ConnectionState.waiting &&
+                        !snapshot.hasData) {
                       return const Center(child: CircularProgressIndicator());
                     }
 
@@ -183,7 +184,6 @@ class _ManagerNotificationCenterPageState
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () async {
-                  // This would typically use url_launcher package
                   debugPrint('Redirect to Firebase console to create index');
                 },
                 child: const Text('Create Index'),
