@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-// import 'package:freshtally/associationRules/dashboard_screen.dart';
 import 'package:freshtally/pages/auth/create_supermarket_page.dart';
 import 'package:freshtally/pages/auth/customer_signup_page.dart';
 import 'package:freshtally/pages/auth/staff_signup_page.dart';
-import 'package:freshtally/pages/auth/staffcode.dart';
 import 'package:freshtally/pages/customer/home/customer_home_page.dart';
 import 'package:freshtally/pages/manager/home/manager_home_screen.dart';
 import 'package:freshtally/pages/shelfStaff/home/shelf_staff_home_screen.dart';
@@ -113,48 +111,41 @@ class _LoginPageState extends State<LoginPage> {
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
+
       final userId = userCredential.user?.uid;
       if (userId == null) throw Exception("User ID not found");
 
-      final supermarketsSnapshot = await _firestore
-          .collection('supermarkets')
+      // Improved user document query
+      final userQuery = await _firestore
+          .collectionGroup('users')
+          .where('uid', isEqualTo: userId)
+          .limit(1)
           .get();
 
-      DocumentSnapshot? userDoc;
-      String? supermarketId;
+      if (userQuery.docs.isEmpty) {
+        throw Exception('User document not found. Contact support.');
+      }
 
-      for (final supermarket in supermarketsSnapshot.docs) {
-        final doc = await _firestore
+      final userDoc = userQuery.docs.first;
+      final userData = userDoc.data() as Map<String, dynamic>;
+      final role = userData['role'] as String? ?? 'customer';
+      final supermarketId = userData['supermarketId'] as String?;
+
+      String supermarketName = 'Unknown';
+      String location = 'Unknown';
+
+      if (supermarketId != null) {
+        final supermarketDoc = await _firestore
             .collection('supermarkets')
-            .doc(supermarket.id)
-            .collection('users')
-            .doc(userId)
+            .doc(supermarketId)
             .get();
 
-        if (doc.exists) {
-          userDoc = doc;
-          supermarketId = supermarket.id;
-          break;
+        if (supermarketDoc.exists) {
+          final supermarketData = supermarketDoc.data()!;
+          supermarketName = supermarketData['name'] as String? ?? 'Unknown';
+          location = supermarketData['location'] as String? ?? 'Unknown';
         }
       }
-
-      if (userDoc == null || supermarketId == null) {
-        throw Exception(
-          'User document not found in any supermarket. Contact support.',
-        );
-      }
-
-      final userData = userDoc.data() as Map<String, dynamic>?;
-      final role = userData?['role'] as String? ?? 'customer';
-
-      final supermarketDoc = await _firestore
-          .collection('supermarkets')
-          .doc(supermarketId)
-          .get();
-      final supermarketData = supermarketDoc.data();
-
-      final supermarketName = supermarketData?['name'] as String? ?? 'Unknown';
-      final location = supermarketData?['location'] as String? ?? 'Unknown';
 
       await _saveRememberMePreferences(_emailController.text.trim());
 
@@ -206,7 +197,7 @@ class _LoginPageState extends State<LoginPage> {
               builder: (_) => CustomerHomePage(
                 supermarketName: supermarketName,
                 location: location,
-                supermarketId: supermarketId!,
+                supermarketId: supermarketId ?? '',
               ),
             ),
           );
@@ -224,9 +215,11 @@ class _LoginPageState extends State<LoginPage> {
         _errorMessage = 'Login failed: ${e.toString()}';
       });
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -427,14 +420,16 @@ class _LoginPageState extends State<LoginPage> {
                     borderRadius: BorderRadius.circular(10.0),
                   ),
                 ),
-                child: const Text(
-                  "Login",
-                  style: TextStyle(
-                    fontSize: 18.0,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
+                child: _isLoading
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text(
+                        "Login",
+                        style: TextStyle(
+                          fontSize: 18.0,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
               ),
               const SizedBox(height: 20.0),
               const Center(
@@ -482,7 +477,6 @@ class _LoginPageState extends State<LoginPage> {
                           context,
                           MaterialPageRoute(
                             builder: (_) => const CreateSupermarketPage(),
-                            // builder: (_) => const DashboardScreen(),
                           ),
                         );
                       },
@@ -507,7 +501,7 @@ class _LoginPageState extends State<LoginPage> {
                         Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => const StaffSignupPage(role: ''),
+                            builder: (_) => const StaffSignupPage(),
                           ),
                         );
                       },
