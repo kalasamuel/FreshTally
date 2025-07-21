@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:freshtally/pages/manager/analytics/analytics_dashbaord_page.dart';
 import 'package:freshtally/pages/manager/managerNotifications/notifications.dart';
+import 'package:freshtally/pages/manager/staffManagement/staff_managementJoin_code.dart';
 import 'package:freshtally/pages/shelfStaff/settings/settings_page.dart';
 import 'package:freshtally/pages/manager/productAllocationView/product_allocation_view.dart';
 import 'package:freshtally/pages/manager/promotions/smart_promotions_suggestions.dart';
@@ -130,7 +131,7 @@ class ManagerDashboardPage extends StatelessWidget {
                   crossAxisCount: 2,
                   crossAxisSpacing: 20.0, // Space between columns
                   mainAxisSpacing: 20.0, // Space between rows
-                  childAspectRatio: 1.5, // Tiles are square
+                  childAspectRatio: 1.4, // Tiles are square
                   children: [
                     _buildDashboardTile(
                       title: 'Analytics Dashboard',
@@ -149,8 +150,8 @@ class ManagerDashboardPage extends StatelessWidget {
                     ),
                     _buildDashboardTile(
                       title: 'Promotions page',
-                      icon: Icons.card_giftcard, // Closest matching icon
-                      color: const Color(0xFFFDECEB), // Pink color
+                      icon: Icons.card_giftcard,
+                      color: const Color(0xFFFDECEB),
                       onTap: () {
                         Navigator.push(
                           context,
@@ -197,6 +198,25 @@ class ManagerDashboardPage extends StatelessWidget {
                     ),
 
                     _buildDashboardTile(
+                      title: 'Staff Management & Join Code',
+
+                      icon: Icons.group,
+                      color: const Color(0xFFE1F5FE),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) {
+                              return ManageStaffPage(
+                                supermarketId: supermarketName,
+                              );
+                            },
+                          ),
+                        );
+                      },
+                    ),
+
+                    _buildDashboardTile(
                       title: 'Sync Status',
                       icon: Icons.sync,
                       color: const Color(0xFFE0F2F1), // Light green color
@@ -217,30 +237,29 @@ class ManagerDashboardPage extends StatelessWidget {
 
               const SizedBox(height: 32),
 
-              // "Sync Now" Button
-              Center(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                  child: ElevatedButton(
-                    onPressed: () {
-                      // Handle Sync Now
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF4CAF50), // Green color
-                      minimumSize: const Size(50, 60), // Full width and height
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(50),
-                      ),
-                      elevation: 0.1,
-                    ),
-                    child: const Text(
-                      'Sync Now',
-                      style: TextStyle(fontSize: 18, color: Colors.white),
-                    ),
-                  ),
-                ),
-              ),
-
+              // // "Sync Now" Button
+              // Center(
+              //   child: Padding(
+              //     padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              //     child: ElevatedButton(
+              //       onPressed: () {
+              //         // Handle Sync Now
+              //       },
+              //       style: ElevatedButton.styleFrom(
+              //         backgroundColor: const Color(0xFF4CAF50), // Green color
+              //         minimumSize: const Size(50, 60), // Full width and height
+              //         shape: RoundedRectangleBorder(
+              //           borderRadius: BorderRadius.circular(50),
+              //         ),
+              //         elevation: 0.1,
+              //       ),
+              //       child: const Text(
+              //         'Sync Now',
+              //         style: TextStyle(fontSize: 18, color: Colors.white),
+              //       ),
+              //     ),
+              //   ),
+              // ),
               const SizedBox(height: 32),
             ],
           ),
@@ -292,7 +311,6 @@ Widget _buildDashboardTile({
   VoidCallback? onTap,
 }) {
   return SizedBox(
-    // Adjust width as needed
     child: Card(
       elevation: 0.1,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -317,8 +335,10 @@ Widget _buildDashboardTile({
               Text(
                 title,
                 textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
-                  fontSize: 16,
+                  fontSize: 14,
                   fontWeight: FontWeight.w600,
                   color: Colors.black87,
                 ),

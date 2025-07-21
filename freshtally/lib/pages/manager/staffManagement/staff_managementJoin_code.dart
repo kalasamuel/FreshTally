@@ -1,24 +1,89 @@
+import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:qr_flutter/qr_flutter.dart';
 
-class ManageStaffPage extends StatelessWidget {
+class ManageStaffPage extends StatefulWidget {
   final String supermarketId;
 
   const ManageStaffPage({super.key, required this.supermarketId});
 
   @override
-  Widget build(BuildContext context) {
-    final joinCodeRef = FirebaseFirestore.instance
+  State<ManageStaffPage> createState() => _ManageStaffPageState();
+}
+
+class _ManageStaffPageState extends State<ManageStaffPage> {
+  late DocumentReference joinCodeRef;
+  late CollectionReference staffRef;
+  static const validityMinutes = 10;
+
+  @override
+  void initState() {
+    super.initState();
+
+    joinCodeRef = FirebaseFirestore.instance
         .collection('supermarkets')
-        .doc(supermarketId)
+        .doc(widget.supermarketId)
         .collection('meta')
         .doc('join_code');
 
-    final staffRef = FirebaseFirestore.instance
+    staffRef = FirebaseFirestore.instance
         .collection('supermarkets')
-        .doc(supermarketId)
+        .doc(widget.supermarketId)
         .collection('staff');
+  }
 
+  /// Generates a random 6-digit numeric code
+  String _generateJoinCode() {
+    final rand = Random.secure();
+    return (100000 + rand.nextInt(900000)).toString(); // always 6 digits
+  }
+
+  /// Saves the new join code to Firestore with expiry
+  Future<void> _setJoinCode() async {
+    final now = DateTime.now();
+    final expiresAt = now.add(const Duration(minutes: validityMinutes));
+    final code = _generateJoinCode();
+
+    await joinCodeRef.set({
+      'code': code,
+      'createdAt': now,
+      'expiresAt':
+          expiresAt, // This ensures 'expiresAt' is always set when generating a new code
+    });
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('New join code generated: $code')));
+
+    setState(() {}); // Refresh FutureBuilder
+  }
+
+  Future<bool> _canGenerateNewCode(DocumentSnapshot? data) async {
+    if (data == null || !data.exists) return true;
+
+    final Map<String, dynamic>? docData = data.data() as Map<String, dynamic>?;
+
+    // Safely check if the 'expiresAt' field exists and is not null
+    if (docData == null ||
+        !docData.containsKey('expiresAt') ||
+        docData['expiresAt'] == null) {
+      return true; // If the field is missing or null, a new code can be generated
+    }
+
+    final expiresAtTimestamp = docData['expiresAt'];
+    final expiresAt = (expiresAtTimestamp as Timestamp).toDate();
+    return DateTime.now().isAfter(expiresAt);
+  }
+
+  String _formatTime(DateTime dt) {
+    return DateFormat.Hm().format(dt);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Manage Staff')),
       body: Padding(
@@ -26,9 +91,44 @@ class ManageStaffPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Staff Join Code',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            Row(
+              children: [
+                const Text(
+                  'Staff Join Code',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const Spacer(),
+                FutureBuilder<DocumentSnapshot>(
+                  future: joinCodeRef.get(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const SizedBox.shrink();
+                    }
+
+                    return ElevatedButton.icon(
+                      onPressed: () async {
+                        final canGenerate = await _canGenerateNewCode(
+                          snapshot.data,
+                        );
+                        if (!canGenerate) {
+                          if (!mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Current code is still valid. Try later.',
+                              ),
+                            ),
+                          );
+                        } else {
+                          await _setJoinCode();
+                        }
+                      },
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Generate'),
+                    );
+                  },
+                ),
+              ],
             ),
             const SizedBox(height: 8),
             FutureBuilder<DocumentSnapshot>(
@@ -38,19 +138,68 @@ class ManageStaffPage extends StatelessWidget {
                   return const CircularProgressIndicator();
                 }
                 if (!snapshot.hasData || !snapshot.data!.exists) {
-                  return const Text('No join code found.');
+                  return const Text(
+                    'No join code found. Generate one to start.',
+                  );
                 }
 
-                final code = snapshot.data!['code'] ?? 'N/A';
+                // Safely get the data map from the DocumentSnapshot
+                final Map<String, dynamic>? docData =
+                    snapshot.data?.data() as Map<String, dynamic>?;
+
+                // Provide default values if docData is null or fields are missing
+                final code = docData?['code'] ?? 'N/A';
+
+                // Safely access 'expiresAt' only if the field exists and is not null
+                final expiresAt =
+                    docData != null &&
+                        docData.containsKey('expiresAt') &&
+                        docData['expiresAt'] != null
+                    ? (docData['expiresAt'] as Timestamp).toDate()
+                    : null;
+
+                final isExpired =
+                    expiresAt != null && DateTime.now().isAfter(expiresAt);
+
                 return Container(
+                  width: double.infinity,
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: Colors.grey[200],
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Text(
-                    'Join Code: $code',
-                    style: const TextStyle(fontSize: 16),
+                  child: Column(
+                    children: [
+                      Text(
+                        'Join Code: $code',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 4,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      if (expiresAt != null)
+                        Text(
+                          isExpired
+                              ? 'Code expired'
+                              : 'Valid until ${_formatTime(expiresAt)}',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: isExpired ? Colors.red : Colors.green,
+                          ),
+                        ),
+                      const SizedBox(height: 12),
+                      if (!isExpired &&
+                          code !=
+                              'N/A') // Only show QR if code is valid and not 'N/A'
+                        QrImageView(
+                          data: code,
+                          size: 120,
+                          backgroundColor: Colors.white,
+                        ),
+                    ],
                   ),
                 );
               },
@@ -78,6 +227,7 @@ class ManageStaffPage extends StatelessWidget {
                     itemCount: staffDocs.length,
                     itemBuilder: (context, index) {
                       final staff = staffDocs[index];
+                      // Cast data safely to Map<String, dynamic>
                       final data = staff.data() as Map<String, dynamic>;
                       final name = data['name'] ?? 'Unnamed';
                       final role = data['role'] ?? 'Unknown';
@@ -100,7 +250,6 @@ class ManageStaffPage extends StatelessWidget {
                                     staff.id,
                                     name,
                                     role,
-                                    staffRef,
                                   );
                                 },
                               ),
@@ -133,6 +282,7 @@ class ManageStaffPage extends StatelessWidget {
                                   );
                                   if (confirmed == true) {
                                     await staffRef.doc(staff.id).delete();
+                                    if (!mounted) return;
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
                                         content: Text('$name was removed.'),
@@ -161,7 +311,6 @@ class ManageStaffPage extends StatelessWidget {
     String staffId,
     String currentName,
     String currentRole,
-    CollectionReference staffRef,
   ) {
     final nameController = TextEditingController(text: currentName);
     final roleController = TextEditingController(text: currentRole);
@@ -203,7 +352,7 @@ class ManageStaffPage extends StatelessWidget {
                   'name': nameController.text.trim(),
                   'role': roleController.text.trim(),
                 });
-                if (!context.mounted) return;
+                if (!mounted) return;
                 Navigator.pop(context);
                 ScaffoldMessenger.of(
                   context,

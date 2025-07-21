@@ -1,5 +1,6 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:freshtally/pages/shelfStaff/home/shelf_staff_home_screen.dart';
 
 class StaffVerificationPage extends StatefulWidget {
@@ -8,6 +9,8 @@ class StaffVerificationPage extends StatefulWidget {
   final String email;
   final String password;
   final String phone;
+  final String supermarketName;
+  final String? supermarketId;
 
   const StaffVerificationPage({
     super.key,
@@ -16,6 +19,8 @@ class StaffVerificationPage extends StatefulWidget {
     required this.email,
     required this.password,
     required this.phone,
+    required this.supermarketName,
+    this.supermarketId,
   });
 
   @override
@@ -23,74 +28,138 @@ class StaffVerificationPage extends StatefulWidget {
 }
 
 class _StaffVerificationPageState extends State<StaffVerificationPage> {
-  final TextEditingController _verificationCodeController =
-      TextEditingController();
+  final _codeController = TextEditingController();
   bool _isLoading = false;
-  String? _verificationError;
+  String? _errorMessage;
+  String? _supermarketId;
+  String? _managerEmail;
 
-  Future<void> _verifyAndCreateAccount() async {
-    final enteredCode = _verificationCodeController.text.trim();
+  @override
+  void initState() {
+    super.initState();
+    _sendVerificationCode();
+  }
 
-    if (enteredCode.length != 6) {
+  Future<void> _sendVerificationCode() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final query = await FirebaseFirestore.instance
+          .collection('supermarkets')
+          .where('name', isEqualTo: widget.supermarketName)
+          .limit(1)
+          .get();
+
+      if (query.docs.isEmpty) {
+        throw Exception('Supermarket not found');
+      }
+
+      final doc = query.docs.first;
+      _supermarketId = doc.id;
+      final data = doc.data();
+      _managerEmail = data['manager']['email'];
+
+      final code = _generate6DigitCode();
+
+      await FirebaseFirestore.instance
+          .collection('verificationCodes')
+          .doc(widget.email)
+          .set({
+            'code': code,
+            'createdAt': FieldValue.serverTimestamp(),
+            'supermarketId': _supermarketId,
+          });
+
+      // In a real app, you would send this code to the manager's email
+      debugPrint('Verification code for ${widget.email}: $code');
+      debugPrint('This would be sent to manager at $_managerEmail');
+    } catch (e) {
       setState(() {
-        _verificationError = 'Code must be exactly 6 characters.';
+        _errorMessage = 'Error: ${e.toString()}';
+      });
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  String _generate6DigitCode() {
+    return (100000 + (DateTime.now().millisecondsSinceEpoch % 900000))
+        .toString();
+  }
+
+  Future<bool> _verifyCode() async {
+    final snapshot = await FirebaseFirestore.instance
+        .collection('verificationCodes')
+        .doc(widget.email)
+        .get();
+
+    if (!snapshot.exists) return false;
+
+    final data = snapshot.data();
+    final storedCode = data?['code']?.toString();
+    final enteredCode = _codeController.text.trim();
+
+    return storedCode == enteredCode;
+  }
+
+  Future<void> _completeSignup() async {
+    if (_codeController.text.isEmpty) {
+      setState(() {
+        _errorMessage = 'Please enter verification code';
       });
       return;
     }
 
     setState(() {
       _isLoading = true;
-      _verificationError = null;
+      _errorMessage = null;
     });
 
     try {
-      // Look for supermarket with this join code
-      final querySnapshot = await FirebaseFirestore.instance
-          .collection('supermarkets')
-          .where('meta.join_code.code', isEqualTo: enteredCode)
-          .get();
-
-      if (querySnapshot.docs.isEmpty) {
-        setState(() {
-          _verificationError = 'Invalid or expired join code.';
-          _isLoading = false;
-        });
-        return;
+      final isValid = await _verifyCode();
+      if (!isValid) {
+        throw Exception('Invalid verification code');
       }
 
-      final supermarketDoc = querySnapshot.docs.first;
-      final supermarketId = supermarketDoc.id;
+      final authResult = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(
+            email: widget.email,
+            password: widget.password,
+          );
 
-      // Save staff under supermarket
       await FirebaseFirestore.instance
           .collection('supermarkets')
-          .doc(supermarketId)
+          .doc(_supermarketId)
           .collection('staff')
-          .add({
-            'name': '${widget.firstName} ${widget.lastName}',
+          .doc(authResult.user!.uid)
+          .set({
+            'firstName': widget.firstName,
+            'lastName': widget.lastName,
             'email': widget.email,
             'phone': widget.phone,
-            'role': 'Staff',
-            'joined_at': FieldValue.serverTimestamp(),
+            'role': 'staff',
+            'createdAt': FieldValue.serverTimestamp(),
           });
 
       if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Account created successfully!'),
-          backgroundColor: Colors.green,
-        ),
-      );
-
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const ShelfStaffDashboard()),
+        MaterialPageRoute(
+          builder: (_) => ShelfStaffDashboard(
+            supermarketId: _supermarketId ?? '',
+            supermarketName: widget.supermarketName,
+            location: '', // You can pass location if needed
+          ),
+        ),
       );
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _verificationError = 'Error verifying code: $e';
+        _errorMessage = 'Error: ${e.toString()}';
       });
     } finally {
       if (!mounted) return;
@@ -101,47 +170,123 @@ class _StaffVerificationPageState extends State<StaffVerificationPage> {
   }
 
   @override
-  void dispose() {
-    _verificationCodeController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Verify Your Account')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            Text(
-              'Enter the 6-digit join code provided by your manager.',
-              style: Theme.of(context).textTheme.bodyLarge,
-              textAlign: TextAlign.center,
+      backgroundColor: const Color(0xFFFFFFFF),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        foregroundColor: Colors.black,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
+          'Verification',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Colors.green[700],
+          ),
+        ),
+        centerTitle: true,
+      ),
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: 20),
+                const Center(
+                  child: Text(
+                    "Enter Verification Code",
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                const SizedBox(height: 30.0),
+
+                Center(
+                  child: Text(
+                    'A 6-digit code was sent to the manager of\n${widget.supermarketName}',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(fontSize: 16),
+                  ),
+                ),
+                const SizedBox(height: 30.0),
+
+                TextFormField(
+                  controller: _codeController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    hintText: 'Enter 6-digit code',
+                    prefixIcon: const Icon(Icons.lock, color: Colors.grey),
+                    filled: true,
+                    fillColor: Colors.grey[200],
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10.0),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      vertical: 16.0,
+                      horizontal: 16.0,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24.0),
+
+                if (_errorMessage != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16.0),
+                    child: Text(
+                      _errorMessage!,
+                      style: const TextStyle(color: Colors.red),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : _completeSignup,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF4CAF50),
+                      padding: const EdgeInsets.symmetric(vertical: 16.0),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10.0),
+                      ),
+                      elevation: 1,
+                    ),
+                    child: _isLoading
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : const Text(
+                            'Complete Signup',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                  ),
+                ),
+                const SizedBox(height: 20.0),
+
+                TextButton(
+                  onPressed: _isLoading ? null : _sendVerificationCode,
+                  child: Text(
+                    'Resend Code',
+                    style: TextStyle(color: Colors.green[700], fontSize: 16),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 20),
-            TextField(
-              controller: _verificationCodeController,
-              keyboardType: TextInputType.number,
-              maxLength: 6,
-              decoration: InputDecoration(
-                labelText: 'Join Code',
-                errorText: _verificationError,
-                border: const OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _isLoading ? null : _verifyAndCreateAccount,
-              child: _isLoading
-                  ? const SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                    )
-                  : const Text('Verify and Create Account'),
-            ),
-          ],
+          ),
         ),
       ),
     );

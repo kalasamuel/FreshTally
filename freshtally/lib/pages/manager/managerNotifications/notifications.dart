@@ -36,24 +36,24 @@ class _ManagerNotificationCenterPageState
       }
 
       return query.snapshots().handleError((error) {
-        if (error.toString().contains('index')) {
-          if (mounted) {
-            setState(() {
-              _hasIndexError = true;
-              _isLoading = false;
-            });
-          }
+        debugPrint("Notification stream error: $error");
+        if (mounted) {
+          setState(() {
+            _hasIndexError = error.toString().contains('index');
+            _isLoading = false;
+          });
         }
-        return Stream.empty();
+        return Stream.error(error);
       });
     } catch (e) {
+      debugPrint("Error creating stream: $e");
       if (mounted) {
         setState(() {
           _hasIndexError = true;
           _isLoading = false;
         });
       }
-      return Stream.empty();
+      return Stream.error(e);
     }
   }
 
@@ -78,7 +78,7 @@ class _ManagerNotificationCenterPageState
             const SizedBox(height: 16),
             _buildFilterRow(),
             const SizedBox(height: 16),
-            if (_isLoading)
+            if (_isLoading && !_hasIndexError)
               const Expanded(child: Center(child: CircularProgressIndicator()))
             else if (_hasIndexError)
               _buildIndexErrorWidget()
@@ -91,7 +91,8 @@ class _ManagerNotificationCenterPageState
                       return Center(child: Text('Error: ${snapshot.error}'));
                     }
 
-                    if (snapshot.connectionState == ConnectionState.waiting) {
+                    if (snapshot.connectionState == ConnectionState.waiting &&
+                        !snapshot.hasData) {
                       return const Center(child: CircularProgressIndicator());
                     }
 
@@ -183,7 +184,6 @@ class _ManagerNotificationCenterPageState
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () async {
-                  // This would typically use url_launcher package
                   debugPrint('Redirect to Firebase console to create index');
                 },
                 child: const Text('Create Index'),
@@ -216,18 +216,20 @@ class _ManagerNotificationCenterPageState
     final formattedTime = timestamp != null
         ? DateFormat('MMM d, h:mm a').format(timestamp.toDate())
         : '';
+    final isRead = data['read'] ?? false;
 
     final payload = data['payload'] as Map<String, dynamic>? ?? {};
-    final staffName = payload['staffName'] ?? '';
-    final code = payload['verificationCode'] ?? '';
-    final supermarket = payload['supermarketName'] ?? '';
+    final staffName = payload['staffName'] ?? data['staffName'] ?? '';
+    final verificationCode = payload['verificationCode'] ?? '';
+    final supermarket =
+        payload['supermarketName'] ?? data['supermarketName'] ?? '';
 
     final List<String> details = [];
     if (type == 'staff_signup') {
       details.addAll([
         message,
         if (staffName.isNotEmpty) 'Staff: $staffName',
-        if (code.isNotEmpty) 'Verification Code: $code',
+        if (verificationCode.isNotEmpty) 'Verification Code: $verificationCode',
         if (supermarket.isNotEmpty) 'Supermarket: $supermarket',
       ]);
     } else {
@@ -270,7 +272,7 @@ class _ManagerNotificationCenterPageState
                       ),
                     ),
                   ),
-                  if (data['read'] == false)
+                  if (!isRead)
                     Container(
                       width: 12,
                       height: 12,
@@ -318,6 +320,7 @@ class _ManagerNotificationCenterPageState
 
     final data = doc.data() as Map<String, dynamic>? ?? {};
     final type = (data['type'] ?? '').toString().toLowerCase();
+    final isRead = data['read'] ?? false;
 
     if (type == 'staff_signup') {
       _showStaffSignupDialog(context, doc);
@@ -353,7 +356,7 @@ class _ManagerNotificationCenterPageState
       );
     }
 
-    if (data['read'] == false) {
+    if (!isRead) {
       doc.reference.update({'read': true});
     }
   }
@@ -364,32 +367,39 @@ class _ManagerNotificationCenterPageState
   ) async {
     final data = doc.data() as Map<String, dynamic>? ?? {};
     final payload = data['payload'] as Map<String, dynamic>? ?? {};
+    final isRead = data['read'] ?? false;
+
+    final staffName = payload['staffName'] ?? data['staffName'] ?? '';
+    final verificationCode = payload['verificationCode'] ?? '';
+    final supermarket =
+        payload['supermarketName'] ?? data['supermarketName'] ?? '';
+    final message = data['message'] ?? '';
 
     await showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Staff Signup Details'),
+        title: const Text('Staff Signup Request'),
         content: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              _buildDetailRow('Message:', data['message'] ?? ''),
+              _buildDetailRow('Message:', message),
               const SizedBox(height: 16),
-              _buildDetailRow('Staff Name:', payload['staffName'] ?? ''),
-              _buildDetailRow('Supermarket:', payload['supermarketName'] ?? ''),
+              _buildDetailRow('Staff Name:', staffName),
+              _buildDetailRow('Supermarket:', supermarket),
               const SizedBox(height: 16),
               _buildDetailRow(
                 'Verification Code:',
-                payload['verificationCode'] ?? '',
+                verificationCode,
                 isImportant: true,
               ),
               const SizedBox(height: 16),
               _buildDetailRow(
                 'Status:',
-                (data['read'] ?? false) ? 'Viewed' : 'New',
+                isRead ? 'Viewed' : 'New',
                 isImportant: true,
-                color: (data['read'] ?? false) ? Colors.grey : Colors.green,
+                color: isRead ? Colors.grey : Colors.green,
               ),
             ],
           ),
@@ -399,66 +409,77 @@ class _ManagerNotificationCenterPageState
             onPressed: () => Navigator.pop(context),
             child: const Text('Close'),
           ),
+          if (verificationCode.isNotEmpty)
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('Copy Code'),
+            ),
         ],
       ),
     );
-  }
 
-  Widget _buildDetailRow(
-    String label,
-    String value, {
-    bool isImportant = false,
-    Color? color,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '$label ',
+    if (!isRead) {
+      doc.reference.update({'read': true});
+    }
+  }
+}
+
+Widget _buildDetailRow(
+  String label,
+  String value, {
+  bool isImportant = false,
+  Color? color,
+}) {
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 4),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '$label ',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: isImportant ? (color ?? Colors.blue) : Colors.black87,
+          ),
+        ),
+        Expanded(
+          child: Text(
+            value,
             style: TextStyle(
-              fontWeight: FontWeight.bold,
               color: isImportant ? (color ?? Colors.blue) : Colors.black87,
             ),
           ),
-          Expanded(
-            child: Text(
-              value,
-              style: TextStyle(
-                color: isImportant ? (color ?? Colors.blue) : Colors.black87,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
+}
 
-  NotificationStyle _getNotificationStyle(String type) {
-    switch (type) {
-      case 'promo_expiry':
-        return NotificationStyle(
-          icon: Icons.local_offer,
-          iconColor: Colors.red,
-          cardColor: const Color(0xFFFFF0F0),
-          borderColor: const Color(0xFFFFCCCC),
-        );
-      case 'staff_signup':
-        return NotificationStyle(
-          icon: Icons.person_add,
-          iconColor: Colors.purple,
-          cardColor: const Color(0xFFF3E5F5),
-          borderColor: const Color(0xFFE1BEE7),
-        );
-      default:
-        return NotificationStyle(
-          icon: Icons.info_outline,
-          iconColor: Colors.blue,
-          cardColor: Colors.white,
-          borderColor: Colors.grey.shade200,
-        );
-    }
+NotificationStyle _getNotificationStyle(String type) {
+  switch (type) {
+    case 'promo_expiry':
+      return NotificationStyle(
+        icon: Icons.local_offer,
+        iconColor: Colors.red,
+        cardColor: const Color(0xFFFFF0F0),
+        borderColor: const Color(0xFFFFCCCC),
+      );
+    case 'staff_signup':
+      return NotificationStyle(
+        icon: Icons.person_add,
+        iconColor: Colors.purple,
+        cardColor: const Color(0xFFF3E5F5),
+        borderColor: const Color(0xFFE1BEE7),
+      );
+    default:
+      return NotificationStyle(
+        icon: Icons.info_outline,
+        iconColor: Colors.blue,
+        cardColor: Colors.white,
+        borderColor: Colors.grey.shade200,
+      );
   }
 }
 

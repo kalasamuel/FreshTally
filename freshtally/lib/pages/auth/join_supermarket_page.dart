@@ -69,8 +69,8 @@ class _JoinSupermarketPageState extends State<JoinSupermarketPage> {
                       bottom: 40.0,
                     ), // More space below app bar
                     child: Row(children: [
-                      ],
-                    ),
+                       ],
+                     ),
                   ),
                   // Search Supermarket Section
                   Center(
@@ -85,7 +85,7 @@ class _JoinSupermarketPageState extends State<JoinSupermarketPage> {
                   ),
                   const SizedBox(height: 16), // Space below title
                   _buildTextField(
-                    'Search Supermarket e.g. Mega',
+                    'Search Supermarket',
                     _searchSupermarketController,
                   ),
                   const SizedBox(height: 40), // More space between sections
@@ -105,7 +105,7 @@ class _JoinSupermarketPageState extends State<JoinSupermarketPage> {
                     'Enter Join Code',
                     _joinCodeController,
                     keyboardType: TextInputType.number,
-                    maxLength: 6, // Limit to 6 digits
+                    maxLength: 6,
                   ),
                   const SizedBox(height: 40), // Space before button
                   // Verify Button
@@ -117,11 +117,10 @@ class _JoinSupermarketPageState extends State<JoinSupermarketPage> {
                           context,
                           MaterialPageRoute(
                             builder: (context) {
-                              return const StaffSignupPage(role: '');
+                              return const StaffSignupPage();
                             },
                           ),
                         );
-
                         print(
                           'Supermarket: ${_searchSupermarketController.text}',
                         );

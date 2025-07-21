@@ -126,10 +126,28 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
             email: _emailController.text.trim(),
             password: _passwordController.text.trim(),
           );
+      final user = userCredential.user;
+      if (user != null) {
+        await FirebaseFirestore.instance
+            .collection('supermarkets')
+            .doc(user.uid) // or your supermarketId variable
+            .set({
+              'name': _supermarketNameController.text.trim(),
+              'location': _locationController.text.trim(),
+              'manager': {
+                'uid': user.uid,
+                'firstName': _firstNameController.text.trim(),
+                'lastName': _lastNameController.text.trim(),
+                'email': _emailController.text.trim(),
+              },
+              'createdAt': FieldValue.serverTimestamp(),
+              'staffCount': 1,
+            });
+      }
 
-      // ---- BEGIN minimal fix -------------------------------------------------
-      final String uid = userCredential.user!.uid; // non‑null UID
-      // -----------------------------------------------------------------------
+      if (!mounted) return;
+
+      final String uid = userCredential.user!.uid;
 
       final supermarketData = {
         'name': _supermarketNameController.text.trim(),
@@ -150,7 +168,7 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
           .collection('supermarkets')
           .doc(uid)
           .collection('users')
-          .doc(uid) // same UID, guaranteed non‑empty
+          .doc(uid)
           .set({
             'firstName': _firstNameController.text.trim(),
             'lastName': _lastNameController.text.trim(),
@@ -168,18 +186,24 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
         arguments: {
           'supermarketName': _supermarketNameController.text.trim(),
           'location': _locationController.text.trim(),
+          'uid': uid,
         },
       );
     } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
       setState(() {
         _errorMessage = _getAuthErrorMessage(e.code);
       });
     } catch (e) {
+      debugPrint('Error during account creation: $e');
+      if (!mounted) return;
       setState(() {
         _errorMessage = 'An unexpected error occurred. Please try again.';
       });
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -214,7 +238,7 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
           style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
-            color: Colors.green[700], // Matched Login Page title color
+            color: Colors.green[700],
           ),
         ),
         centerTitle: true,
@@ -224,17 +248,13 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
         child: Form(
           key: _formKey,
           child: Column(
-            crossAxisAlignment:
-                CrossAxisAlignment.stretch, // Stretch for full width
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 20),
               const Center(
                 child: Text(
                   "Create an account for your supermarket",
-                  style: TextStyle(
-                    fontSize: 18,
-                    color: Colors.black87,
-                  ), // Matched Login Page text style
+                  style: TextStyle(fontSize: 18, color: Colors.black87),
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -258,7 +278,7 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
                   return null;
                 },
               ),
-              const SizedBox(height: 16.0), // Consistent spacing
+              const SizedBox(height: 16.0),
               // Supermarket Location Field
               IconTextField(
                 hintText: 'Supermarket Location',
@@ -272,7 +292,7 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
                   return null;
                 },
               ),
-              const SizedBox(height: 24.0), // Spacing before manager details
+              const SizedBox(height: 24.0),
 
               const Center(
                 child: Text(
@@ -281,11 +301,11 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: Colors.black87,
-                  ), // Styled like Login title
+                  ),
                   textAlign: TextAlign.center,
                 ),
               ),
-              const SizedBox(height: 20.0), // Consistent spacing
+              const SizedBox(height: 20.0),
               // First Name Field
               IconTextField(
                 hintText: 'First Name',
@@ -400,9 +420,6 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
                       ),
               ),
               const SizedBox(height: 20.0),
-
-              // Removed social login and existing account link as they
-              // are not part of the Create Supermarket flow.
             ],
           ),
         ),
