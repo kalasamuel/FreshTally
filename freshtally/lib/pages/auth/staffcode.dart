@@ -88,10 +88,12 @@ class _StaffVerificationPageState extends State<StaffVerificationPage> {
         MaterialPageRoute(builder: (context) => const ShelfStaffDashboard()),
       );
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _verificationError = 'Error verifying code: $e';
       });
     } finally {
+      if (!mounted) return;
       setState(() {
         _isLoading = false;
       });
@@ -132,7 +134,11 @@ class _StaffVerificationPageState extends State<StaffVerificationPage> {
             ElevatedButton(
               onPressed: _isLoading ? null : _verifyAndCreateAccount,
               child: _isLoading
-                  ? const CircularProgressIndicator()
+                  ? const SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                    )
                   : const Text('Verify and Create Account'),
             ),
           ],
