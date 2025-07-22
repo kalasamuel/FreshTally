@@ -64,6 +64,7 @@ class _LoginPageState extends State<LoginPage> {
   bool _isLoading = false;
   String? _errorMessage;
   bool _rememberMe = false;
+  bool _obscurePassword = true;
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -127,7 +128,7 @@ class _LoginPageState extends State<LoginPage> {
       }
 
       final userDoc = userQuery.docs.first;
-      final userData = userDoc.data() as Map<String, dynamic>;
+      final userData = userDoc.data();
       final role = userData['role'] as String? ?? 'customer';
       final supermarketId = userData['supermarketId'] as String?;
 
@@ -320,6 +321,13 @@ class _LoginPageState extends State<LoginPage> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Center(
+                child: Image.asset(
+                  'assets/images/logo.png', // Make sure this path matches your asset location
+                  height: 300, // Adjust as needed
+                ),
+              ),
+              const SizedBox(height: 24.0),
+              Center(
                 child: Text(
                   "Welcome to FreshTally!",
                   style: TextStyle(
@@ -332,7 +340,7 @@ class _LoginPageState extends State<LoginPage> {
               const SizedBox(height: 40.0),
               const Center(
                 child: Text(
-                  "Login",
+                  "",
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
@@ -356,11 +364,9 @@ class _LoginPageState extends State<LoginPage> {
                 },
               ),
               const SizedBox(height: 16.0),
-              IconTextField(
-                hintText: "Password",
-                icon: Icons.lock,
-                isPassword: true,
+              TextFormField(
                 controller: _passwordController,
+                obscureText: _obscurePassword,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Password is required';
@@ -370,6 +376,33 @@ class _LoginPageState extends State<LoginPage> {
                   }
                   return null;
                 },
+                decoration: InputDecoration(
+                  hintText: "Password",
+                  prefixIcon: const Icon(Icons.lock, color: Colors.grey),
+                  filled: true,
+                  fillColor: Colors.grey[200],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10.0),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    vertical: 16.0,
+                    horizontal: 16.0,
+                  ),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscurePassword
+                          ? Icons.visibility_off
+                          : Icons.visibility,
+                      color: Colors.grey,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _obscurePassword = !_obscurePassword;
+                      });
+                    },
+                  ),
+                ),
               ),
               const SizedBox(height: 10.0),
               Row(
