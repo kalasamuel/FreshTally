@@ -123,6 +123,7 @@ flutter:
     #- assets/lottie/
     - assets/images/
     - assets/products.json
+    - assets/images/logo.png
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
