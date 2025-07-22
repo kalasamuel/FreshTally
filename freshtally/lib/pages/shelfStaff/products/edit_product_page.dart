@@ -10,7 +10,6 @@ class EditProductPage extends StatefulWidget {
 
 class _EditProductPageState extends State<EditProductPage> {
   final _formKey = GlobalKey<FormState>();
-  final bool _isFormValid = false;
 
   final List<String> _categories = [
     'Beverages',
@@ -185,7 +184,7 @@ class _EditProductPageState extends State<EditProductPage> {
                 ),
                 onPressed: () {
                   if (_formKey.currentState?.validate() ?? false) {
-                    // Add product logic here
+                    //It adds product logic here
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text('Product details updated successfully!'),
@@ -198,7 +197,7 @@ class _EditProductPageState extends State<EditProductPage> {
                   style: TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
-                    fontSize: 16,
+                    fontSize: 18,
                   ),
                 ),
               ),
@@ -223,7 +222,7 @@ class _EditProductPageState extends State<EditProductPage> {
                   style: TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
-                    fontSize: 16,
+                    fontSize: 17,
                   ),
                 ),
               ),
