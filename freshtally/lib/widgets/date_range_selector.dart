@@ -50,8 +50,8 @@ class DateRangeSelector extends StatelessWidget {
       builder: (BuildContext context) {
         return AlertDialog(
           content: SizedBox(
-            width: 300, // Adjust width as needed
-            height: 300, // Adjust height as needed
+            width: 301, // Adjust width as needed
+            height: 301, // Adjust height as needed
             child: SfDateRangePicker(
               onSelectionChanged: (DateRangePickerSelectionChangedArgs args) {
                 if (args.value is PickerDateRange) {
