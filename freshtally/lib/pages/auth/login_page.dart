@@ -64,13 +64,10 @@ class _LoginPageState extends State<LoginPage> {
   bool _isLoading = false;
   String? _errorMessage;
   bool _rememberMe = false;
-  bool _obscurePassword = true;
+  bool _obscurePassword = true; // <-- Add this line
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
-  final TextEditingController _aiChatController = TextEditingController();
-  final List<String> _aiMessages = [];
 
   @override
   void initState() {
@@ -307,14 +304,6 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  void _sendAIMessage(String message) {
-    setState(() {
-      _aiMessages.add("You: $message");
-      _aiMessages.add("AI: This is a helpful response to \"$message\".");
-    });
-    _aiChatController.clear();
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -324,390 +313,274 @@ class _LoginPageState extends State<LoginPage> {
         foregroundColor: Colors.black,
         automaticallyImplyLeading: false,
       ),
-      body: Stack(
-        children: [
-          SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(24.0),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(child: Image.asset('assets/images/logo.jpg', height: 200)),
+              const SizedBox(height: 24.0),
+              Center(
+                child: Text(
+                  "Welcome to FreshTally!",
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green[700],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 40.0),
+              const Center(
+                child: Text(
+                  "",
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 30.0),
+              IconTextField(
+                hintText: "Email",
+                icon: Icons.email,
+                controller: _emailController,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Email is required';
+                  }
+                  if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
+                    return 'Enter a valid email';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16.0),
+              // --- Password field with show/hide functionality ---
+              TextFormField(
+                controller: _passwordController,
+                obscureText: _obscurePassword,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Password is required';
+                  }
+                  if (value.length < 6) {
+                    return 'Password must be at least 6 characters long';
+                  }
+                  return null;
+                },
+                decoration: InputDecoration(
+                  hintText: "Password",
+                  prefixIcon: const Icon(Icons.lock, color: Colors.grey),
+                  filled: true,
+                  fillColor: Colors.grey[200],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10.0),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    vertical: 16.0,
+                    horizontal: 16.0,
+                  ),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscurePassword
+                          ? Icons.visibility_off
+                          : Icons.visibility,
+                      color: Colors.grey,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _obscurePassword = !_obscurePassword;
+                      });
+                    },
+                  ),
+                ),
+              ),
+              // --- End password field ---
+              const SizedBox(height: 10.0),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Center(
-                    child: Image.asset(
-                      'assets/images/logo.png', // Make sure this path matches your asset location
-                      height: 100, // Adjust as needed
+                  Expanded(
+                    child: CheckboxListTile(
+                      title: const Text(
+                        "Remember me",
+                        style: TextStyle(fontSize: 14.0),
+                      ),
+                      value: _rememberMe,
+                      onChanged: (newValue) {
+                        setState(() {
+                          _rememberMe = newValue!;
+                        });
+                      },
+                      controlAffinity: ListTileControlAffinity.leading,
+                      contentPadding: EdgeInsets.zero,
+                      dense: true,
                     ),
                   ),
-                  const SizedBox(height: 24.0),
-                  Center(
+                  TextButton(
+                    onPressed: _forgotPassword,
                     child: Text(
-                      "Welcome to FreshTally!",
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.green[700],
-                      ),
+                      "Forgot Password?",
+                      style: TextStyle(color: Colors.grey[600], fontSize: 14.0),
                     ),
                   ),
-                  const SizedBox(height: 40.0),
-                  const Center(
-                    child: Text(
-                      "",
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black87,
-                      ),
-                    ),
+                ],
+              ),
+              const SizedBox(height: 20.0),
+              if (_errorMessage != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16.0),
+                  child: Text(
+                    _errorMessage!,
+                    style: const TextStyle(color: Colors.red),
+                    textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 30.0),
-                  IconTextField(
-                    hintText: "Email",
-                    icon: Icons.email,
-                    controller: _emailController,
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Email is required';
-                      }
-                      if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
-                        return 'Enter a valid email';
-                      }
-                      return null;
-                    },
+                ),
+              ElevatedButton(
+                onPressed: _isLoading ? null : _login,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green[600],
+                  padding: const EdgeInsets.symmetric(vertical: 16.0),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10.0),
                   ),
-                  const SizedBox(height: 16.0),
-                  TextFormField(
-                    controller: _passwordController,
-                    obscureText: _obscurePassword,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Password is required';
-                      }
-                      if (value.length < 6) {
-                        return 'Password must be at least 6 characters long';
-                      }
-                      return null;
-                    },
-                    decoration: InputDecoration(
-                      hintText: "Password",
-                      prefixIcon: const Icon(Icons.lock, color: Colors.grey),
-                      filled: true,
-                      fillColor: Colors.grey[200],
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10.0),
-                        borderSide: BorderSide.none,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        vertical: 16.0,
-                        horizontal: 16.0,
-                      ),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscurePassword
-                              ? Icons.visibility_off
-                              : Icons.visibility,
-                          color: Colors.grey,
+                ),
+                child: _isLoading
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text(
+                        "Login",
+                        style: TextStyle(
+                          fontSize: 18.0,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
                         ),
-                        onPressed: () {
-                          setState(() {
-                            _obscurePassword = !_obscurePassword;
-                          });
-                        },
+                      ),
+              ),
+              const SizedBox(height: 20.0),
+              const Center(
+                child: Text(
+                  "Or Sign In with:",
+                  style: TextStyle(color: Colors.grey),
+                ),
+              ),
+              const SizedBox(height: 15.0),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton(
+                    icon: const Icon(
+                      Icons.facebook,
+                      size: 40,
+                      color: Colors.blue,
+                    ),
+                    onPressed: _signInWithFacebook,
+                  ),
+                  const SizedBox(width: 20),
+                  IconButton(
+                    icon: Image.asset('assets/icons/google.png', height: 35),
+                    onPressed: _signInWithGoogle,
+                  ),
+                  const SizedBox(width: 20),
+                  IconButton(
+                    icon: const Icon(
+                      Icons.apple,
+                      size: 40,
+                      color: Colors.black,
+                    ),
+                    onPressed: _signInWithApple,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 30.0),
+              Column(
+                children: [
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      onPressed: () {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const CreateSupermarketPage(),
+                          ),
+                        );
+                      },
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Colors.green),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 12.0),
+                      ),
+                      child: const Text(
+                        "New Supermarket?",
+                        style: TextStyle(color: Colors.green, fontSize: 16.0),
                       ),
                     ),
                   ),
                   const SizedBox(height: 10.0),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: CheckboxListTile(
-                          title: const Text(
-                            "Remember me",
-                            style: TextStyle(fontSize: 14.0),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      onPressed: () {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const StaffSignupPage(),
                           ),
-                          value: _rememberMe,
-                          onChanged: (newValue) {
-                            setState(() {
-                              _rememberMe = newValue!;
-                            });
-                          },
-                          controlAffinity: ListTileControlAffinity.leading,
-                          contentPadding: EdgeInsets.zero,
-                          dense: true,
+                        );
+                      },
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Colors.orange),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
                         ),
+                        padding: const EdgeInsets.symmetric(vertical: 12.0),
                       ),
-                      TextButton(
-                        onPressed: _forgotPassword,
-                        child: Text(
-                          "Forgot Password?",
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontSize: 14.0,
-                          ),
-                        ),
+                      child: const Text(
+                        "Joining Staff?",
+                        style: TextStyle(color: Colors.orange, fontSize: 16.0),
                       ),
-                    ],
+                    ),
                   ),
-                  const SizedBox(height: 20.0),
-                  if (_errorMessage != null)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 16.0),
+                  const SizedBox(height: 10.0),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      onPressed: () {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const CustomerSignupPage(),
+                          ),
+                        );
+                      },
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: Colors.blue.shade700),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 12.0),
+                      ),
                       child: Text(
-                        _errorMessage!,
-                        style: const TextStyle(color: Colors.red),
-                        textAlign: TextAlign.center,
+                        "I am Customer",
+                        style: TextStyle(
+                          color: Colors.blue[700],
+                          fontSize: 16.0,
+                        ),
                       ),
                     ),
-                  ElevatedButton(
-                    onPressed: _isLoading ? null : _login,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green[600],
-                      padding: const EdgeInsets.symmetric(vertical: 16.0),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10.0),
-                      ),
-                    ),
-                    child: _isLoading
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text(
-                            "Login",
-                            style: TextStyle(
-                              fontSize: 18.0,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                  ),
-                  const SizedBox(height: 20.0),
-                  const Center(
-                    child: Text(
-                      "Or Sign In with:",
-                      style: TextStyle(color: Colors.grey),
-                    ),
-                  ),
-                  const SizedBox(height: 15.0),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      IconButton(
-                        icon: const Icon(
-                          Icons.facebook,
-                          size: 40,
-                          color: Colors.blue,
-                        ),
-                        onPressed: _signInWithFacebook,
-                      ),
-                      const SizedBox(width: 20),
-                      IconButton(
-                        icon: Image.asset(
-                          'assets/icons/google.png',
-                          height: 35,
-                        ),
-                        onPressed: _signInWithGoogle,
-                      ),
-                      const SizedBox(width: 20),
-                      IconButton(
-                        icon: const Icon(
-                          Icons.apple,
-                          size: 40,
-                          color: Colors.black,
-                        ),
-                        onPressed: _signInWithApple,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 30.0),
-                  Column(
-                    children: [
-                      SizedBox(
-                        width: double.infinity,
-                        child: OutlinedButton(
-                          onPressed: () {
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const CreateSupermarketPage(),
-                              ),
-                            );
-                          },
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Colors.green),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 12.0),
-                          ),
-                          child: const Text(
-                            "New Supermarket?",
-                            style: TextStyle(
-                              color: Colors.green,
-                              fontSize: 16.0,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 10.0),
-                      SizedBox(
-                        width: double.infinity,
-                        child: OutlinedButton(
-                          onPressed: () {
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const StaffSignupPage(),
-                              ),
-                            );
-                          },
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: Colors.orange),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 12.0),
-                          ),
-                          child: const Text(
-                            "Joining Staff?",
-                            style: TextStyle(
-                              color: Colors.orange,
-                              fontSize: 16.0,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 10.0),
-                      SizedBox(
-                        width: double.infinity,
-                        child: OutlinedButton(
-                          onPressed: () {
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const CustomerSignupPage(),
-                              ),
-                            );
-                          },
-                          style: OutlinedButton.styleFrom(
-                            side: BorderSide(color: Colors.blue.shade700),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            padding: const EdgeInsets.symmetric(vertical: 12.0),
-                          ),
-                          child: Text(
-                            "I am Customer",
-                            style: TextStyle(
-                              color: Colors.blue[700],
-                              fontSize: 16.0,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
                   ),
                 ],
               ),
-            ),
+            ],
           ),
-          // AI Assistant Floating Button at the bottom right
-          Positioned(
-            bottom: 24,
-            right: 24,
-            child: FloatingActionButton(
-              heroTag: "aiAssistant",
-              backgroundColor: Colors.blue.shade700,
-              child: const Icon(Icons.smart_toy, color: Colors.white),
-              onPressed: () {
-                showModalBottomSheet(
-                  context: context,
-                  isScrollControlled: true,
-                  shape: const RoundedRectangleBorder(
-                    borderRadius: BorderRadius.vertical(
-                      top: Radius.circular(16),
-                    ),
-                  ),
-                  builder: (context) => Padding(
-                    padding: EdgeInsets.only(
-                      bottom: MediaQuery.of(context).viewInsets.bottom,
-                      left: 16,
-                      right: 16,
-                      top: 16,
-                    ),
-                    child: SizedBox(
-                      height: 350,
-                      child: Column(
-                        children: [
-                          const Text(
-                            "AI Assistant",
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Expanded(
-                            child: ListView.builder(
-                              itemCount: _aiMessages.length,
-                              itemBuilder: (context, index) => Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 2.0,
-                                ),
-                                child: Align(
-                                  alignment:
-                                      _aiMessages[index].startsWith("You:")
-                                      ? Alignment.centerRight
-                                      : Alignment.centerLeft,
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      color:
-                                          _aiMessages[index].startsWith("You:")
-                                          ? Colors.green[100]
-                                          : Colors.blue[100],
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    padding: const EdgeInsets.all(8.0),
-                                    child: Text(_aiMessages[index]),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: TextField(
-                                  controller: _aiChatController,
-                                  decoration: const InputDecoration(
-                                    hintText: "Type your question...",
-                                  ),
-                                  onSubmitted: (value) {
-                                    if (value.trim().isNotEmpty) {
-                                      _sendAIMessage(value.trim());
-                                    }
-                                  },
-                                ),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.send),
-                                onPressed: () {
-                                  final value = _aiChatController.text.trim();
-                                  if (value.isNotEmpty) {
-                                    _sendAIMessage(value);
-                                  }
-                                },
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
