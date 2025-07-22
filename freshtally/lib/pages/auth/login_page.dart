@@ -363,7 +363,7 @@ class _LoginPageState extends State<LoginPage> {
                   return null;
                 },
               ),
-              const SizedBox(height: 16.0),
+              const SizedBox(height: 1.0),
               TextFormField(
                 controller: _passwordController,
                 obscureText: _obscurePassword,
