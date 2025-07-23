@@ -133,8 +133,8 @@ class DiscountsAndPromotionsPage extends StatelessWidget {
                     child: image.isNotEmpty
                         ? Image.network(
                             image,
-                            width: 60,
-                            height: 60,
+                            width: 61,
+                            height: 61,
                             fit: BoxFit.cover,
                             errorBuilder: (context, error, stackTrace) {
                               return Container(

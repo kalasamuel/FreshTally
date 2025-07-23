@@ -54,7 +54,7 @@ class _JoinSupermarketPageState extends State<JoinSupermarketPage> {
             margin: const EdgeInsets.all(
               20.0,
             ), // Margin around the main content area
-            padding: const EdgeInsets.all(16.0), // Padding inside the main card
+            padding: const EdgeInsets.all(17.0), // Padding inside the main card
 
             child: SingleChildScrollView(
               // Make content scrollable if keyboard appears
@@ -66,7 +66,7 @@ class _JoinSupermarketPageState extends State<JoinSupermarketPage> {
                   // App Bar Section
                   Padding(
                     padding: const EdgeInsets.only(
-                      bottom: 40.0,
+                      bottom: 41.0,
                     ), // More space below app bar
                     child: Row(children: [
                        ],

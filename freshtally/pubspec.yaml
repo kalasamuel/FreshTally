@@ -120,18 +120,20 @@ dev_dependencies:
 flutter:
   assets:
     - assets/icons/
-    #- assets/lottie/
-    - assets/images/
+    - assets/images/Logo.jpg
     - assets/products.json
+    
 
+
+    # If you intended to use logo.jpeg, add the file or update the path accordingly.
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
-  # assets:
-  #   - images/a_dot_burr.jpeg
+   #assets:
+    #- images/Logo.jpeg
   #   - images/a_dot_ham.jpeg
 
 
