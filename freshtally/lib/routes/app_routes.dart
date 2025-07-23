@@ -1,5 +1,3 @@
-
-
 // Auth pages
 
 // Staff pages
