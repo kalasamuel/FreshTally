@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:intl/intl.dart';
 
 class AnalyticsDashboardPage extends StatefulWidget {
   const AnalyticsDashboardPage({super.key});
@@ -24,7 +23,10 @@ class _AnalyticsDashboardPageState extends State<AnalyticsDashboardPage> {
     final sevenDaysAgo = now.subtract(const Duration(days: 7));
     final query = await FirebaseFirestore.instance
         .collection('sales')
-        .where('timestamp', isGreaterThanOrEqualTo: Timestamp.fromDate(sevenDaysAgo))
+        .where(
+          'timestamp',
+          isGreaterThanOrEqualTo: Timestamp.fromDate(sevenDaysAgo),
+        )
         .get();
 
     // Map: productId -> ProductSalesData
@@ -38,7 +40,10 @@ class _AnalyticsDashboardPageState extends State<AnalyticsDashboardPage> {
       final timestamp = (data['timestamp'] as Timestamp).toDate();
 
       if (productId == null) continue;
-      salesMap.putIfAbsent(productId, () => ProductSalesData(productId, category));
+      salesMap.putIfAbsent(
+        productId,
+        () => ProductSalesData(productId, category),
+      );
       salesMap[productId]!.addSale(timestamp, quantity);
     }
 
@@ -60,7 +65,9 @@ class _AnalyticsDashboardPageState extends State<AnalyticsDashboardPage> {
           }
           final salesMap = snapshot.data ?? {};
           if (salesMap.isEmpty) {
-            return const Center(child: Text('No sales data for the last 7 days.'));
+            return const Center(
+              child: Text('No sales data for the last 7 days.'),
+            );
           }
 
           // Sort products by total sold descending
@@ -107,7 +114,10 @@ class _AnalyticsDashboardPageState extends State<AnalyticsDashboardPage> {
                                 return Padding(
                                   padding: const EdgeInsets.only(top: 8.0),
                                   child: Text(
-                                    sortedProducts[index].productId.substring(0, 6),
+                                    sortedProducts[index].productId.substring(
+                                      0,
+                                      6,
+                                    ),
                                     style: const TextStyle(fontSize: 10),
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -209,4 +219,4 @@ class ProductSalesData {
       saleTimestamps.add(timestamp);
     }
   }
-} 
+}

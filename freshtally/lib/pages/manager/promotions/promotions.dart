@@ -517,6 +517,7 @@ class _PromotionsPageState extends State<PromotionsPage> {
                             backgroundColor: Colors.red,
                           ),
                         );
+
                         return;
                       }
 

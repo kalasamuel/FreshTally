@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:freshtally/pages/customer/list/shopping_list_page.dart';
 import 'package:freshtally/pages/manager/home/manager_home_screen.dart';
 import 'package:freshtally/pages/shelfStaff/shelves/shelf_mapping_page.dart';
-import 'package:freshtally/pages/shelfStaff/shelves/smart_suggestions_page.dart'; 
+import 'package:freshtally/pages/shelfStaff/shelves/smart_suggestions_page.dart';
 import 'package:freshtally/pages/auth/create_supermarket_page.dart';
 import 'package:freshtally/pages/auth/join_supermarket_page.dart';
 import 'package:freshtally/pages/auth/role_selection_page.dart';
@@ -69,7 +69,7 @@ class FreshTallyApp extends StatelessWidget {
               builder: (_) => SmartShelfSuggestionsPage(
                 supermarketId: args['supermarketId'] ?? '',
               ),
-            );  
+            );
           case '/managerHome':
             return MaterialPageRoute(
               builder: (_) {
@@ -109,6 +109,7 @@ class FreshTallyApp extends StatelessWidget {
                 return const CustomerSignupPage();
               },
             );
+
           case '/staff/managerHome':
             final args = settings.arguments as Map<String, dynamic>? ?? {};
             return MaterialPageRoute(

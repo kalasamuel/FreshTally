@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:freshtally/pages/customer/product/products_details_page.dart';
-import 'package:intl/intl.dart';
 
 class DiscountsAndPromotionsPage extends StatelessWidget {
   final String? highlightProductName;
@@ -134,8 +133,8 @@ class DiscountsAndPromotionsPage extends StatelessWidget {
                     child: image.isNotEmpty
                         ? Image.network(
                             image,
-                            width: 60,
-                            height: 60,
+                            width: 61,
+                            height: 61,
                             fit: BoxFit.cover,
                             errorBuilder: (context, error, stackTrace) {
                               return Container(

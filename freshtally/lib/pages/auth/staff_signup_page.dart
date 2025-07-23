@@ -1,78 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:freshtally/pages/auth/role_selection_page.dart';
-import 'package:freshtally/pages/auth/login_page.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Create Staff Account',
-      theme: ThemeData(primarySwatch: Colors.green, fontFamily: 'Inter'),
-      // The role parameter is not used in StaffSignupPage directly, removed for clarity.
-      home: const StaffSignupPage(role: ''),
-      debugShowCheckedModeBanner: false,
-    );
-  }
-}
-
-// IconTextField widget (assuming it's either defined here or in a shared file)
-class IconTextField extends StatelessWidget {
-  final String hintText;
-  final IconData icon;
-  final bool isPassword;
-  final TextEditingController? controller;
-  final String? Function(String?)? validator;
-  final TextInputType keyboardType;
-  final int? maxLength;
-
-  const IconTextField({
-    super.key,
-    required this.hintText,
-    required this.icon,
-    this.isPassword = false,
-    this.controller,
-    this.validator,
-    this.keyboardType = TextInputType.text,
-    this.maxLength,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return TextFormField(
-      controller: controller,
-      obscureText: isPassword,
-      validator: validator,
-      keyboardType: keyboardType,
-      maxLength: maxLength,
-      decoration: InputDecoration(
-        hintText: hintText,
-        prefixIcon: Icon(icon, color: Colors.grey),
-        filled: true,
-        fillColor: Colors.grey[200],
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10.0),
-          borderSide: BorderSide.none,
-        ),
-        contentPadding: const EdgeInsets.symmetric(
-          vertical: 16.0,
-          horizontal: 16.0,
-        ),
-        counterText: '',
-      ),
-    );
-  }
-}
+import 'package:freshtally/pages/auth/staffcode.dart';
 
 class StaffSignupPage extends StatefulWidget {
-  const StaffSignupPage({super.key, required String role});
+  const StaffSignupPage({super.key});
 
   @override
   State<StaffSignupPage> createState() => _StaffSignupPageState();
@@ -83,7 +13,6 @@ class _StaffSignupPageState extends State<StaffSignupPage> {
   bool _isLoading = false;
   String? _errorMessage;
 
-  // Text editing controllers for each input field
   final TextEditingController _firstNameController = TextEditingController();
   final TextEditingController _lastNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
@@ -91,8 +20,7 @@ class _StaffSignupPageState extends State<StaffSignupPage> {
   final TextEditingController _confirmPasswordController =
       TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
-
-  String? get supermarketId => null;
+  final TextEditingController _supermarketController = TextEditingController();
 
   @override
   void dispose() {
@@ -102,11 +30,11 @@ class _StaffSignupPageState extends State<StaffSignupPage> {
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     _phoneController.dispose();
+    _supermarketController.dispose();
     super.dispose();
   }
 
-  // Placeholder for account creation logic
-  Future<void> _createAccount() async {
+  void _navigateToVerification() {
     if (!_formKey.currentState!.validate()) {
       setState(() {
         _errorMessage = 'Please correct the errors in the form.';
@@ -114,116 +42,39 @@ class _StaffSignupPageState extends State<StaffSignupPage> {
       return;
     }
 
-    final firstName = _firstNameController.text.trim();
-    final lastName = _lastNameController.text.trim();
-    final email = _emailController.text.trim();
-    final password = _passwordController.text;
-    final phone = _phoneController.text.trim();
-
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-
-    try {
-      // Create user in Firebase Auth
-      final authResult = await FirebaseAuth.instance
-          .createUserWithEmailAndPassword(email: email, password: password);
-
-      final uid = authResult.user?.uid;
-      if (uid == null) throw Exception("Failed to create user account.");
-
-      // Save staff data in Firestore
-      await FirebaseFirestore.instance
-          .collection('supermarkets')
-          .doc(supermarketId)
-          .collection('staff')
-          .doc(uid)
-          .set({
-            'firstName': firstName,
-            'lastName': lastName,
-            'email': email,
-            'phone': phone,
-            'role': 'staff',
-            'createdAt': FieldValue.serverTimestamp(),
-            'isActive': true,
-            'uid': uid,
-          });
-
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Staff account created successfully!'),
-          backgroundColor: Colors.green,
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => StaffVerificationPage(
+          firstName: _firstNameController.text.trim(),
+          lastName: _lastNameController.text.trim(),
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
+          phone: _phoneController.text.trim(),
+          supermarketName: _supermarketController.text.trim(),
         ),
-      );
-
-      // Navigate to RoleSelectionPage or dashboard
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => RoleSelectionPage(role: 'staff'),
-        ),
-      );
-    } on FirebaseAuthException catch (e) {
-      String msg = 'Failed to create account.';
-      if (e.code == 'email-already-in-use') {
-        msg = 'This email is already in use.';
-      } else if (e.code == 'weak-password') {
-        msg = 'Password is too weak.';
-      }
-      setState(() {
-        _errorMessage = msg;
-      });
-    } catch (e) {
-      setState(() {
-        _errorMessage = 'Failed: ${e.toString()}';
-      });
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
-    }
-  }
-
-  // Placeholder for social sign-up methods
-  void _signUpWithGoogle() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Google Sign-Up not implemented.')),
-    );
-  }
-
-  void _signUpWithFacebook() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Facebook Sign-Up not implemented.')),
-    );
-  }
-
-  void _signUpWithApple() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Apple Sign-Up not implemented.')),
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFFFFFF), // White background
+      backgroundColor: const Color(0xFFFFFFFF),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        foregroundColor: Colors.black, // Back button color
+        foregroundColor: Colors.black,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'Create Staff Account', // Retain original title
+          'Create Staff Account',
           style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
-            color: Colors.green[700], // Match Login Page title color
+            color: Colors.green[700],
           ),
         ),
         centerTitle: true,
@@ -231,19 +82,16 @@ class _StaffSignupPageState extends State<StaffSignupPage> {
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(
-              24.0,
-            ), // Padding around the form content
+            padding: const EdgeInsets.all(24.0),
             child: Form(
               key: _formKey,
               child: Column(
-                crossAxisAlignment:
-                    CrossAxisAlignment.stretch, // Stretch children
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const SizedBox(height: 20),
                   const Center(
                     child: Text(
-                      "Join as Staff!", // Custom text for staff signup
+                      "Join as Staff!",
                       style: TextStyle(
                         fontSize: 28,
                         fontWeight: FontWeight.bold,
@@ -254,7 +102,6 @@ class _StaffSignupPageState extends State<StaffSignupPage> {
                   ),
                   const SizedBox(height: 30.0),
 
-                  // Input Fields using IconTextField
                   IconTextField(
                     hintText: 'First Name',
                     icon: Icons.person,
@@ -333,14 +180,27 @@ class _StaffSignupPageState extends State<StaffSignupPage> {
                   const SizedBox(height: 16.0),
 
                   IconTextField(
+                    hintText: 'Supermarket Name',
+                    icon: Icons.store,
+                    controller: _supermarketController,
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Supermarket name is required';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16.0),
+
+                  IconTextField(
                     hintText: 'Phone No. (Optional)',
                     icon: Icons.phone,
                     controller: _phoneController,
                     keyboardType: TextInputType.phone,
-                    maxLength: 15, // Example max length for phone numbers
+                    maxLength: 15,
                   ),
-                  const SizedBox(height: 24.0), // Space before button
-                  // Error Message Display
+                  const SizedBox(height: 24.0),
+
                   if (_errorMessage != null)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 16.0),
@@ -351,29 +211,22 @@ class _StaffSignupPageState extends State<StaffSignupPage> {
                       ),
                     ),
 
-                  // Create Account Button
                   SizedBox(
-                    width: double.infinity, // Button takes full width
+                    width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: _isLoading ? null : _createAccount,
+                      onPressed: _isLoading ? null : _navigateToVerification,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(
-                          0xFF4CAF50,
-                        ), // Green button color
+                        backgroundColor: const Color(0xFF4CAF50),
                         padding: const EdgeInsets.symmetric(vertical: 16.0),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(
-                            10.0,
-                          ), // Rounded corners
+                          borderRadius: BorderRadius.circular(10.0),
                         ),
-                        elevation: 1, // Add a subtle shadow
+                        elevation: 1,
                       ),
                       child: _isLoading
-                          ? const CircularProgressIndicator(
-                              color: Colors.white,
-                            ) // White spinner
+                          ? const CircularProgressIndicator(color: Colors.white)
                           : const Text(
-                              'Create Account',
+                              'Next',
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
@@ -382,83 +235,59 @@ class _StaffSignupPageState extends State<StaffSignupPage> {
                             ),
                     ),
                   ),
-                  const SizedBox(height: 20.0), // Space below button
-                  // Or Sign Up with:
-                  const Center(
-                    child: Text(
-                      "Or Sign Up with:", // Changed from "Sign In" to "Sign Up" for clarity
-                      style: TextStyle(color: Colors.grey),
-                    ),
-                  ),
-                  const SizedBox(height: 15.0),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      IconButton(
-                        icon: const Icon(
-                          Icons.facebook,
-                          size: 40,
-                          color: Colors.blue,
-                        ),
-                        onPressed: _signUpWithFacebook,
-                      ),
-                      const SizedBox(width: 20),
-                      IconButton(
-                        icon: Image.asset(
-                          'assets/icons/google.png',
-                          height: 35,
-                        ),
-                        onPressed: _signUpWithGoogle,
-                      ),
-                      const SizedBox(width: 20),
-                      IconButton(
-                        icon: const Icon(
-                          Icons.apple,
-                          size: 40,
-                          color: Colors.black,
-                        ),
-                        onPressed: _signUpWithApple,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 30.0), // Space below icons
-                  // Already have an account? Sign In
-                  Center(
-                    child: GestureDetector(
-                      onTap: () {
-                        // Navigate to the LoginPage
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const LoginPage(),
-                          ),
-                        );
-                      },
-                      child: RichText(
-                        text: TextSpan(
-                          text: 'Already have an account? ',
-                          style: TextStyle(
-                            color: Colors.grey[800],
-                            fontSize: 15,
-                          ),
-                          children: const [
-                            TextSpan(
-                              text: 'Sign In',
-                              style: TextStyle(
-                                color: Colors.green, // Green for "Sign In"
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
+                  const SizedBox(height: 20.0),
                 ],
               ),
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class IconTextField extends StatelessWidget {
+  final String hintText;
+  final IconData icon;
+  final bool isPassword;
+  final TextEditingController? controller;
+  final String? Function(String?)? validator;
+  final TextInputType keyboardType;
+  final int? maxLength;
+
+  const IconTextField({
+    super.key,
+    required this.hintText,
+    required this.icon,
+    this.isPassword = false,
+    this.controller,
+    this.validator,
+    this.keyboardType = TextInputType.text,
+    this.maxLength,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TextFormField(
+      controller: controller,
+      obscureText: isPassword,
+      validator: validator,
+      keyboardType: keyboardType,
+      maxLength: maxLength,
+      decoration: InputDecoration(
+        hintText: hintText,
+        prefixIcon: Icon(icon, color: Colors.grey),
+        filled: true,
+        fillColor: Colors.grey[200],
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10.0),
+          borderSide: BorderSide.none,
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          vertical: 16.0,
+          horizontal: 16.0,
+        ),
+        counterText: '',
       ),
     );
   }

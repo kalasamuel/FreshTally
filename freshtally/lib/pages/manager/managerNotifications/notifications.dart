@@ -17,8 +17,6 @@ class ManagerNotificationCenterPage extends StatefulWidget {
 
 class _ManagerNotificationCenterPageState
     extends State<ManagerNotificationCenterPage> {
-  String _selectedFilter = 'All';
-  final _filters = const ['All', 'Staff', 'Promotions'];
   bool _hasIndexError = false;
   bool _isLoading = true;
 
@@ -29,31 +27,25 @@ class _ManagerNotificationCenterPageState
           .where('supermarketName', isEqualTo: widget.supermarketName)
           .orderBy('createdAt', descending: true);
 
-      if (_selectedFilter == 'Staff') {
-        query = query.where('type', isEqualTo: 'staff_signup');
-      } else if (_selectedFilter == 'Promotions') {
-        query = query.where('type', isEqualTo: 'promo_expiry');
-      }
-
       return query.snapshots().handleError((error) {
-        if (error.toString().contains('index')) {
-          if (mounted) {
-            setState(() {
-              _hasIndexError = true;
-              _isLoading = false;
-            });
-          }
+        debugPrint("Notification stream error: $error");
+        if (mounted) {
+          setState(() {
+            _hasIndexError = error.toString().contains('index');
+            _isLoading = false;
+          });
         }
-        return Stream.empty();
+        return Stream.error(error);
       });
     } catch (e) {
+      debugPrint("Error creating stream: $e");
       if (mounted) {
         setState(() {
           _hasIndexError = true;
           _isLoading = false;
         });
       }
-      return Stream.empty();
+      return Stream.error(e);
     }
   }
 
@@ -76,9 +68,7 @@ class _ManagerNotificationCenterPageState
         child: Column(
           children: [
             const SizedBox(height: 16),
-            _buildFilterRow(),
-            const SizedBox(height: 16),
-            if (_isLoading)
+            if (_isLoading && !_hasIndexError)
               const Expanded(child: Center(child: CircularProgressIndicator()))
             else if (_hasIndexError)
               _buildIndexErrorWidget()
@@ -91,7 +81,8 @@ class _ManagerNotificationCenterPageState
                       return Center(child: Text('Error: ${snapshot.error}'));
                     }
 
-                    if (snapshot.connectionState == ConnectionState.waiting) {
+                    if (snapshot.connectionState == ConnectionState.waiting &&
+                        !snapshot.hasData) {
                       return const Center(child: CircularProgressIndicator());
                     }
 
@@ -118,49 +109,6 @@ class _ManagerNotificationCenterPageState
     );
   }
 
-  Widget _buildFilterRow() {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
-        children: _filters.map((filter) {
-          return Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: ChoiceChip(
-              label: Text(filter),
-              selected: _selectedFilter == filter,
-              selectedColor: const Color(0xFF4CAF50),
-              backgroundColor: const Color(0xFFF5F6FA),
-              onSelected: (selected) {
-                if (selected) {
-                  setState(() {
-                    _selectedFilter = filter;
-                    _isLoading = true;
-                    _hasIndexError = false;
-                  });
-                }
-              },
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              labelPadding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 4,
-              ),
-              avatar: _selectedFilter == filter
-                  ? const Icon(
-                      Icons.check_circle,
-                      color: Colors.white,
-                      size: 18,
-                    )
-                  : null,
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
-
   Widget _buildIndexErrorWidget() {
     return Expanded(
       child: Center(
@@ -183,7 +131,6 @@ class _ManagerNotificationCenterPageState
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () async {
-                  // This would typically use url_launcher package
                   debugPrint('Redirect to Firebase console to create index');
                 },
                 child: const Text('Create Index'),
@@ -216,27 +163,41 @@ class _ManagerNotificationCenterPageState
     final formattedTime = timestamp != null
         ? DateFormat('MMM d, h:mm a').format(timestamp.toDate())
         : '';
+    final isRead = data['read'] ?? false;
 
     final payload = data['payload'] as Map<String, dynamic>? ?? {};
-    final staffName = payload['staffName'] ?? '';
-    final code = payload['verificationCode'] ?? '';
-    final supermarket = payload['supermarketName'] ?? '';
+    final staffName = payload['staffName'] ?? data['staffName'] ?? '';
+    final verificationCode = payload['verificationCode'] ?? '';
+    final supermarket =
+        payload['supermarketName'] ?? data['supermarketName'] ?? '';
 
     final List<String> details = [];
     if (type == 'staff_signup') {
       details.addAll([
         message,
         if (staffName.isNotEmpty) 'Staff: $staffName',
-        if (code.isNotEmpty) 'Verification Code: $code',
+        if (verificationCode.isNotEmpty) 'Verification Code: $verificationCode',
         if (supermarket.isNotEmpty) 'Supermarket: $supermarket',
       ]);
-    } else {
+    } else if (type == 'promo_expiry') {
       details.add(message);
       if (data['expiryDate'] != null) {
+        final expiryDate = (data['expiryDate'] as Timestamp).toDate();
+        final timeLeft = expiryDate.difference(DateTime.now());
         details.add(
-          'Expires: ${DateFormat('MMM d, y').format((data['expiryDate'] as Timestamp).toDate())}',
+          'Expires: ${DateFormat('MMM d, y').format(expiryDate)} (${timeLeft.inHours} hours left)',
         );
       }
+    } else if (type == 'promo_48h_warning') {
+      details.add(message);
+      if (data['expiryDate'] != null) {
+        final expiryDate = (data['expiryDate'] as Timestamp).toDate();
+        details.add(
+          'Expires soon: ${DateFormat('MMM d, y').format(expiryDate)}',
+        );
+      }
+    } else {
+      details.add(message);
     }
 
     final style = _getNotificationStyle(type);
@@ -270,12 +231,12 @@ class _ManagerNotificationCenterPageState
                       ),
                     ),
                   ),
-                  if (data['read'] == false)
+                  if (!isRead)
                     Container(
                       width: 12,
                       height: 12,
                       decoration: const BoxDecoration(
-                        color: Colors.red,
+                        color: Colors.blue,
                         shape: BoxShape.circle,
                       ),
                     ),
@@ -318,6 +279,7 @@ class _ManagerNotificationCenterPageState
 
     final data = doc.data() as Map<String, dynamic>? ?? {};
     final type = (data['type'] ?? '').toString().toLowerCase();
+    final isRead = data['read'] ?? false;
 
     if (type == 'staff_signup') {
       _showStaffSignupDialog(context, doc);
@@ -336,7 +298,9 @@ class _ManagerNotificationCenterPageState
                   Padding(
                     padding: const EdgeInsets.only(top: 8),
                     child: Text(
-                      'Expires: ${DateFormat('MMM d, y h:mm a').format((data['expiryDate'] as Timestamp).toDate())}',
+                      type == 'promo_48h_warning'
+                          ? 'Expires soon: ${DateFormat('MMM d, y h:mm a').format((data['expiryDate'] as Timestamp).toDate())}'
+                          : 'Expires: ${DateFormat('MMM d, y h:mm a').format((data['expiryDate'] as Timestamp).toDate())}',
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),
@@ -353,7 +317,7 @@ class _ManagerNotificationCenterPageState
       );
     }
 
-    if (data['read'] == false) {
+    if (!isRead) {
       doc.reference.update({'read': true});
     }
   }
@@ -364,32 +328,39 @@ class _ManagerNotificationCenterPageState
   ) async {
     final data = doc.data() as Map<String, dynamic>? ?? {};
     final payload = data['payload'] as Map<String, dynamic>? ?? {};
+    final isRead = data['read'] ?? false;
+
+    final staffName = payload['staffName'] ?? data['staffName'] ?? '';
+    final verificationCode = payload['verificationCode'] ?? '';
+    final supermarket =
+        payload['supermarketName'] ?? data['supermarketName'] ?? '';
+    final message = data['message'] ?? '';
 
     await showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Staff Signup Details'),
+        title: const Text('Staff Signup Request'),
         content: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              _buildDetailRow('Message:', data['message'] ?? ''),
+              _buildDetailRow('Message:', message),
               const SizedBox(height: 16),
-              _buildDetailRow('Staff Name:', payload['staffName'] ?? ''),
-              _buildDetailRow('Supermarket:', payload['supermarketName'] ?? ''),
+              _buildDetailRow('Staff Name:', staffName),
+              _buildDetailRow('Supermarket:', supermarket),
               const SizedBox(height: 16),
               _buildDetailRow(
                 'Verification Code:',
-                payload['verificationCode'] ?? '',
+                verificationCode,
                 isImportant: true,
               ),
               const SizedBox(height: 16),
               _buildDetailRow(
                 'Status:',
-                (data['read'] ?? false) ? 'Viewed' : 'New',
+                isRead ? 'Viewed' : 'New',
                 isImportant: true,
-                color: (data['read'] ?? false) ? Colors.grey : Colors.green,
+                color: isRead ? Colors.grey : Colors.blue,
               ),
             ],
           ),
@@ -399,66 +370,84 @@ class _ManagerNotificationCenterPageState
             onPressed: () => Navigator.pop(context),
             child: const Text('Close'),
           ),
+          if (verificationCode.isNotEmpty)
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('Copy Code'),
+            ),
         ],
       ),
     );
-  }
 
-  Widget _buildDetailRow(
-    String label,
-    String value, {
-    bool isImportant = false,
-    Color? color,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '$label ',
+    if (!isRead) {
+      doc.reference.update({'read': true});
+    }
+  }
+}
+
+Widget _buildDetailRow(
+  String label,
+  String value, {
+  bool isImportant = false,
+  Color? color,
+}) {
+  return Padding(
+    padding: const EdgeInsets.symmetric(vertical: 4),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          '$label ',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: isImportant ? (color ?? Colors.blue) : Colors.black87,
+          ),
+        ),
+        Expanded(
+          child: Text(
+            value,
             style: TextStyle(
-              fontWeight: FontWeight.bold,
               color: isImportant ? (color ?? Colors.blue) : Colors.black87,
             ),
           ),
-          Expanded(
-            child: Text(
-              value,
-              style: TextStyle(
-                color: isImportant ? (color ?? Colors.blue) : Colors.black87,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
+}
 
-  NotificationStyle _getNotificationStyle(String type) {
-    switch (type) {
-      case 'promo_expiry':
-        return NotificationStyle(
-          icon: Icons.local_offer,
-          iconColor: Colors.red,
-          cardColor: const Color(0xFFFFF0F0),
-          borderColor: const Color(0xFFFFCCCC),
-        );
-      case 'staff_signup':
-        return NotificationStyle(
-          icon: Icons.person_add,
-          iconColor: Colors.purple,
-          cardColor: const Color(0xFFF3E5F5),
-          borderColor: const Color(0xFFE1BEE7),
-        );
-      default:
-        return NotificationStyle(
-          icon: Icons.info_outline,
-          iconColor: Colors.blue,
-          cardColor: Colors.white,
-          borderColor: Colors.grey.shade200,
-        );
-    }
+NotificationStyle _getNotificationStyle(String type) {
+  switch (type) {
+    case 'promo_expiry':
+      return NotificationStyle(
+        icon: Icons.local_offer,
+        iconColor: Colors.blue,
+        cardColor: const Color(0xFFE3F2FD),
+        borderColor: const Color(0xFFBBDEFB),
+      );
+    case 'promo_48h_warning':
+      return NotificationStyle(
+        icon: Icons.warning,
+        iconColor: Colors.orange,
+        cardColor: const Color(0xFFFFF3E0),
+        borderColor: const Color(0xFFFFE0B2),
+      );
+    case 'staff_signup':
+      return NotificationStyle(
+        icon: Icons.person_add,
+        iconColor: Colors.blue,
+        cardColor: const Color(0xFFE3F2FD),
+        borderColor: const Color(0xFFBBDEFB),
+      );
+    default:
+      return NotificationStyle(
+        icon: Icons.info_outline,
+        iconColor: Colors.blue,
+        cardColor: Colors.white,
+        borderColor: Colors.grey.shade200,
+      );
   }
 }
 

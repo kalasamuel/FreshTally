@@ -64,6 +64,7 @@ class _LoginPageState extends State<LoginPage> {
   bool _isLoading = false;
   String? _errorMessage;
   bool _rememberMe = false;
+  bool _obscurePassword = true; // <-- Add this line
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -111,48 +112,41 @@ class _LoginPageState extends State<LoginPage> {
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
+
       final userId = userCredential.user?.uid;
       if (userId == null) throw Exception("User ID not found");
 
-      final supermarketsSnapshot = await _firestore
-          .collection('supermarkets')
+      // Improved user document query
+      final userQuery = await _firestore
+          .collectionGroup('users')
+          .where('uid', isEqualTo: userId)
+          .limit(1)
           .get();
 
-      DocumentSnapshot? userDoc;
-      String? supermarketId;
+      if (userQuery.docs.isEmpty) {
+        throw Exception('User document not found. Contact support.');
+      }
 
-      for (final supermarket in supermarketsSnapshot.docs) {
-        final doc = await _firestore
+      final userDoc = userQuery.docs.first;
+      final userData = userDoc.data();
+      final role = userData['role'] as String? ?? 'customer';
+      final supermarketId = userData['supermarketId'] as String?;
+
+      String supermarketName = 'Unknown';
+      String location = 'Unknown';
+
+      if (supermarketId != null) {
+        final supermarketDoc = await _firestore
             .collection('supermarkets')
-            .doc(supermarket.id)
-            .collection('users')
-            .doc(userId)
+            .doc(supermarketId)
             .get();
 
-        if (doc.exists) {
-          userDoc = doc;
-          supermarketId = supermarket.id;
-          break;
+        if (supermarketDoc.exists) {
+          final supermarketData = supermarketDoc.data()!;
+          supermarketName = supermarketData['name'] as String? ?? 'Unknown';
+          location = supermarketData['location'] as String? ?? 'Unknown';
         }
       }
-
-      if (userDoc == null || supermarketId == null) {
-        throw Exception(
-          'User document not found in any supermarket. Contact support.',
-        );
-      }
-
-      final userData = userDoc.data() as Map<String, dynamic>?;
-      final role = userData?['role'] as String? ?? 'customer';
-
-      final supermarketDoc = await _firestore
-          .collection('supermarkets')
-          .doc(supermarketId)
-          .get();
-      final supermarketData = supermarketDoc.data() as Map<String, dynamic>?;
-
-      final supermarketName = supermarketData?['name'] as String? ?? 'Unknown';
-      final location = supermarketData?['location'] as String? ?? 'Unknown';
 
       await _saveRememberMePreferences(_emailController.text.trim());
 
@@ -202,9 +196,9 @@ class _LoginPageState extends State<LoginPage> {
             context,
             MaterialPageRoute(
               builder: (_) => CustomerHomePage(
-                supermarketId: supermarketId,
                 supermarketName: supermarketName,
                 location: location,
+                supermarketId: supermarketId ?? '',
               ),
             ),
           );
@@ -222,9 +216,11 @@ class _LoginPageState extends State<LoginPage> {
         _errorMessage = 'Login failed: ${e.toString()}';
       });
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -324,6 +320,8 @@ class _LoginPageState extends State<LoginPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              Center(child: Image.asset('assets/images/logo.jpg', height: 200)),
+              const SizedBox(height: 24.0),
               Center(
                 child: Text(
                   "Welcome to FreshTally!",
@@ -337,7 +335,7 @@ class _LoginPageState extends State<LoginPage> {
               const SizedBox(height: 40.0),
               const Center(
                 child: Text(
-                  "Login",
+                  "",
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
@@ -361,11 +359,10 @@ class _LoginPageState extends State<LoginPage> {
                 },
               ),
               const SizedBox(height: 16.0),
-              IconTextField(
-                hintText: "Password",
-                icon: Icons.lock,
-                isPassword: true,
+              // --- Password field with show/hide functionality ---
+              TextFormField(
                 controller: _passwordController,
+                obscureText: _obscurePassword,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Password is required';
@@ -375,7 +372,35 @@ class _LoginPageState extends State<LoginPage> {
                   }
                   return null;
                 },
+                decoration: InputDecoration(
+                  hintText: "Password",
+                  prefixIcon: const Icon(Icons.lock, color: Colors.grey),
+                  filled: true,
+                  fillColor: Colors.grey[200],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10.0),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    vertical: 16.0,
+                    horizontal: 16.0,
+                  ),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscurePassword
+                          ? Icons.visibility_off
+                          : Icons.visibility,
+                      color: Colors.grey,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _obscurePassword = !_obscurePassword;
+                      });
+                    },
+                  ),
+                ),
               ),
+              // --- End password field ---
               const SizedBox(height: 10.0),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -425,14 +450,16 @@ class _LoginPageState extends State<LoginPage> {
                     borderRadius: BorderRadius.circular(10.0),
                   ),
                 ),
-                child: const Text(
-                  "Login",
-                  style: TextStyle(
-                    fontSize: 18.0,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
+                child: _isLoading
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text(
+                        "Login",
+                        style: TextStyle(
+                          fontSize: 18.0,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
               ),
               const SizedBox(height: 20.0),
               const Center(
@@ -504,7 +531,7 @@ class _LoginPageState extends State<LoginPage> {
                         Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => const StaffSignupPage(role: ''),
+                            builder: (_) => const StaffSignupPage(),
                           ),
                         );
                       },

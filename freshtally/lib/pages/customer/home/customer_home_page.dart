@@ -12,7 +12,7 @@ import 'package:flutter_typeahead/flutter_typeahead.dart';
 class CustomerHomePage extends StatefulWidget {
   final String? supermarketName;
   final String? location;
-  final String? supermarketId;
+  final String supermarketId;
   const CustomerHomePage({
     super.key,
     this.supermarketName,
@@ -79,7 +79,7 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
                 child: FutureBuilder<DocumentSnapshot>(
                   future: FirebaseFirestore.instance
                       .collection('supermarkets')
-                      .doc(widget.supermarketId) // Use widget.supermarketId
+                      .doc(widget.supermarketId)
                       .get(),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
@@ -202,7 +202,8 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const SettingsPage(supermarketId: ''),
+                  builder: (context) =>
+                      SettingsPage(supermarketId: widget.supermarketId),
                 ),
               );
             },
