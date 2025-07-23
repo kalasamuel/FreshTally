@@ -1,3 +1,4 @@
+//all pages
 
 // Auth pages
 
