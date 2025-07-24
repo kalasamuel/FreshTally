@@ -267,3 +267,52 @@ exports.onTransactionChange = functions.firestore
     console.log(`Transaction ${context.params.transactionId} processed for aggregation.`);
     return null;
   });
+
+  const functions = require("firebase-functions");
+const admin = require("firebase-admin");
+admin.initializeApp();
+
+exports.notifyExpiringPromotions = functions.pubsub
+  .schedule("every 24 hours")
+  .onRun(async (context) => {
+    const now = new Date();
+    const twoDaysLater = new Date(now);
+    twoDaysLater.setDate(now.getDate() + 2);
+
+    const productsRef = admin.firestore().collection("products");
+    const snapshot = await productsRef
+      .where("discountExpiry", ">=", now)
+      .where("discountExpiry", "<=", twoDaysLater)
+      .get();
+
+    const batch = admin.firestore().batch();
+
+    snapshot.forEach((doc) => {
+      const data = doc.data();
+      const notificationRef = admin.firestore().collection("notifications").doc();
+
+      batch.set(notificationRef, {
+        type: "promo_expiry",
+        title: "Discount Ending Soon",
+        message: `Promotion on ${data.name} is about to expire.`,
+        supermarketName: data.supermarketName ?? "Unknown",
+        createdAt: admin.firestore.Timestamp.now(),
+        read: false,
+        payload: {
+          productId: doc.id,
+          productName: data.name,
+          expiryDate: data.discountExpiry,
+          discountPercentage: data.discountPercentage,
+        },
+      });
+    });
+
+    if (!snapshot.empty) {
+      await batch.commit();
+      console.log(`Created ${snapshot.size} promotion expiry notifications.`);
+    } else {
+      console.log("No expiring promotions found.");
+    }
+
+    return null;
+  });

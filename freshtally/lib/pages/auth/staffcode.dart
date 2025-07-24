@@ -186,7 +186,7 @@ class _StaffVerificationPageState extends State<StaffVerificationPage> {
           style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
-            color: Colors.green[700],
+            color: Colors.green[800],
           ),
         ),
         centerTitle: true,
@@ -257,9 +257,9 @@ class _StaffVerificationPageState extends State<StaffVerificationPage> {
                     onPressed: _isLoading ? null : _completeSignup,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF4CAF50),
-                      padding: const EdgeInsets.symmetric(vertical: 16.0),
+                      padding: const EdgeInsets.symmetric(vertical: 17.0),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10.0),
+                        borderRadius: BorderRadius.circular(11.0),
                       ),
                       elevation: 1,
                     ),

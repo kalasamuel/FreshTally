@@ -263,7 +263,7 @@ class _ExpiryTrackingPageState extends State<ExpiryTrackingPage> {
     );
   }
 
-  // Helper method to build a detail item with an info icon
+  // This is the helper method to build a detail item with an info icon
   Widget _buildDetailItem(String text) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),

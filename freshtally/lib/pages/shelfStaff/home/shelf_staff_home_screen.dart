@@ -97,7 +97,7 @@ class ShelfStaffDashboard extends StatelessWidget {
                 child: Text(
                   'Shelf Attendant Dashboard',
                   style: TextStyle(
-                    fontSize: 28,
+                    fontSize: 30,
                     fontWeight: FontWeight.bold,
                     color: Colors.black87,
                   ),

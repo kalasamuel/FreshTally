@@ -87,54 +87,13 @@ class _ProductSearchPageState extends State<ProductSearchPage> {
                       child: ListTile(
                         leading: Image.network(
                           imageUrl,
-                          width: 50,
-                          height: 50,
+                          width: 51,
+                          height: 51,
                           errorBuilder: (_, __, ___) =>
                               const Icon(Icons.image_not_supported),
                         ),
                         title: Text(name),
-                        // subtitle: Column(
-                        //   crossAxisAlignment: CrossAxisAlignment.start,
-                        //   children: [
-                        //     Text('$price UGX'),
-                        //     if (locationText.isNotEmpty)
-                        //       Padding(
-                        //         padding: const EdgeInsets.only(top: 6.0),
-                        //         child: Container(
-                        //           padding: const EdgeInsets.symmetric(
-                        //             horizontal: 8,
-                        //             vertical: 4,
-                        //           ),
-                        //           decoration: BoxDecoration(
-                        //             color: Colors.green.shade50,
-                        //             borderRadius: BorderRadius.circular(8),
-                        //             border: Border.all(
-                        //               color: Colors.green.shade400,
-                        //               width: 1,
-                        //             ),
-                        //           ),
-                        //           child: Row(
-                        //             mainAxisSize: MainAxisSize.min,
-                        //             children: [
-                        //               const Icon(
-                        //                 Icons.location_on,
-                        //                 color: Colors.green,
-                        //                 size: 18,
-                        //               ),
-                        //               const SizedBox(width: 4),
-                        //               Text(
-                        //                 locationText,
-                        //                 style: const TextStyle(
-                        //                   color: Colors.green,
-                        //                   fontWeight: FontWeight.bold,
-                        //                 ),
-                        //               ),
-                        //             ],
-                        //           ),
-                        //         ),
-                        //       ),
-                        //   ],
-                        // ),
+                        subtitle: Text('$price UGX'),
                         onTap: () {
                           Navigator.push(
                             context,

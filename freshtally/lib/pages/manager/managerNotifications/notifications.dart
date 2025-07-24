@@ -17,8 +17,6 @@ class ManagerNotificationCenterPage extends StatefulWidget {
 
 class _ManagerNotificationCenterPageState
     extends State<ManagerNotificationCenterPage> {
-  String _selectedFilter = 'All';
-  final _filters = const ['All', 'Staff', 'Promotions'];
   bool _hasIndexError = false;
   bool _isLoading = true;
 
@@ -28,12 +26,6 @@ class _ManagerNotificationCenterPageState
           .collection('notifications')
           .where('supermarketName', isEqualTo: widget.supermarketName)
           .orderBy('createdAt', descending: true);
-
-      if (_selectedFilter == 'Staff') {
-        query = query.where('type', isEqualTo: 'staff_signup');
-      } else if (_selectedFilter == 'Promotions') {
-        query = query.where('type', isEqualTo: 'promo_expiry');
-      }
 
       return query.snapshots().handleError((error) {
         debugPrint("Notification stream error: $error");
@@ -76,8 +68,6 @@ class _ManagerNotificationCenterPageState
         child: Column(
           children: [
             const SizedBox(height: 16),
-            _buildFilterRow(),
-            const SizedBox(height: 16),
             if (_isLoading && !_hasIndexError)
               const Expanded(child: Center(child: CircularProgressIndicator()))
             else if (_hasIndexError)
@@ -115,49 +105,6 @@ class _ManagerNotificationCenterPageState
               ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildFilterRow() {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
-        children: _filters.map((filter) {
-          return Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: ChoiceChip(
-              label: Text(filter),
-              selected: _selectedFilter == filter,
-              selectedColor: const Color(0xFF4CAF50),
-              backgroundColor: const Color(0xFFF5F6FA),
-              onSelected: (selected) {
-                if (selected) {
-                  setState(() {
-                    _selectedFilter = filter;
-                    _isLoading = true;
-                    _hasIndexError = false;
-                  });
-                }
-              },
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              labelPadding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 4,
-              ),
-              avatar: _selectedFilter == filter
-                  ? const Icon(
-                      Icons.check_circle,
-                      color: Colors.white,
-                      size: 18,
-                    )
-                  : null,
-            ),
-          );
-        }).toList(),
       ),
     );
   }
@@ -232,13 +179,25 @@ class _ManagerNotificationCenterPageState
         if (verificationCode.isNotEmpty) 'Verification Code: $verificationCode',
         if (supermarket.isNotEmpty) 'Supermarket: $supermarket',
       ]);
-    } else {
+    } else if (type == 'promo_expiry') {
       details.add(message);
       if (data['expiryDate'] != null) {
+        final expiryDate = (data['expiryDate'] as Timestamp).toDate();
+        final timeLeft = expiryDate.difference(DateTime.now());
         details.add(
-          'Expires: ${DateFormat('MMM d, y').format((data['expiryDate'] as Timestamp).toDate())}',
+          'Expires: ${DateFormat('MMM d, y').format(expiryDate)} (${timeLeft.inHours} hours left)',
         );
       }
+    } else if (type == 'promo_48h_warning') {
+      details.add(message);
+      if (data['expiryDate'] != null) {
+        final expiryDate = (data['expiryDate'] as Timestamp).toDate();
+        details.add(
+          'Expires soon: ${DateFormat('MMM d, y').format(expiryDate)}',
+        );
+      }
+    } else {
+      details.add(message);
     }
 
     final style = _getNotificationStyle(type);
@@ -277,7 +236,7 @@ class _ManagerNotificationCenterPageState
                       width: 12,
                       height: 12,
                       decoration: const BoxDecoration(
-                        color: Colors.red,
+                        color: Colors.blue,
                         shape: BoxShape.circle,
                       ),
                     ),
@@ -339,7 +298,9 @@ class _ManagerNotificationCenterPageState
                   Padding(
                     padding: const EdgeInsets.only(top: 8),
                     child: Text(
-                      'Expires: ${DateFormat('MMM d, y h:mm a').format((data['expiryDate'] as Timestamp).toDate())}',
+                      type == 'promo_48h_warning'
+                          ? 'Expires soon: ${DateFormat('MMM d, y h:mm a').format((data['expiryDate'] as Timestamp).toDate())}'
+                          : 'Expires: ${DateFormat('MMM d, y h:mm a').format((data['expiryDate'] as Timestamp).toDate())}',
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ),
@@ -399,7 +360,7 @@ class _ManagerNotificationCenterPageState
                 'Status:',
                 isRead ? 'Viewed' : 'New',
                 isImportant: true,
-                color: isRead ? Colors.grey : Colors.green,
+                color: isRead ? Colors.grey : Colors.blue,
               ),
             ],
           ),
@@ -462,16 +423,23 @@ NotificationStyle _getNotificationStyle(String type) {
     case 'promo_expiry':
       return NotificationStyle(
         icon: Icons.local_offer,
-        iconColor: Colors.red,
-        cardColor: const Color(0xFFFFF0F0),
-        borderColor: const Color(0xFFFFCCCC),
+        iconColor: Colors.blue,
+        cardColor: const Color(0xFFE3F2FD),
+        borderColor: const Color(0xFFBBDEFB),
+      );
+    case 'promo_48h_warning':
+      return NotificationStyle(
+        icon: Icons.warning,
+        iconColor: Colors.orange,
+        cardColor: const Color(0xFFFFF3E0),
+        borderColor: const Color(0xFFFFE0B2),
       );
     case 'staff_signup':
       return NotificationStyle(
         icon: Icons.person_add,
-        iconColor: Colors.purple,
-        cardColor: const Color(0xFFF3E5F5),
-        borderColor: const Color(0xFFE1BEE7),
+        iconColor: Colors.blue,
+        cardColor: const Color(0xFFE3F2FD),
+        borderColor: const Color(0xFFBBDEFB),
       );
     default:
       return NotificationStyle(
