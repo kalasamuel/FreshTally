@@ -127,7 +127,7 @@ class _LoginPageState extends State<LoginPage> {
       }
 
       final userDoc = userQuery.docs.first;
-      final userData = userDoc.data() as Map<String, dynamic>;
+      final userData = userDoc.data();
       final role = userData['role'] as String? ?? 'customer';
       final supermarketId = userData['supermarketId'] as String?;
 
