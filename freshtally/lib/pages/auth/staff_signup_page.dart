@@ -10,7 +10,7 @@ class StaffSignupPage extends StatefulWidget {
 
 class _StaffSignupPageState extends State<StaffSignupPage> {
   final _formKey = GlobalKey<FormState>();
-  bool _isLoading = false;
+  final bool _isLoading = false;
   String? _errorMessage;
 
   final TextEditingController _firstNameController = TextEditingController();
