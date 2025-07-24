@@ -64,7 +64,7 @@ class _LoginPageState extends State<LoginPage> {
   bool _isLoading = false;
   String? _errorMessage;
   bool _rememberMe = false;
-  bool _obscurePassword = true; // <-- Add this line
+  bool _obscurePassword = true;
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
