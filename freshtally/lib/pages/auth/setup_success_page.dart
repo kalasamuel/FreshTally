@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:freshtally/pages/manager/home/manager_home_screen.dart';
+import 'package:Freshtally/pages/manager/home/manager_home_screen.dart';
 
 class OrganizationSetupSuccessPage extends StatelessWidget {
   final String supermarketName;

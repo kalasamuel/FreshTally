@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:freshtally/pages/manager/analytics/analytics_dashbaord_page.dart';
-import 'package:freshtally/pages/manager/managerNotifications/notifications.dart';
-import 'package:freshtally/pages/manager/staffManagement/staff_managementJoin_code.dart';
-import 'package:freshtally/pages/shelfStaff/settings/settings_page.dart';
-import 'package:freshtally/pages/manager/productAllocationView/product_allocation_view.dart';
-import 'package:freshtally/pages/manager/promotions/smart_promotions_suggestions.dart';
+import 'package:Freshtally/pages/manager/analytics/analytics_dashbaord_page.dart';
+import 'package:Freshtally/pages/manager/managerNotifications/notifications.dart';
+import 'package:Freshtally/pages/manager/staffManagement/staff_managementJoin_code.dart';
+import 'package:Freshtally/pages/shelfStaff/settings/settings_page.dart';
+import 'package:Freshtally/pages/manager/productAllocationView/product_allocation_view.dart';
+import 'package:Freshtally/pages/manager/promotions/smart_promotions_suggestions.dart';
 
-import 'package:freshtally/pages/shelfStaff/sync/sync_status_page.dart';
-import 'package:freshtally/pages/manager/promotions/promotions.dart';
+import 'package:Freshtally/pages/shelfStaff/sync/sync_status_page.dart';
+import 'package:Freshtally/pages/manager/promotions/promotions.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ManagerDashboardPage extends StatelessWidget {

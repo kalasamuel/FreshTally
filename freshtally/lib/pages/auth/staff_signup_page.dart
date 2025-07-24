@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:freshtally/pages/auth/staffcode.dart';
+import 'package:Freshtally/pages/auth/staffcode.dart';
 
 class StaffSignupPage extends StatefulWidget {
   const StaffSignupPage({super.key});
@@ -52,6 +52,7 @@ class _StaffSignupPageState extends State<StaffSignupPage> {
           password: _passwordController.text,
           phone: _phoneController.text.trim(),
           supermarketName: _supermarketController.text.trim(),
+          location: '',
         ),
       ),
     );

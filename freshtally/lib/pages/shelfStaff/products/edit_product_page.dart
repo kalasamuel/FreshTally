@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:freshtally/pages/shelfStaff/products/product_entry_page.dart';
+import 'package:Freshtally/pages/shelfStaff/products/product_entry_page.dart';
 
 class EditProductPage extends StatefulWidget {
   const EditProductPage({super.key});

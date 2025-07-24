@@ -1,4 +1,4 @@
-name: freshtally
+name: Freshtally
 description: "A smart supermarket management and customer engagement app
  (inventory, expiry tracking, shelf mapping, analytics, and discount browsing)."
 # The following line prevents the package from being accidentally published to
@@ -88,20 +88,27 @@ dependencies:
   # Typeahead search
   flutter_typeahead: ^5.2.0
   flutter_keyboard_visibility: ^6.0.0
-  google_sign_in: ^7.1.0
+  google_sign_in: ^7.1.1
   sign_in_with_apple: ^7.0.1
   collection: ^1.19.1
   data_tables: ^1.4.0
   syncfusion_flutter_datepicker: ^30.1.40
   qr_flutter: ^4.1.0
+  
   #flutter_facebook_auth:
     #git:
       #url: https://github.com/darwin-morocho/flutter-facebook-auth.git
       #ref: main
 
+flutter_icons:
+    android: true
+    ios: true
+    image_path: "assets/images/logo.png"
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  flutter_launcher_icons: ^0.14.4
   #flutter_lints: ^3.0.1
   build_runner: ^2.4.7
   hive_generator: ^2.0.1
@@ -120,7 +127,7 @@ dev_dependencies:
 flutter:
   assets:
     - assets/icons/
-    - assets/images/Logo.jpg
+    - assets/images/
     - assets/products.json
     
 

@@ -1,7 +1,7 @@
 // // lib/services/firestore_service.dart
 // import 'package:cloud_firestore/cloud_firestore.dart';
-// import 'package:freshtally/models/association_rule.dart'; // Keep this import
-// import 'package:freshtally/models/dashboard_data.dart'; // NEW: Import DashboardData
+// import 'package:reshtally/models/association_rule.dart'; // Keep this import
+// import 'package:reshtally/models/dashboard_data.dart'; // NEW: Import DashboardData
 // import 'package:syncfusion_flutter_datepicker/datepicker.dart'; // For PickerDateRange
 
 // class FirestoreService {
