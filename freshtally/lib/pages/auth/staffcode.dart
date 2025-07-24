@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:freshtally/pages/shelfStaff/home/shelf_staff_home_screen.dart';
+import 'package:flutter/material.dart';
+import 'package:freshtally/pages/auth/role_selection_page.dart'; // Import RoleSelectionPage
+import 'package:firebase_auth/firebase_auth.dart'; // Import FirebaseAuth
 
 class StaffVerificationPage extends StatefulWidget {
   final String firstName;

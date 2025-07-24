@@ -2,7 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:freshtally/pages/manager/home/manager_home_screen.dart';
 
 class OrganizationSetupSuccessPage extends StatelessWidget {
-  const OrganizationSetupSuccessPage({super.key});
+  final String supermarketName;
+  final String location;
+  final String supermarketId;
+  final String managerId;
+  const OrganizationSetupSuccessPage({
+    super.key,
+    required this.supermarketName,
+    required this.location,
+    required this.managerId,
+    required this.supermarketId,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -42,8 +52,10 @@ class OrganizationSetupSuccessPage extends StatelessWidget {
                     MaterialPageRoute(
                       builder: (context) {
                         return ManagerDashboardPage(
-                          supermarketName: 'Your Supermarket Name',
-                          location: 'Your Location',
+                          supermarketName: supermarketName,
+                          location: location,
+                          managerId: managerId,
+                          supermarketId: supermarketId,
                         );
                       },
                     ),
