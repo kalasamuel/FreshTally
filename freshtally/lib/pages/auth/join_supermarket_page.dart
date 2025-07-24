@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:freshtally/pages/auth/staff_signup_page.dart';
+import 'package:Freshtally/pages/auth/staff_signup_page.dart';
 
 void main() {
   runApp(const MyApp());

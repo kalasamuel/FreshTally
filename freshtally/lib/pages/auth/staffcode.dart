@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:freshtally/pages/shelfStaff/home/shelf_staff_home_screen.dart';
+// Import RoleSelectionPage
+import 'package:Freshtally/pages/shelfStaff/home/shelf_staff_home_screen.dart'; // Import FirebaseAuth
 
 class StaffVerificationPage extends StatefulWidget {
   final String firstName;
@@ -21,6 +22,7 @@ class StaffVerificationPage extends StatefulWidget {
     required this.phone,
     required this.supermarketName,
     this.supermarketId,
+    required String location,
   });
 
   @override
@@ -152,7 +154,7 @@ class _StaffVerificationPageState extends State<StaffVerificationPage> {
           builder: (_) => ShelfStaffDashboard(
             supermarketId: _supermarketId ?? '',
             supermarketName: widget.supermarketName,
-            location: '', // You can pass location if needed
+            location: '',
           ),
         ),
       );

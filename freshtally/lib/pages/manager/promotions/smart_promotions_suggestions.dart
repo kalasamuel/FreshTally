@@ -22,7 +22,7 @@ class _SmartPromotionsSuggestionsPageState
   final _firestore = FirebaseFirestore.instance;
   final _currencyFormat = NumberFormat.currency(symbol: 'UGX ');
   bool _isLoadingAi = false;
-  Map<String, List<String>> _productSuggestions = {};
+  final Map<String, List<String>> _productSuggestions = {};
 
   Future<void> _fetchProductSuggestions(String productName) async {
     setState(() {

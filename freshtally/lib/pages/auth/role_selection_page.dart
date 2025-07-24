@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
-import 'package:freshtally/pages/shelfStaff/home/shelf_staff_home_screen.dart';
-import 'package:freshtally/pages/storeManager/home/home_screen.dart';
+import 'package:Freshtally/pages/shelfStaff/home/shelf_staff_home_screen.dart';
+import 'package:Freshtally/pages/storeManager/home/home_screen.dart';
 
 class RoleSelectionPage extends StatefulWidget {
   final String? supermarketId; // This is now correctly passed and used

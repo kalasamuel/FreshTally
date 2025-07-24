@@ -1,11 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:freshtally/pages/customer/product/products_details_page.dart';
-import 'package:freshtally/pages/customer/search/product_search_page.dart';
-import 'package:freshtally/pages/customer/list/shopping_list_page.dart';
-import 'package:freshtally/pages/customer/discounts/discounts_and_promotions.dart';
-import 'package:freshtally/pages/customer/customerNotifications/customer_notifications.dart';
-import 'package:freshtally/pages/shelfStaff/settings/settings_page.dart';
+import 'package:Freshtally/pages/customer/product/products_details_page.dart';
+import 'package:Freshtally/pages/customer/search/product_search_page.dart';
+import 'package:Freshtally/pages/customer/list/shopping_list_page.dart';
+import 'package:Freshtally/pages/customer/discounts/discounts_and_promotions.dart';
+import 'package:Freshtally/pages/customer/customerNotifications/customer_notifications.dart';
+import 'package:Freshtally/pages/shelfStaff/settings/settings_page.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 

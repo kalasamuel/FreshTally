@@ -1,14 +1,14 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:freshtally/pages/customer/list/shopping_list_page.dart';
-import 'package:freshtally/pages/manager/home/manager_home_screen.dart';
-import 'package:freshtally/pages/shelfStaff/shelves/shelf_mapping_page.dart';
-import 'package:freshtally/pages/shelfStaff/shelves/smart_suggestions_page.dart';
-import 'package:freshtally/pages/auth/create_supermarket_page.dart';
-import 'package:freshtally/pages/auth/join_supermarket_page.dart';
-import 'package:freshtally/pages/auth/role_selection_page.dart';
-import 'package:freshtally/pages/auth/customer_signup_page.dart';
-import 'package:freshtally/pages/shelfStaff/home/shelf_staff_home_screen.dart';
+import 'package:Freshtally/pages/auth/staffcode.dart';
+import 'package:Freshtally/pages/customer/list/shopping_list_page.dart';
+import 'package:Freshtally/pages/manager/home/manager_home_screen.dart';
+import 'package:Freshtally/pages/shelfStaff/shelves/shelf_mapping_page.dart';
+import 'package:Freshtally/pages/shelfStaff/shelves/smart_suggestions_page.dart';
+import 'package:Freshtally/pages/auth/create_supermarket_page.dart';
+// import 'package:Freshtally/pages/auth/join_supermarket_page.dart';
+import 'package:Freshtally/pages/auth/role_selection_page.dart';
+import 'package:Freshtally/pages/shelfStaff/home/shelf_staff_home_screen.dart';
 import 'firebase_options.dart';
 import 'pages/auth/login_page.dart';
 import 'pages/customer/home/customer_home_page.dart';
@@ -61,7 +61,9 @@ class FreshTallyApp extends StatelessWidget {
             );
           case '/shelfStaffHome':
             return MaterialPageRoute(
-              builder: (_) => const ShelfMappingPage(supermarketId: ''),
+              builder: (_) => const ShelfMappingPage(
+                supermarketId: '',
+              ), // This might be incorrect if it's meant to be ShelfStaffDashboard
             );
           case '/smartSuggestions':
             final args = settings.arguments as Map<String, dynamic>? ?? {};
@@ -70,10 +72,10 @@ class FreshTallyApp extends StatelessWidget {
                 supermarketId: args['supermarketId'] ?? '',
               ),
             );
-          case '/managerHome':
+          case '/managerHome': // This route might be a duplicate or intended for a different purpose than '/staff/managerHome'
             return MaterialPageRoute(
               builder: (_) {
-                return const LoginPage();
+                return const LoginPage(); // Revisit this route if it should lead to ManagerDashboardPage
               },
             );
           case '/createSupermarket':
@@ -85,7 +87,15 @@ class FreshTallyApp extends StatelessWidget {
           case '/joinSupermarket':
             return MaterialPageRoute(
               builder: (_) {
-                return const JoinSupermarketPage();
+                return const StaffVerificationPage(
+                  firstName: '',
+                  lastName: '',
+                  email: '',
+                  password: '',
+                  phone: '',
+                  supermarketName: '',
+                  location: '',
+                );
               },
             );
           case '/roleSelection':
@@ -100,23 +110,23 @@ class FreshTallyApp extends StatelessWidget {
               builder: (_) => ShelfStaffDashboard(
                 supermarketName: args['supermarketName'],
                 location: args['location'],
-                supermarketId: '',
+                supermarketId:
+                    args['supermarketId'] ??
+                    '', // Added supermarketId here as well
               ),
-            );
-          case '/customerSignup':
-            return MaterialPageRoute(
-              builder: (_) {
-                return const CustomerSignupPage();
-              },
             );
 
           case '/staff/managerHome':
             final args = settings.arguments as Map<String, dynamic>? ?? {};
+            final String supermarketId =
+                args['supermarketId'] ?? ''; // Safely extract supermarketId
             return MaterialPageRoute(
               builder: (_) {
                 return ManagerDashboardPage(
                   supermarketName: args['supermarketName'],
                   location: args['location'],
+                  supermarketId: supermarketId,
+                  managerId: args['managerId'] ?? '',
                 );
               },
             );
