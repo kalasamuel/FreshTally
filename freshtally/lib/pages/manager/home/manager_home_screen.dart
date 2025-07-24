@@ -82,6 +82,7 @@ class ManagerDashboardPage extends StatelessWidget {
                             builder: (context) {
                               return ManagerNotificationCenterPage(
                                 supermarketName: supermarketName,
+                                managerId: managerId!,
                               );
                             },
                           ),
