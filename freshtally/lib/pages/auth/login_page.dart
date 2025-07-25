@@ -26,3 +26,65 @@ class IconTextField extends StatelessWidget {
     this.controller,
     this.validator,
   });
+
+  @override
+  Widget build(BuildContext context) {
+    return TextFormField(
+      controller: controller,
+      obscureText: isPassword,
+      validator: validator,
+      decoration: InputDecoration(
+        hintText: hintText,
+        prefixIcon: Icon(icon, color: Colors.grey),
+        filled: true,
+        fillColor: Colors.grey[200],
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10.0),
+          borderSide: BorderSide.none,
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          vertical: 16.0,
+          horizontal: 16.0,
+        ),
+      ),
+    );
+  }
+}
+
+class LoginPage extends StatefulWidget {
+  const LoginPage({super.key});
+
+  @override
+  State<LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
+  final _formKey = GlobalKey<FormState>();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  bool _isLoading = false;
+  String? _errorMessage;
+  bool _rememberMe = false;
+  bool _obscurePassword = true; // <-- Add this line
+
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRememberMePreferences();
+  }
+
+  Future<void> _loadRememberMePreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedEmail = prefs.getString('rememberedEmail');
+    final rememberMeFlag = prefs.getBool('rememberMe') ?? false;
+
+    if (savedEmail != null && rememberMeFlag) {
+      setState(() {
+        _emailController.text = savedEmail;
+        _rememberMe = rememberMeFlag;
+      });
+    }
+  }
