@@ -10,7 +10,6 @@ import 'package:Freshtally/pages/shelfStaff/home/shelf_staff_home_screen.dart';
 import 'package:Freshtally/pages/storeManager/home/home_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-
 class IconTextField extends StatelessWidget {
   final String hintText;
   final IconData icon;
@@ -70,7 +69,7 @@ class _LoginPageState extends State<LoginPage> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-    @override
+  @override
   void initState() {
     super.initState();
     _loadRememberMePreferences();
@@ -100,7 +99,7 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-    Future<void> _login() async {
+  Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() {
@@ -108,7 +107,7 @@ class _LoginPageState extends State<LoginPage> {
       _errorMessage = null;
     });
 
-        try {
+    try {
       final userCredential = await _auth.signInWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
@@ -125,7 +124,7 @@ class _LoginPageState extends State<LoginPage> {
           .get();
 
       if (userQuery.docs.isEmpty) {
-        throw Exception("User document not found. Contact support.");
+        throw Exception('User document not found. Contact support.');
       }
 
       final userDoc = userQuery.docs.first;
@@ -133,7 +132,7 @@ class _LoginPageState extends State<LoginPage> {
       final role = userData['role'] as String? ?? 'customer';
       final supermarketId = userData['supermarketId'] as String?;
 
-            String supermarketName = 'Unknown';
+      String supermarketName = 'Unknown';
       String location = 'Unknown';
 
       if (supermarketId != null) {
@@ -168,57 +167,57 @@ class _LoginPageState extends State<LoginPage> {
           );
           break;
 
-          case 'storeManager':
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => StoreManagerDashboard(
-                  supermarketId: supermarketId!,
-                  supermarketName: supermarketName,
-                  location: location,
-                ),
+        case 'storeManager':
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => StoreManagerDashboard(
+                supermarketId: supermarketId!,
+                supermarketName: supermarketName,
+                location: location,
               ),
-            );
-            break;
+            ),
+          );
+          break;
 
-            case 'staff':
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => StaffSignupPage(
-                  supermarketId: supermarketId!,
-                  supermarketName: supermarketName,
-                  location: location,
-                ),
+        case 'staff':
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => ShelfStaffDashboard(
+                supermarketId: supermarketId!,
+                supermarketName: supermarketName,
+                location: location,
               ),
-            );
-            break;
+            ),
+          );
+          break;
 
-            case 'customer':
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => CustomerHomePage(
-                  supermarketId: supermarketId!,
-                  supermarketName: supermarketName,
-                  location: location,
-                ),
+        case 'customer':
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => CustomerHomePage(
+                supermarketName: supermarketName,
+                location: location,
+                supermarketId: supermarketId ?? '',
               ),
-            );
-            break;
+            ),
+          );
+          break;
 
-            default:
-            throw Exception("Unknown user role: $role. Contact support");
+        default:
+          throw Exception("Unknown user role: $role. Contact support.");
       }
-        }on FirebaseAuthException catch (e) {
+    } on FirebaseAuthException catch (e) {
       setState(() {
         _errorMessage = _getAuthErrorMessage(e.code);
       });
-      } catch (e) {
+    } catch (e) {
       setState(() {
         _errorMessage = 'Login failed: ${e.toString()}';
       });
-      } finally {
+    } finally {
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -227,7 +226,8 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-   Future<void> _forgotPassword() async {
+
+  Future<void> _forgotPassword() async {
     final email = _emailController.text.trim();
     if (email.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -246,27 +246,25 @@ class _LoginPageState extends State<LoginPage> {
 
     try {
       await _auth.sendPasswordResetEmail(email: email);
-      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Password reset email sent to $email.'),
+        const SnackBar(
+          content: Text('Password reset email sent!'),
           backgroundColor: Colors.green,
         ),
       );
-      } on FirebaseAuthException catch (e) {
+    } on FirebaseAuthException catch (e) {
       setState(() {
         _errorMessage = _getAuthErrorMessage(e.code);
       });
-      } catch (e) {
+    } catch (e) {
       setState(() {
         _errorMessage = 'Failed to send password reset email: ${e.toString()}';
       });
-      } finally {
+    } finally {
       setState(() {
         _isLoading = false;
       });
-      }
-   }
+    }
   }
 
   String _getAuthErrorMessage(String code) {
@@ -287,7 +285,6 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  
   Future<void> _signInWithGoogle() async {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -438,15 +435,6 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ],
               ),
-              TextButton(
-                    onPressed: _forgotPassword,
-                    child: Text(
-                      "Forgot Password?",
-                      style: TextStyle(color: Colors.grey[600], fontSize: 14.0),
-                    ),
-                  ),
-                ],
-              ),
               const SizedBox(height: 20.0),
               if (_errorMessage != null)
                 Padding(
@@ -457,7 +445,7 @@ class _LoginPageState extends State<LoginPage> {
                     textAlign: TextAlign.center,
                   ),
                 ),
-                ElevatedButton(
+              ElevatedButton(
                 onPressed: _isLoading ? null : _login,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green[600],
@@ -477,14 +465,14 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
               ),
-               const SizedBox(height: 20.0),
+              const SizedBox(height: 20.0),
               const Center(
                 child: Text(
                   "Or Sign In with:",
                   style: TextStyle(color: Colors.grey),
                 ),
               ),
-               const SizedBox(height: 15.0),
+              const SizedBox(height: 15.0),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -594,22 +582,10 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ],
               ),
-            
+            ], 
           ),
         ),
-      );
-    
+      ),
+    );
   }
-
-
-        
-  
-      
-
-
-
-            
-
-            
-
-      
+}
