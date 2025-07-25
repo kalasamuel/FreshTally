@@ -66,7 +66,7 @@ class _AnalyticsDashboardPageState extends State<AnalyticsDashboardPage> {
           final salesMap = snapshot.data ?? {};
           if (salesMap.isEmpty) {
             return const Center(
-              child: Text('No sales data for the last 7 days.'),
+              child: Text('No sales data for the last 8 days.'),
             );
           }
 
