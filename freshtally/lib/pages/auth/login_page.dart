@@ -265,10 +265,11 @@ class _LoginPageState extends State<LoginPage> {
       setState(() {
         _isLoading = false;
       });
-    }
+      }
+   }
   }
 
-    String _getAuthErrorMessage(String code) {
+  String _getAuthErrorMessage(String code) {
     switch (code) {
       case 'user-not-found':
         return 'No user found with this email.';
@@ -285,6 +286,322 @@ class _LoginPageState extends State<LoginPage> {
       // return 'An unexpected error occurred. Please try again.';
     }
   }
+
+  
+  Future<void> _signInWithGoogle() async {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Google Sign-In not fully implemented yet.'),
+      ),
+    );
+  }
+
+  Future<void> _signInWithFacebook() async {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Facebook Sign-In not fully implemented yet.'),
+      ),
+    );
+  }
+
+  Future<void> _signInWithApple() async {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Apple Sign-In not fully implemented yet.')),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      // appBar: AppBar(
+      //   backgroundColor: Colors.transparent,
+      //   elevation: 0,
+      //   foregroundColor: Colors.black,
+      //   automaticallyImplyLeading: false,
+      // ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(24.0),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SizedBox(height: 30.0),
+              Center(child: Image.asset('assets/images/logo.png', height: 200)),
+              const SizedBox(height: 1.0),
+              Center(
+                child: Text(
+                  "Welcome to FreshTally!",
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green[700],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10.0),
+              const Center(
+                child: Text(
+                  "",
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 30.0),
+              IconTextField(
+                hintText: "Email",
+                icon: Icons.email,
+                controller: _emailController,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Email is required';
+                  }
+                  if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
+                    return 'Enter a valid email';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16.0),
+              // --- Password field with show/hide functionality ---
+              TextFormField(
+                controller: _passwordController,
+                obscureText: _obscurePassword,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Password is required';
+                  }
+                  if (value.length < 6) {
+                    return 'Password must be at least 6 characters long';
+                  }
+                  return null;
+                },
+                decoration: InputDecoration(
+                  hintText: "Password",
+                  prefixIcon: const Icon(Icons.lock, color: Colors.grey),
+                  filled: true,
+                  fillColor: Colors.grey[200],
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10.0),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    vertical: 16.0,
+                    horizontal: 16.0,
+                  ),
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscurePassword
+                          ? Icons.visibility_off
+                          : Icons.visibility,
+                      color: Colors.grey,
+                    ),
+                    onPressed: () {
+                      setState(() {
+                        _obscurePassword = !_obscurePassword;
+                      });
+                    },
+                  ),
+                ),
+              ),
+              // --- End password field ---
+              const SizedBox(height: 10.0),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: CheckboxListTile(
+                      title: const Text(
+                        "Remember me",
+                        style: TextStyle(fontSize: 14.0),
+                      ),
+                      value: _rememberMe,
+                      onChanged: (newValue) {
+                        setState(() {
+                          _rememberMe = newValue!;
+                        });
+                      },
+                      controlAffinity: ListTileControlAffinity.leading,
+                      contentPadding: EdgeInsets.zero,
+                      dense: true,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: _forgotPassword,
+                    child: Text(
+                      "Forgot Password?",
+                      style: TextStyle(color: Colors.grey[600], fontSize: 14.0),
+                    ),
+                  ),
+                ],
+              ),
+              TextButton(
+                    onPressed: _forgotPassword,
+                    child: Text(
+                      "Forgot Password?",
+                      style: TextStyle(color: Colors.grey[600], fontSize: 14.0),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20.0),
+              if (_errorMessage != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16.0),
+                  child: Text(
+                    _errorMessage!,
+                    style: const TextStyle(color: Colors.red),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                ElevatedButton(
+                onPressed: _isLoading ? null : _login,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green[600],
+                  padding: const EdgeInsets.symmetric(vertical: 16.0),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10.0),
+                  ),
+                ),
+                child: _isLoading
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text(
+                        "Login",
+                        style: TextStyle(
+                          fontSize: 18.0,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+              ),
+               const SizedBox(height: 20.0),
+              const Center(
+                child: Text(
+                  "Or Sign In with:",
+                  style: TextStyle(color: Colors.grey),
+                ),
+              ),
+               const SizedBox(height: 15.0),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton(
+                    icon: const Icon(
+                      Icons.facebook,
+                      size: 40,
+                      color: Colors.blue,
+                    ),
+                    onPressed: _signInWithFacebook,
+                  ),
+                  const SizedBox(width: 20),
+                  IconButton(
+                    icon: Image.asset('assets/icons/google.png', height: 35),
+                    onPressed: _signInWithGoogle,
+                  ),
+                  const SizedBox(width: 20),
+                  IconButton(
+                    icon: const Icon(
+                      Icons.apple,
+                      size: 40,
+                      color: Colors.black,
+                    ),
+                    onPressed: _signInWithApple,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 30.0),
+              Column(
+                children: [
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const CreateSupermarketPage(),
+                          ),
+                        );
+                      },
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Colors.green),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 12.0),
+                      ),
+                      child: const Text(
+                        "New Supermarket?",
+                        style: TextStyle(color: Colors.green, fontSize: 16.0),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10.0),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const StaffSignupPage(),
+                          ),
+                        );
+                      },
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Colors.orange),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 12.0),
+                      ),
+                      child: const Text(
+                        "Joining Staff?",
+                        style: TextStyle(color: Colors.orange, fontSize: 16.0),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10.0),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const CustomerSignupPage(),
+                          ),
+                        );
+                      },
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: Colors.blue.shade700),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 12.0),
+                      ),
+                      child: Text(
+                        "I am Customer",
+                        style: TextStyle(
+                          color: Colors.blue[700],
+                          fontSize: 16.0,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
         
   
       
