@@ -243,6 +243,48 @@ class _LoginPageState extends State<LoginPage> {
       _isLoading = true;
       _errorMessage = null;
     });
+
+    try {
+      await _auth.sendPasswordResetEmail(email: email);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Password reset email sent to $email.'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      } on FirebaseAuthException catch (e) {
+      setState(() {
+        _errorMessage = _getAuthErrorMessage(e.code);
+      });
+      } catch (e) {
+      setState(() {
+        _errorMessage = 'Failed to send password reset email: ${e.toString()}';
+      });
+      } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+    String _getAuthErrorMessage(String code) {
+    switch (code) {
+      case 'user-not-found':
+        return 'No user found with this email.';
+      case 'wrong-password':
+        return 'Incorrect password. Please try again.';
+      case 'invalid-email':
+        return 'Please enter a valid email address.';
+      case 'user-disabled':
+        return 'This account has been disabled. Please contact support.';
+      case 'too-many-requests':
+        return 'Too many login attempts. Please try again later.';
+      default:
+        return 'Check your internet connection and try again.';
+      // return 'An unexpected error occurred. Please try again.';
+    }
+  }
         
   
       
