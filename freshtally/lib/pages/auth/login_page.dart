@@ -168,16 +168,48 @@ class _LoginPageState extends State<LoginPage> {
           );
           break;
 
-        case 'storeManager':
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => StoreManagerDashboard(
-                supermarketId: supermarketId!,
-                supermarketName: supermarketName,
-                location: location,
+          case 'storeManager':
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => StoreManagerDashboard(
+                  supermarketId: supermarketId!,
+                  supermarketName: supermarketName,
+                  location: location,
+                ),
               ),
-            ),
-          );
+            );
+            break;
+
+            case 'staff':
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => StaffSignupPage(
+                  supermarketId: supermarketId!,
+                  supermarketName: supermarketName,
+                  location: location,
+                ),
+              ),
+            );
+            break;
+
+            case 'customer':
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => CustomerHomePage(
+                  supermarketId: supermarketId!,
+                  supermarketName: supermarketName,
+                  location: location,
+                ),
+              ),
+            );
+            break;
+            
+
+            
+
+            
 
       
