@@ -8,13 +8,13 @@ class ExpiredDetailsPage extends StatelessWidget {
   final String shelfLocation;
 
   const ExpiredDetailsPage({
-    Key? key,
+    super.key,
     required this.productName,
     required this.productCode,
     required this.expiryDate,
     required this.quantity,
     required this.shelfLocation,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
