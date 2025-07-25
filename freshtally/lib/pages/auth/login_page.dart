@@ -206,7 +206,48 @@ class _LoginPageState extends State<LoginPage> {
               ),
             );
             break;
-            
+
+            default:
+            throw Exception("Unknown user role: $role. Contact support");
+      }
+        }on FirebaseAuthException catch (e) {
+      setState(() {
+        _errorMessage = _getAuthErrorMessage(e.code);
+      });
+      } catch (e) {
+      setState(() {
+        _errorMessage = 'Login failed: ${e.toString()}';
+      });
+      } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+   Future<void> _forgotPassword() async {
+    final email = _emailController.text.trim();
+    if (email.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter your email to reset password.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+        
+  
+      
+
+
 
             
 
