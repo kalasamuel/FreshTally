@@ -99,3 +99,29 @@ class _LoginPageState extends State<LoginPage> {
       await prefs.remove('rememberMe');
     }
   }
+
+    Future<void> _login() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+        try {
+      final userCredential = await _auth.signInWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
+
+      final userId = userCredential.user?.uid;
+      if (userId == null) throw Exception("User ID not found");
+
+      // Improved user document query
+      final userQuery = await _firestore
+          .collectionGroup('users')
+          .where('uid', isEqualTo: userId)
+          .limit(1)
+          .get();
+
+      
