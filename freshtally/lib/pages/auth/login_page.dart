@@ -149,4 +149,35 @@ class _LoginPageState extends State<LoginPage> {
         }
       }
 
+      await _saveRememberMePreferences(_emailController.text.trim());
+
+      if (!mounted) return;
+
+      switch (role) {
+        case 'manager':
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => ManagerDashboardPage(
+                supermarketName: supermarketName,
+                location: location,
+                managerId: '',
+                supermarketId: '',
+              ),
+            ),
+          );
+          break;
+
+        case 'storeManager':
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => StoreManagerDashboard(
+                supermarketId: supermarketId!,
+                supermarketName: supermarketName,
+                location: location,
+              ),
+            ),
+          );
+
       
