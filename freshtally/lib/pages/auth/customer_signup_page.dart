@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:Freshtally/pages/auth/login_page.dart';
+import 'package:Freshtally/pages/customer/home/customer_home_page.dart';
 
 class CustomerSignupPage extends StatefulWidget {
   const CustomerSignupPage({super.key});
@@ -23,6 +26,9 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
   final TextEditingController _confirmPasswordController =
       TextEditingController();
   final TextEditingController _phoneNumberController = TextEditingController();
+
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   @override
   void initState() {
@@ -55,33 +61,39 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
 
     try {
       // 1. Create Firebase Auth account
-      final UserCredential userCredential = await FirebaseAuth.instance
+      final UserCredential userCredential = await _auth
           .createUserWithEmailAndPassword(
             email: _emailController.text.trim(),
             password: _passwordController.text.trim(),
           );
 
-      // 2. Save to Firestore 'users' collection
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(userCredential.user!.uid)
-          .set({
-            'firstName': _firstNameController.text.trim(),
-            'lastName': _lastNameController.text.trim(),
-            'email': _emailController.text.trim(),
-            'phoneNumber': _phoneNumberController.text.trim(),
-            'role': 'customer', // Differentiate from managers
-            'createdAt': FieldValue.serverTimestamp(),
-          });
+      final String uid = userCredential.user!.uid;
 
-      // 3. Show success message
+      // 2. Save to Firestore 'users' collection (matches manager format)
+      await _firestore.collection('users').doc(uid).set({
+        'uid': uid,
+        'firstName': _firstNameController.text.trim(),
+        'lastName': _lastNameController.text.trim(),
+        'email': _emailController.text.trim(),
+        'phoneNumber': _phoneNumberController.text.trim(),
+        'role': 'customer',
+        'supermarketId': '',
+        'supermarketName': '',
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      // 3. Navigate to customer home
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Account created successfully!')),
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => CustomerHomePage(
+            supermarketName: '',
+            location: '',
+            supermarketId: '',
+          ),
+        ),
       );
-
-      // Optional: Navigate to login or home page
-      // Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => LoginPage()));
     } on FirebaseAuthException catch (e) {
       setState(() => _errorMessage = _getErrorMessage(e.code));
     } catch (e) {
@@ -237,7 +249,7 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
               ),
               const SizedBox(height: 16.0),
 
-              // Phone Number (non-validated)
+              // Phone Number
               IconTextField(
                 hintText: 'Phone Number',
                 icon: Icons.phone,
@@ -278,7 +290,7 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
                       ),
               ),
 
-              // Social Sign-In Options (unchanged)
+              // Social Sign-In Options
               const SizedBox(height: 20.0),
               const Center(
                 child: Text(
@@ -329,6 +341,46 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class IconTextField extends StatelessWidget {
+  final String hintText;
+  final IconData icon;
+  final bool isPassword;
+  final TextEditingController? controller;
+  final String? Function(String?)? validator;
+
+  const IconTextField({
+    super.key,
+    required this.hintText,
+    required this.icon,
+    this.isPassword = false,
+    this.controller,
+    this.validator,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TextFormField(
+      controller: controller,
+      obscureText: isPassword,
+      validator: validator,
+      decoration: InputDecoration(
+        hintText: hintText,
+        prefixIcon: Icon(icon, color: Colors.grey),
+        filled: true,
+        fillColor: Colors.grey[200],
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10.0),
+          borderSide: BorderSide.none,
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          vertical: 16.0,
+          horizontal: 16.0,
         ),
       ),
     );
