@@ -179,8 +179,8 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                           ),
                           secondary: Image.network(
                             data['image_url'] ?? '',
-                            width: 50,
-                            height: 50,
+                            width: 60,
+                            height: 60,
                             errorBuilder: (_, __, ___) =>
                                 const Icon(Icons.image_not_supported),
                           ),
