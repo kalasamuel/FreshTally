@@ -124,4 +124,29 @@ class _LoginPageState extends State<LoginPage> {
           .limit(1)
           .get();
 
+      if (userQuery.docs.isEmpty) {
+        throw Exception("User document not found. Contact support.");
+      }
+
+      final userDoc = userQuery.docs.first;
+      final userData = userDoc.data();
+      final role = userData['role'] as String? ?? 'customer';
+      final supermarketId = userData['supermarketId'] as String?;
+
+            String supermarketName = 'Unknown';
+      String location = 'Unknown';
+
+      if (supermarketId != null) {
+        final supermarketDoc = await _firestore
+            .collection('supermarkets')
+            .doc(supermarketId)
+            .get();
+
+        if (supermarketDoc.exists) {
+          final supermarketData = supermarketDoc.data()!;
+          supermarketName = supermarketData['name'] as String? ?? 'Unknown';
+          location = supermarketData['location'] as String? ?? 'Unknown';
+        }
+      }
+
       
