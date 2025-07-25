@@ -64,7 +64,7 @@ class _LoginPageState extends State<LoginPage> {
   bool _isLoading = false;
   String? _errorMessage;
   bool _rememberMe = false;
-  bool _obscurePassword = true;
+  bool _obscurePassword = true; // <-- Add this line
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -225,6 +225,7 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
+
   Future<void> _forgotPassword() async {
     final email = _emailController.text.trim();
     if (email.isEmpty) {
@@ -244,10 +245,9 @@ class _LoginPageState extends State<LoginPage> {
 
     try {
       await _auth.sendPasswordResetEmail(email: email);
-      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Password reset email sent to $email.'),
+        const SnackBar(
+          content: Text('Password reset email sent!'),
           backgroundColor: Colors.green,
         ),
       );
@@ -581,7 +581,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ],
               ),
-            ],
+            ], 
           ),
         ),
       ),

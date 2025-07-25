@@ -2,7 +2,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:Freshtally/pages/auth/staffcode.dart';
 import 'package:Freshtally/pages/customer/list/shopping_list_page.dart';
-import 'package:Freshtally/pages/manager/home/manager_home_screen.dart';
+import 'package:Freshtally/pages/manager/home/manager_home_screen.dart'; // Assuming ManagerDashboardPage is here
 import 'package:Freshtally/pages/shelfStaff/shelves/shelf_mapping_page.dart';
 import 'package:Freshtally/pages/shelfStaff/shelves/smart_suggestions_page.dart';
 import 'package:Freshtally/pages/auth/create_supermarket_page.dart';
@@ -126,7 +126,7 @@ class FreshTallyApp extends StatelessWidget {
                   supermarketName: args['supermarketName'],
                   location: args['location'],
                   supermarketId: supermarketId,
-                  managerId: args['managerId'] ?? '',
+                  managerId: args['managerId'],
                 );
               },
             );
@@ -141,3 +141,5 @@ class FreshTallyApp extends StatelessWidget {
     );
   }
 }
+
+
