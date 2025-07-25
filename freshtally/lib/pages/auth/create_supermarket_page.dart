@@ -57,6 +57,7 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
   bool _isLoading = false;
   String? _errorMessage;
   bool _isSupermarketValid = true;
+  bool _isCheckingName = false;
 
   final TextEditingController _supermarketNameController =
       TextEditingController();
@@ -88,24 +89,30 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
     final location = _locationController.text.trim();
 
     if (name.isEmpty || location.isEmpty) {
-      setState(() => _isSupermarketValid = true);
+      setState(() {
+        _isSupermarketValid = true;
+        _isCheckingName = false;
+      });
       return;
     }
+
+    setState(() => _isCheckingName = true);
 
     try {
       final query = await _firestore
           .collection('supermarkets')
-          .where('name', isEqualTo: name)
-          .where('location', isEqualTo: location)
+          .where('nameLowercase', isEqualTo: name.toLowerCase())
           .limit(1)
           .get();
 
       setState(() {
         _isSupermarketValid = query.docs.isEmpty;
+        _isCheckingName = false;
       });
     } catch (e) {
       setState(() {
         _isSupermarketValid = true;
+        _isCheckingName = false;
       });
     }
   }
@@ -130,9 +137,12 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
       if (user != null) {
         await FirebaseFirestore.instance
             .collection('supermarkets')
-            .doc(user.uid) // or your supermarketId variable
+            .doc(user.uid)
             .set({
               'name': _supermarketNameController.text.trim(),
+              'nameLowercase': _supermarketNameController.text
+                  .trim()
+                  .toLowerCase(),
               'location': _locationController.text.trim(),
               'manager': {
                 'uid': user.uid,
@@ -151,6 +161,7 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
 
       final supermarketData = {
         'name': _supermarketNameController.text.trim(),
+        'nameLowercase': _supermarketNameController.text.trim().toLowerCase(),
         'location': _locationController.text.trim(),
         'manager': {
           'uid': uid,
@@ -162,27 +173,23 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
         'staffCount': 1,
       };
 
-      // After successfully creating the user and storing supermarket data
       await _firestore.collection('supermarkets').doc(uid).set(supermarketData);
 
-      // Store manager details under the supermarket's user subcollection
       await _firestore
           .collection('supermarkets')
           .doc(uid)
           .collection('users')
           .doc(uid)
           .set({
-            'uid': uid,
             'firstName': _firstNameController.text.trim(),
             'lastName': _lastNameController.text.trim(),
             'email': _emailController.text.trim(),
             'role': 'manager',
-            'supermarketId': uid, // This is already correctly storing the UID
+            'supermarketId': uid,
             'supermarketName': _supermarketNameController.text.trim(),
             'createdAt': FieldValue.serverTimestamp(),
           });
 
-      // After creating the supermarket and manager:
       await _firestore.collection('users').doc(uid).set({
         'uid': uid,
         'firstName': _firstNameController.text.trim(),
@@ -195,12 +202,11 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
       });
 
       if (!mounted) return;
-      // Navigate and pass the actual supermarket ID (which is the UID)
       Navigator.pushReplacementNamed(
         context,
-        '/staff/managerHome', // Assuming this route eventually leads to ManageStaffPage or provides the ID to it
+        '/staff/managerHome',
         arguments: {
-          'supermarketId': uid, // <--- IMPORTANT: Pass the UID here!
+          'supermarketId': uid,
           'supermarketName': _supermarketNameController.text.trim(),
           'location': _locationController.text.trim(),
           'uid': uid,
@@ -278,24 +284,37 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
               const SizedBox(height: 30.0),
 
               // Supermarket Name Field
-              IconTextField(
-                hintText: 'Supermarket Name',
-                icon: Icons.store,
-                controller: _supermarketNameController,
-                onChanged: (_) => _validateSupermarket(),
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Supermarket name is required';
-                  }
-                  if (!_isSupermarketValid &&
-                      _supermarketNameController.text.trim().isNotEmpty &&
-                      _locationController.text.trim().isNotEmpty) {
-                    return 'A supermarket with this name already exists at this location';
-                  }
-                  return null;
-                },
+              Stack(
+                children: [
+                  IconTextField(
+                    hintText: 'Supermarket Name',
+                    icon: Icons.store,
+                    controller: _supermarketNameController,
+                    onChanged: (_) => _validateSupermarket(),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Supermarket name is required';
+                      }
+                      if (!_isSupermarketValid && !_isCheckingName) {
+                        return 'A supermarket with this name already exists';
+                      }
+                      return null;
+                    },
+                  ),
+                  if (_isCheckingName)
+                    const Positioned(
+                      right: 16,
+                      top: 16,
+                      child: SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    ),
+                ],
               ),
               const SizedBox(height: 16.0),
+
               // Supermarket Location Field
               IconTextField(
                 hintText: 'Supermarket Location',
@@ -323,6 +342,7 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
                 ),
               ),
               const SizedBox(height: 20.0),
+
               // First Name Field
               IconTextField(
                 hintText: 'First Name',
