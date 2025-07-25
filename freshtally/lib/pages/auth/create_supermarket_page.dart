@@ -162,8 +162,10 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
         'staffCount': 1,
       };
 
+      // After successfully creating the user and storing supermarket data
       await _firestore.collection('supermarkets').doc(uid).set(supermarketData);
 
+      // Store manager details under the supermarket's user subcollection
       await _firestore
           .collection('supermarkets')
           .doc(uid)
@@ -174,16 +176,18 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
             'lastName': _lastNameController.text.trim(),
             'email': _emailController.text.trim(),
             'role': 'manager',
-            'supermarketId': uid,
+            'supermarketId': uid, // This is already correctly storing the UID
             'supermarketName': _supermarketNameController.text.trim(),
             'createdAt': FieldValue.serverTimestamp(),
           });
 
       if (!mounted) return;
+      // Navigate and pass the actual supermarket ID (which is the UID)
       Navigator.pushReplacementNamed(
         context,
-        '/staff/managerHome',
+        '/staff/managerHome', // Assuming this route eventually leads to ManageStaffPage or provides the ID to it
         arguments: {
+          'supermarketId': uid, // <--- IMPORTANT: Pass the UID here!
           'supermarketName': _supermarketNameController.text.trim(),
           'location': _locationController.text.trim(),
           'uid': uid,

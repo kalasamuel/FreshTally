@@ -1,11 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:freshtally/pages/shelfStaff/notifications/notifications_shelfstaff.dart';
-import 'package:freshtally/pages/shelfStaff/settings/settings_page.dart';
-import 'package:freshtally/pages/shelfStaff/products/discounted_products_screen.dart';
-import 'package:freshtally/pages/shelfStaff/shelves/shelf_mapping_page.dart';
-import 'package:freshtally/pages/shelfStaff/shelves/smart_suggestions_page.dart';
-import 'package:freshtally/pages/shelfStaff/sync/sync_status_page.dart';
+import 'package:Freshtally/pages/shelfStaff/notifications/notifications_shelfstaff.dart';
+import 'package:Freshtally/pages/shelfStaff/settings/settings_page.dart';
+import 'package:Freshtally/pages/shelfStaff/products/discounted_products_screen.dart';
+import 'package:Freshtally/pages/shelfStaff/shelves/shelf_mapping_page.dart';
+import 'package:Freshtally/pages/shelfStaff/shelves/smart_suggestions_page.dart';
+import 'package:Freshtally/pages/shelfStaff/sync/sync_status_page.dart';
 
 class ShelfStaffDashboard extends StatelessWidget {
   final String supermarketId;

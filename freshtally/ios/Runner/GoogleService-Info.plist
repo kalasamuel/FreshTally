@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>713501543104-3vcagp0b372il44tgep9qn9o23hrju1j.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.713501543104-3vcagp0b372il44tgep9qn9o23hrju1j</string>
+	<key>API_KEY</key>
+	<string>AIzaSyDKXMaiyq-XoNuW5iZ2PAWENNhJl_I4kSs</string>
+	<key>GCM_SENDER_ID</key>
+	<string>713501543104</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.example.freshtally</string>
+	<key>PROJECT_ID</key>
+	<string>freshtally8</string>
+	<key>STORAGE_BUCKET</key>
+	<string>freshtally8.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:713501543104:ios:bd002b2db42f9b5a503b25</string>
+</dict>
+</plist>

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:freshtally/utils/firestore_uploader.dart';
+import 'package:Freshtally/utils/firestore_uploader.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

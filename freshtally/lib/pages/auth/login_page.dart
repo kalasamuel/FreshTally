@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:freshtally/pages/auth/create_supermarket_page.dart';
-import 'package:freshtally/pages/auth/customer_signup_page.dart';
-import 'package:freshtally/pages/auth/staff_signup_page.dart';
-import 'package:freshtally/pages/customer/home/customer_home_page.dart';
-import 'package:freshtally/pages/manager/home/manager_home_screen.dart';
-import 'package:freshtally/pages/shelfStaff/home/shelf_staff_home_screen.dart';
-import 'package:freshtally/pages/storeManager/home/home_screen.dart';
+import 'package:Freshtally/pages/auth/create_supermarket_page.dart';
+import 'package:Freshtally/pages/auth/customer_signup_page.dart';
+import 'package:Freshtally/pages/auth/staff_signup_page.dart';
+import 'package:Freshtally/pages/customer/home/customer_home_page.dart';
+import 'package:Freshtally/pages/manager/home/manager_home_screen.dart';
+import 'package:Freshtally/pages/shelfStaff/home/shelf_staff_home_screen.dart';
+import 'package:Freshtally/pages/storeManager/home/home_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class IconTextField extends StatelessWidget {
@@ -64,7 +64,7 @@ class _LoginPageState extends State<LoginPage> {
   bool _isLoading = false;
   String? _errorMessage;
   bool _rememberMe = false;
-  bool _obscurePassword = true; // <-- Add this line
+  bool _obscurePassword = true;
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -154,19 +154,21 @@ class _LoginPageState extends State<LoginPage> {
 
       switch (role) {
         case 'manager':
-          Navigator.pushReplacement(
+          Navigator.push(
             context,
             MaterialPageRoute(
               builder: (_) => ManagerDashboardPage(
                 supermarketName: supermarketName,
                 location: location,
+                managerId: '',
+                supermarketId: '',
               ),
             ),
           );
           break;
 
         case 'storeManager':
-          Navigator.pushReplacement(
+          Navigator.push(
             context,
             MaterialPageRoute(
               builder: (_) => StoreManagerDashboard(
@@ -179,7 +181,7 @@ class _LoginPageState extends State<LoginPage> {
           break;
 
         case 'staff':
-          Navigator.pushReplacement(
+          Navigator.push(
             context,
             MaterialPageRoute(
               builder: (_) => ShelfStaffDashboard(
@@ -192,7 +194,7 @@ class _LoginPageState extends State<LoginPage> {
           break;
 
         case 'customer':
-          Navigator.pushReplacement(
+          Navigator.push(
             context,
             MaterialPageRoute(
               builder: (_) => CustomerHomePage(
@@ -278,7 +280,8 @@ class _LoginPageState extends State<LoginPage> {
       case 'too-many-requests':
         return 'Too many login attempts. Please try again later.';
       default:
-        return 'An unexpected error occurred. Please try again.';
+        return 'Check your internet connection and try again.';
+      // return 'An unexpected error occurred. Please try again.';
     }
   }
 
@@ -307,12 +310,12 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        foregroundColor: Colors.black,
-        automaticallyImplyLeading: false,
-      ),
+      // appBar: AppBar(
+      //   backgroundColor: Colors.transparent,
+      //   elevation: 0,
+      //   foregroundColor: Colors.black,
+      //   automaticallyImplyLeading: false,
+      // ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
         child: Form(
@@ -320,8 +323,9 @@ class _LoginPageState extends State<LoginPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Center(child: Image.asset('assets/images/logo.jpg', height: 200)),
-              const SizedBox(height: 24.0),
+              const SizedBox(height: 30.0),
+              Center(child: Image.asset('assets/images/logo.png', height: 200)),
+              const SizedBox(height: 1.0),
               Center(
                 child: Text(
                   "Welcome to FreshTally!",
@@ -332,7 +336,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
               ),
-              const SizedBox(height: 40.0),
+              const SizedBox(height: 10.0),
               const Center(
                 child: Text(
                   "",
@@ -503,7 +507,7 @@ class _LoginPageState extends State<LoginPage> {
                     width: double.infinity,
                     child: OutlinedButton(
                       onPressed: () {
-                        Navigator.pushReplacement(
+                        Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (_) => const CreateSupermarketPage(),
@@ -528,7 +532,7 @@ class _LoginPageState extends State<LoginPage> {
                     width: double.infinity,
                     child: OutlinedButton(
                       onPressed: () {
-                        Navigator.pushReplacement(
+                        Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (_) => const StaffSignupPage(),
@@ -553,7 +557,7 @@ class _LoginPageState extends State<LoginPage> {
                     width: double.infinity,
                     child: OutlinedButton(
                       onPressed: () {
-                        Navigator.pushReplacement(
+                        Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (_) => const CustomerSignupPage(),

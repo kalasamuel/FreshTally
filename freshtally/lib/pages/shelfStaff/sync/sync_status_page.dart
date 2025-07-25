@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:freshtally/pages/shelfStaff/settings/settings_page.dart';
+import 'package:Freshtally/pages/shelfStaff/settings/settings_page.dart';
 // Remove the import below as SyncStatusPage is defined in this file
 // import 'package:freshtally/pages/storeManager/sync/sync_status_page.dart';
 
