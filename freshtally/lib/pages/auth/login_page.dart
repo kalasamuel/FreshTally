@@ -70,7 +70,7 @@ class _LoginPageState extends State<LoginPage> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  @override
+    @override
   void initState() {
     super.initState();
     _loadRememberMePreferences();
@@ -86,5 +86,16 @@ class _LoginPageState extends State<LoginPage> {
         _emailController.text = savedEmail;
         _rememberMe = rememberMeFlag;
       });
+    }
+  }
+
+  Future<void> _saveRememberMePreferences(String email) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (_rememberMe) {
+      await prefs.setString('rememberedEmail', email);
+      await prefs.setBool('rememberMe', true);
+    } else {
+      await prefs.remove('rememberedEmail');
+      await prefs.remove('rememberMe');
     }
   }
