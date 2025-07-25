@@ -172,6 +172,7 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
           .collection('users')
           .doc(uid)
           .set({
+            'uid': uid,
             'firstName': _firstNameController.text.trim(),
             'lastName': _lastNameController.text.trim(),
             'email': _emailController.text.trim(),
@@ -180,6 +181,18 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
             'supermarketName': _supermarketNameController.text.trim(),
             'createdAt': FieldValue.serverTimestamp(),
           });
+
+      // After creating the supermarket and manager:
+      await _firestore.collection('users').doc(uid).set({
+        'uid': uid,
+        'firstName': _firstNameController.text.trim(),
+        'lastName': _lastNameController.text.trim(),
+        'email': _emailController.text.trim(),
+        'role': 'manager',
+        'supermarketId': uid,
+        'supermarketName': _supermarketNameController.text.trim(),
+        'createdAt': FieldValue.serverTimestamp(),
+      });
 
       if (!mounted) return;
       // Navigate and pass the actual supermarket ID (which is the UID)

@@ -116,7 +116,6 @@ class _LoginPageState extends State<LoginPage> {
       final userId = userCredential.user?.uid;
       if (userId == null) throw Exception("User ID not found");
 
-      // Improved user document query
       final userQuery = await _firestore
           .collectionGroup('users')
           .where('uid', isEqualTo: userId)

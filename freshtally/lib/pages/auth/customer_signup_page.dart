@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:Freshtally/pages/auth/login_page.dart';
 
 class CustomerSignupPage extends StatefulWidget {
@@ -10,8 +12,10 @@ class CustomerSignupPage extends StatefulWidget {
 
 class _CustomerSignupPageState extends State<CustomerSignupPage> {
   final _formKey = GlobalKey<FormState>();
-
   bool _isFormValid = false;
+  bool _isLoading = false;
+  String? _errorMessage;
+
   final TextEditingController _firstNameController = TextEditingController();
   final TextEditingController _lastNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
@@ -41,6 +45,76 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
     });
   }
 
+  Future<void> _signUp() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      // 1. Create Firebase Auth account
+      final UserCredential userCredential = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(
+            email: _emailController.text.trim(),
+            password: _passwordController.text.trim(),
+          );
+
+      // 2. Save to Firestore 'users' collection
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userCredential.user!.uid)
+          .set({
+            'firstName': _firstNameController.text.trim(),
+            'lastName': _lastNameController.text.trim(),
+            'email': _emailController.text.trim(),
+            'phoneNumber': _phoneNumberController.text.trim(),
+            'role': 'customer', // Differentiate from managers
+            'createdAt': FieldValue.serverTimestamp(),
+          });
+
+      // 3. Show success message
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Account created successfully!')),
+      );
+
+      // Optional: Navigate to login or home page
+      // Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => LoginPage()));
+    } on FirebaseAuthException catch (e) {
+      setState(() => _errorMessage = _getErrorMessage(e.code));
+    } catch (e) {
+      setState(() => _errorMessage = 'An unexpected error occurred.');
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  String _getErrorMessage(String code) {
+    switch (code) {
+      case 'email-already-in-use':
+        return 'Email already in use.';
+      case 'invalid-email':
+        return 'Invalid email address.';
+      case 'weak-password':
+        return 'Password must be at least 6 characters.';
+      default:
+        return 'Sign-up failed. Please try again.';
+    }
+  }
+
+  @override
+  void dispose() {
+    _firstNameController.dispose();
+    _lastNameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    _phoneNumberController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -50,9 +124,7 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
         foregroundColor: Colors.black,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.pop(context);
-          },
+          onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
           'Create Your Shopper Account',
@@ -71,16 +143,6 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Center(
-              //   child: Text(
-              //     "Welcome to FreshTally!",
-              //     style: TextStyle(
-              //       fontSize: 24,
-              //       fontWeight: FontWeight.bold,
-              //       color: Colors.green[700],
-              //     ),
-              //   ),
-              // ),
               const SizedBox(height: 40.0),
               const Center(
                 child: Text(
@@ -92,8 +154,9 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 16.0),
+
+              // First Name
               IconTextField(
                 hintText: 'First Name',
                 icon: Icons.person,
@@ -106,6 +169,8 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
                 },
               ),
               const SizedBox(height: 16.0),
+
+              // Last Name
               IconTextField(
                 hintText: 'Last Name',
                 icon: Icons.person_outline,
@@ -118,6 +183,8 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
                 },
               ),
               const SizedBox(height: 16.0),
+
+              // Email
               IconTextField(
                 hintText: 'Email',
                 icon: Icons.email,
@@ -126,7 +193,6 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
                   if (value == null || value.trim().isEmpty) {
                     return 'Email is required';
                   }
-                  // Simple email validation
                   if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
                     return 'Enter a valid email';
                   }
@@ -134,6 +200,8 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
                 },
               ),
               const SizedBox(height: 16.0),
+
+              // Password
               IconTextField(
                 hintText: 'Password',
                 icon: Icons.lock,
@@ -150,6 +218,8 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
                 },
               ),
               const SizedBox(height: 16.0),
+
+              // Confirm Password
               IconTextField(
                 hintText: 'Confirm Password',
                 icon: Icons.lock_outline,
@@ -165,28 +235,30 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
                   return null;
                 },
               ),
-
               const SizedBox(height: 16.0),
+
+              // Phone Number (non-validated)
               IconTextField(
-                hintText: 'phone Number',
-                icon: Icons.lock_outline,
-                isPassword: true,
+                hintText: 'Phone Number',
+                icon: Icons.phone,
                 controller: _phoneNumberController,
               ),
               const SizedBox(height: 32.0),
+
+              // Error Message
+              if (_errorMessage != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16.0),
+                  child: Text(
+                    _errorMessage!,
+                    style: const TextStyle(color: Colors.red),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+
+              // Sign Up Button
               ElevatedButton(
-                onPressed: _isFormValid
-                    ? () {
-                        if (_formKey.currentState!.validate()) {
-                          // Process data
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Account created successfully!'),
-                            ),
-                          );
-                        }
-                      }
-                    : null,
+                onPressed: _isFormValid && !_isLoading ? _signUp : null,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green[600],
                   padding: const EdgeInsets.symmetric(vertical: 16.0),
@@ -194,15 +266,19 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
                     borderRadius: BorderRadius.circular(10.0),
                   ),
                 ),
-                child: const Text(
-                  'Create Account',
-                  style: TextStyle(
-                    fontSize: 18.0,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
+                child: _isLoading
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text(
+                        'Create Account',
+                        style: TextStyle(
+                          fontSize: 18.0,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
               ),
+
+              // Social Sign-In Options (unchanged)
               const SizedBox(height: 20.0),
               const Center(
                 child: Text(
