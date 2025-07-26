@@ -52,6 +52,7 @@ class _ManagerNotificationCenterPageState
             'Thank you for joining FreshTally. We hope you enjoy using our app to manage your supermarket.',
         'type': 'welcome',
         'supermarketName': widget.supermarketName,
+        'recipientId': widget.managerId,
         'createdAt': Timestamp.now(),
         'read': false,
       });
@@ -65,6 +66,7 @@ class _ManagerNotificationCenterPageState
       Query query = FirebaseFirestore.instance
           .collection('notifications')
           .where('supermarketName', isEqualTo: widget.supermarketName)
+          .where('recipientId', isEqualTo: widget.managerId)
           .orderBy('createdAt', descending: true);
 
       return query.snapshots().handleError((error) {
@@ -72,7 +74,6 @@ class _ManagerNotificationCenterPageState
         if (mounted) {
           setState(() {
             _hasIndexError = error.toString().contains('index');
-            _isLoading = false;
           });
         }
         return Stream.error(error);
@@ -82,7 +83,6 @@ class _ManagerNotificationCenterPageState
       if (mounted) {
         setState(() {
           _hasIndexError = true;
-          _isLoading = false;
         });
       }
       return Stream.error(e);
@@ -172,7 +172,8 @@ class _ManagerNotificationCenterPageState
                       return const Center(child: CircularProgressIndicator());
                     }
 
-                    if (_isLoading) {
+                    // Stop loading when we have data
+                    if (_isLoading && snapshot.hasData) {
                       WidgetsBinding.instance.addPostFrameCallback((_) {
                         if (mounted) {
                           setState(() {
