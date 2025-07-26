@@ -39,12 +39,16 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
   @override
   void initState() {
     super.initState();
+    // Pass the supermarketId to relevant pages
     _pages = <Widget>[
-      _HomeBody(onNavigateToOffers: _navigateToOffersTab),
-      const ProductSearchPage(),
-      const ShoppingListPage(),
-      const DiscountsAndPromotionsPage(),
-      const NotificationsPage(),
+      _HomeBody(
+        onNavigateToOffers: _navigateToOffersTab,
+        supermarketId: widget.supermarketId,
+      ),
+      ProductSearchPage(supermarketId: widget.supermarketId),
+      ShoppingListPage(supermarketId: widget.supermarketId),
+      DiscountsAndPromotionsPage(supermarketId: widget.supermarketId),
+      const NotificationsPage(), // Notifications might be global or specific
     ];
   }
 
@@ -75,13 +79,14 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
             Expanded(
               flex: 2,
               child: Padding(
-                padding: const EdgeInsets.only(left: 16.0), // Add left padding
+                padding: const EdgeInsets.only(left: 16.0),
                 child: FutureBuilder<DocumentSnapshot>(
                   future: FirebaseFirestore.instance
                       .collection('supermarkets')
                       .doc(widget.supermarketId)
                       .get(),
                   builder: (context, snapshot) {
+                    // ... existing snapshot handling for supermarket details ...
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return const Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -109,7 +114,7 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
                             style: TextStyle(fontSize: 18, color: Colors.red),
                           ),
                           Text(
-                            'Failed to load',
+                            'Failed to load supermarket', // More specific error message
                             style: TextStyle(fontSize: 14, color: Colors.red),
                           ),
                         ],
@@ -127,7 +132,7 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
                             ),
                           ),
                           Text(
-                            'Unknown Location',
+                            'Not Found', // More specific message
                             style: TextStyle(fontSize: 14, color: Colors.grey),
                           ),
                         ],
@@ -146,7 +151,7 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
                             fontWeight: FontWeight.bold,
                             color: Colors.black87,
                           ),
-                          overflow: TextOverflow.ellipsis, // Handle long names
+                          overflow: TextOverflow.ellipsis,
                         ),
                         Text(
                           location,
@@ -154,8 +159,7 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
                             fontSize: 14,
                             color: Colors.grey,
                           ),
-                          overflow:
-                              TextOverflow.ellipsis, // Handle long locations
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     );
@@ -180,9 +184,10 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
           ],
         ),
         actions: [
-          // Notifications Icon (Right side)
           IconButton(
             onPressed: () {
+              // Decide if notifications are global or supermarket-specific
+              // If supermarket-specific, pass widget.supermarketId
               Navigator.push(
                 context,
                 MaterialPageRoute(
@@ -232,8 +237,12 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
 
 class _HomeBody extends StatelessWidget {
   final VoidCallback onNavigateToOffers;
+  final String supermarketId; // Add supermarketId to _HomeBody
 
-  const _HomeBody({required this.onNavigateToOffers});
+  const _HomeBody({
+    required this.onNavigateToOffers,
+    required this.supermarketId, // Make it required
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -248,7 +257,8 @@ class _HomeBody extends StatelessWidget {
               controller: controller,
               focusNode: focusNode,
               decoration: InputDecoration(
-                hintText: 'Search products...',
+                hintText:
+                    'Search products in this supermarket...', // More specific hint
                 hintStyle: const TextStyle(color: Colors.black54),
                 prefixIcon: const Icon(Icons.search, color: Colors.black87),
                 border: OutlineInputBorder(
@@ -265,6 +275,10 @@ class _HomeBody extends StatelessWidget {
             if (pattern.isEmpty) return [];
             final querySnapshot = await FirebaseFirestore.instance
                 .collection('products')
+                .where(
+                  'supermarketId',
+                  isEqualTo: supermarketId,
+                ) // Filter by supermarketId
                 .where('name', isGreaterThanOrEqualTo: pattern)
                 .where('name', isLessThanOrEqualTo: '$pattern\uf8ff')
                 .limit(10)
@@ -272,14 +286,16 @@ class _HomeBody extends StatelessWidget {
 
             return querySnapshot.docs.map((doc) {
               final data = doc.data();
-              data['id'] = doc.id; // Ensure ID is part of the data
+              data['id'] = doc.id;
               return data;
             }).toList();
           },
           itemBuilder: (context, suggestion) {
-            final name = suggestion['name'] ?? 'Unnamed';
-            final price = suggestion['price'] ?? 0;
-            final imageUrl = suggestion['image_url'] ?? '';
+            // FIX: Access properties from the 'suggestion' map
+            final String imageUrl = suggestion['image_url'] ?? '';
+            final String name = suggestion['name'] ?? 'Unnamed Product';
+            final num price =
+                suggestion['price'] ?? 0; // Use num for flexibility
 
             return ListTile(
               leading: imageUrl.isNotEmpty
@@ -297,12 +313,15 @@ class _HomeBody extends StatelessWidget {
             );
           },
           onSelected: (suggestion) {
-            // Renamed from onSuggestionSelected to onSelected
+            // FIX: Access 'id' from the 'suggestion' map
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) =>
-                    ProductDetailsPage(productId: suggestion['id']),
+                builder: (context) => ProductDetailsPage(
+                  productId: suggestion['id'],
+                  supermarketId:
+                      supermarketId, // 'supermarketId' is already in scope here
+                ),
               ),
             );
           },
@@ -354,11 +373,16 @@ class _HomeBody extends StatelessWidget {
         StreamBuilder<QuerySnapshot>(
           stream: FirebaseFirestore.instance
               .collection('products')
+              .where(
+                'supermarketId',
+                isEqualTo: supermarketId,
+              ) // Filter by supermarketId
               .where('discountPercentage', isGreaterThan: 0)
               .orderBy('discountExpiry')
               .limit(4)
               .snapshots(),
           builder: (context, snapshot) {
+            // ... existing snapshot handling for discounts ...
             if (snapshot.hasError) {
               return const Center(child: Text('Failed to load discounts'));
             }
@@ -369,7 +393,9 @@ class _HomeBody extends StatelessWidget {
             final docs = snapshot.data!.docs;
 
             if (docs.isEmpty) {
-              return const Center(child: Text('No active discounts'));
+              return const Center(
+                child: Text('No active discounts for this supermarket.'),
+              ); // More specific message
             }
 
             return Column(

@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // Import Firebase Auth
+import 'package:cloud_firestore/cloud_firestore.dart'; // Import Firestore
 import 'package:Freshtally/pages/auth/login_page.dart';
 import 'package:Freshtally/pages/customer/home/customer_home_page.dart';
 
@@ -15,9 +13,9 @@ class CustomerSignupPage extends StatefulWidget {
 
 class _CustomerSignupPageState extends State<CustomerSignupPage> {
   final _formKey = GlobalKey<FormState>();
-  bool _isFormValid = false;
-  bool _isLoading = false;
-  String? _errorMessage;
+
+  bool _isLoading = false; // State to manage loading indicator
+  String? _errorMessage; // State to manage error messages
 
   final TextEditingController _firstNameController = TextEditingController();
   final TextEditingController _lastNameController = TextEditingController();
@@ -27,94 +25,9 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
       TextEditingController();
   final TextEditingController _phoneNumberController = TextEditingController();
 
+  // Firebase instances
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
-  @override
-  void initState() {
-    super.initState();
-    _firstNameController.addListener(_validateForm);
-    _lastNameController.addListener(_validateForm);
-    _emailController.addListener(_validateForm);
-    _passwordController.addListener(_validateForm);
-    _confirmPasswordController.addListener(_validateForm);
-  }
-
-  void _validateForm() {
-    setState(() {
-      _isFormValid =
-          _firstNameController.text.trim().isNotEmpty &&
-          _lastNameController.text.trim().isNotEmpty &&
-          _emailController.text.trim().isNotEmpty &&
-          _passwordController.text.isNotEmpty &&
-          _confirmPasswordController.text.isNotEmpty;
-    });
-  }
-
-  Future<void> _signUp() async {
-    if (!_formKey.currentState!.validate()) return;
-
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-
-    try {
-      // 1. Create Firebase Auth account
-      final UserCredential userCredential = await _auth
-          .createUserWithEmailAndPassword(
-            email: _emailController.text.trim(),
-            password: _passwordController.text.trim(),
-          );
-
-      final String uid = userCredential.user!.uid;
-
-      // 2. Save to Firestore 'users' collection (matches manager format)
-      await _firestore.collection('users').doc(uid).set({
-        'uid': uid,
-        'firstName': _firstNameController.text.trim(),
-        'lastName': _lastNameController.text.trim(),
-        'email': _emailController.text.trim(),
-        'phoneNumber': _phoneNumberController.text.trim(),
-        'role': 'customer',
-        'supermarketId': '',
-        'supermarketName': '',
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-
-      // 3. Navigate to customer home
-      if (!mounted) return;
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => CustomerHomePage(
-            supermarketName: '',
-            location: '',
-            supermarketId: '',
-          ),
-        ),
-      );
-    } on FirebaseAuthException catch (e) {
-      setState(() => _errorMessage = _getErrorMessage(e.code));
-    } catch (e) {
-      setState(() => _errorMessage = 'An unexpected error occurred.');
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
-  String _getErrorMessage(String code) {
-    switch (code) {
-      case 'email-already-in-use':
-        return 'Email already in use.';
-      case 'invalid-email':
-        return 'Invalid email address.';
-      case 'weak-password':
-        return 'Password must be at least 6 characters.';
-      default:
-        return 'Sign-up failed. Please try again.';
-    }
-  }
 
   @override
   void dispose() {
@@ -127,9 +40,83 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
     super.dispose();
   }
 
+  Future<void> _signUpCustomer() async {
+    if (!_formKey.currentState!.validate()) {
+      setState(() {
+        _errorMessage = 'Please correct the errors in the form.';
+      });
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null; // Clear previous errors
+    });
+
+    try {
+      // 1. Create user with Firebase Authentication
+      UserCredential userCredential = await _auth
+          .createUserWithEmailAndPassword(
+            email: _emailController.text.trim(),
+            password: _passwordController.text,
+          );
+
+      final user = userCredential.user;
+      if (user != null) {
+        // 2. Store user details in Firestore
+        await _firestore.collection('users').doc(user.uid).set({
+          'uid': user.uid,
+          'firstName': _firstNameController.text.trim(),
+          'lastName': _lastNameController.text.trim(),
+          'email': _emailController.text.trim(),
+          'phoneNumber': _phoneNumberController.text
+              .trim(), // Store phone number
+          'role': 'customer',
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+
+        if (!mounted) {
+          return; // Check if widget is still mounted before navigating
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Account created successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+
+        // Navigate to login page after successful signup
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginPage()),
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      setState(() {
+        if (e.code == 'weak-password') {
+          _errorMessage = 'The password provided is too weak.';
+        } else if (e.code == 'email-already-in-use') {
+          _errorMessage = 'The account already exists for that email.';
+        } else {
+          _errorMessage = 'Firebase Auth Error: ${e.message}';
+        }
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'An unexpected error occurred: ${e.toString()}';
+      });
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFFFFFFF), // Set background color
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -201,6 +188,7 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
                 hintText: 'Email',
                 icon: Icons.email,
                 controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return 'Email is required';
@@ -251,13 +239,16 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
 
               // Phone Number
               IconTextField(
-                hintText: 'Phone Number',
+                hintText: 'Phone No. (Optional)',
                 icon: Icons.phone,
+                isPassword: false,
                 controller: _phoneNumberController,
+                keyboardType: TextInputType.phone,
+                maxLength: 15,
               ),
               const SizedBox(height: 32.0),
 
-              // Error Message
+              // Display error message if any
               if (_errorMessage != null)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 16.0),
@@ -268,26 +259,30 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
                   ),
                 ),
 
-              // Sign Up Button
-              ElevatedButton(
-                onPressed: _isFormValid && !_isLoading ? _signUp : null,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green[600],
-                  padding: const EdgeInsets.symmetric(vertical: 16.0),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10.0),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _isLoading
+                      ? null
+                      : _signUpCustomer, // Call signup function
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green[600],
+                    padding: const EdgeInsets.symmetric(vertical: 16.0),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10.0),
+                    ),
                   ),
-                ),
-                child: _isLoading
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text(
-                        'Create Account',
-                        style: TextStyle(
-                          fontSize: 18.0,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                  child: _isLoading
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text(
+                          'Create Account',
+                          style: TextStyle(
+                            fontSize: 18.0,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
                         ),
-                      ),
+                ),
               ),
 
               // Social Sign-In Options
@@ -308,12 +303,16 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
                       size: 40,
                       color: Colors.blue,
                     ),
-                    onPressed: () {},
+                    onPressed: () {
+                      // Implement Facebook sign-in
+                    },
                   ),
                   const SizedBox(width: 20),
                   IconButton(
                     icon: Image.asset('assets/icons/google.png', height: 35),
-                    onPressed: () {},
+                    onPressed: () {
+                      // Implement Google sign-in
+                    },
                   ),
                   const SizedBox(width: 20),
                   IconButton(
@@ -322,7 +321,9 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
                       size: 40,
                       color: Colors.black,
                     ),
-                    onPressed: () {},
+                    onPressed: () {
+                      // Implement Apple sign-in
+                    },
                   ),
                 ],
               ),
@@ -353,6 +354,8 @@ class IconTextField extends StatelessWidget {
   final bool isPassword;
   final TextEditingController? controller;
   final String? Function(String?)? validator;
+  final TextInputType keyboardType;
+  final int? maxLength;
 
   const IconTextField({
     super.key,
@@ -361,6 +364,8 @@ class IconTextField extends StatelessWidget {
     this.isPassword = false,
     this.controller,
     this.validator,
+    this.keyboardType = TextInputType.text,
+    this.maxLength,
   });
 
   @override
@@ -369,6 +374,8 @@ class IconTextField extends StatelessWidget {
       controller: controller,
       obscureText: isPassword,
       validator: validator,
+      keyboardType: keyboardType,
+      maxLength: maxLength,
       decoration: InputDecoration(
         hintText: hintText,
         prefixIcon: Icon(icon, color: Colors.grey),
@@ -382,6 +389,7 @@ class IconTextField extends StatelessWidget {
           vertical: 16.0,
           horizontal: 16.0,
         ),
+        counterText: '',
       ),
     );
   }

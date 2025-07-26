@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:Freshtally/pages/customer/product/products_details_page.dart';
 
 class ProductSearchPage extends StatefulWidget {
-  const ProductSearchPage({super.key});
+  final String supermarketId;
+  const ProductSearchPage({super.key, required this.supermarketId});
 
   @override
   State<ProductSearchPage> createState() => _ProductSearchPageState();
@@ -21,7 +22,8 @@ class _ProductSearchPageState extends State<ProductSearchPage> {
             padding: const EdgeInsets.all(16),
             child: TextField(
               decoration: const InputDecoration(
-                hintText: 'Search...',
+                hintText:
+                    'Search products in this supermarket...', // More specific hint
                 prefixIcon: Icon(Icons.search),
                 border: OutlineInputBorder(),
               ),
@@ -34,8 +36,21 @@ class _ProductSearchPageState extends State<ProductSearchPage> {
           ),
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
+              // MODIFIED: Incorporate supermarketId and name filtering directly into the Firestore query
               stream: FirebaseFirestore.instance
                   .collection('products')
+                  .where(
+                    'supermarketId',
+                    isEqualTo: widget.supermarketId,
+                  ) // Filter by supermarketId
+                  .where(
+                    'name',
+                    isGreaterThanOrEqualTo: query,
+                  ) // Start of case-insensitive search
+                  .where(
+                    'name',
+                    isLessThanOrEqualTo: '$query\uf8ff',
+                  ) // End of case-insensitive search
                   .snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
@@ -43,21 +58,22 @@ class _ProductSearchPageState extends State<ProductSearchPage> {
                 }
 
                 if (snapshot.hasError) {
-                  return const Center(child: Text('Something went wrong.'));
+                  return Center(
+                    child: Text('Something went wrong: ${snapshot.error}'),
+                  ); // Better error message
                 }
 
                 if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                  return const Center(child: Text('No products available.'));
+                  // This message will appear if no products are found for the given supermarketId
+                  // or if no products match the search query within that supermarket.
+                  return const Center(
+                    child: Text('No products found in this supermarket.'),
+                  );
                 }
 
-                final filtered = snapshot.data!.docs.where((doc) {
-                  final name = doc['name']?.toString().toLowerCase() ?? '';
-                  return name.contains(query);
-                }).toList();
-
-                if (filtered.isEmpty) {
-                  return const Center(child: Text('No products found.'));
-                }
+                // With the Firestore query filtering, you no longer need the client-side `where` clause.
+                // The `snapshot.data!.docs` will already contain only the relevant products.
+                final filtered = snapshot.data!.docs;
 
                 return ListView.builder(
                   itemCount: filtered.length,
@@ -69,14 +85,6 @@ class _ProductSearchPageState extends State<ProductSearchPage> {
                     final name = productData['name'] ?? '';
                     final price = productData['price'] ?? '';
                     final imageUrl = productData['image_url'] ?? '';
-                    // final location =
-                    //     productData['location'] as Map<String, dynamic>?;
-
-                    // String locationText = '';
-                    // if (location != null) {
-                    //   locationText =
-                    //       'Floor: ${location['floor']}, Shelf: ${location['shelf']}, Position: ${location['position'].toString().toUpperCase()}';
-                    // }
 
                     return Card(
                       margin: const EdgeInsets.symmetric(
@@ -85,21 +93,31 @@ class _ProductSearchPageState extends State<ProductSearchPage> {
                       ),
                       elevation: 0.1,
                       child: ListTile(
-                        leading: Image.network(
-                          imageUrl,
-                          width: 51,
-                          height: 51,
-                          errorBuilder: (_, __, ___) =>
-                              const Icon(Icons.image_not_supported),
-                        ),
+                        leading: imageUrl.isNotEmpty
+                            ? Image.network(
+                                imageUrl,
+                                width: 51,
+                                height: 51,
+                                fit: BoxFit
+                                    .cover, // Added fit for better image display
+                                errorBuilder: (_, __, ___) =>
+                                    const Icon(Icons.image_not_supported),
+                              )
+                            : const Icon(
+                                Icons.image_not_supported,
+                                size: 51,
+                              ), // Placeholder if no image URL
                         title: Text(name),
                         subtitle: Text('$price UGX'),
                         onTap: () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) =>
-                                  ProductDetailsPage(productId: productId),
+                              builder: (_) => ProductDetailsPage(
+                                productId: productId,
+                                supermarketId:
+                                    widget.supermarketId, // Pass supermarketId
+                              ),
                             ),
                           );
                         },

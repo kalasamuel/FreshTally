@@ -42,9 +42,9 @@ class SmartShelfSuggestionsPage extends StatelessWidget {
 
         for (var product in products) {
           final location = product['location'] as Map<String, dynamic>?;
-          if (location == null || 
-              location['floor'] == null || 
-              location['shelf'] == null || 
+          if (location == null ||
+              location['floor'] == null ||
+              location['shelf'] == null ||
               location['position'] == null) {
             unassignedProducts++;
             continue;
@@ -55,7 +55,7 @@ class SmartShelfSuggestionsPage extends StatelessWidget {
           final shelf = location['shelf']?.toString() ?? 'Unknown';
           final position = location['position']?.toString() ?? 'Unknown';
           final locationKey = '$floor-$shelf-$position';
-          
+
           locationCounts[locationKey] = (locationCounts[locationKey] ?? 0) + 1;
           locationDetails[locationKey] = {
             'floor': floor,
@@ -80,7 +80,8 @@ class SmartShelfSuggestionsPage extends StatelessWidget {
           confidence = (maxCount / assignedProducts) * 100;
         }
 
-        if (suggestedLocation != null && locationDetails.containsKey(suggestedLocation)) {
+        if (suggestedLocation != null &&
+            locationDetails.containsKey(suggestedLocation)) {
           final details = locationDetails[suggestedLocation]!;
           suggestions[category] = {
             'floor': details['floor'],
@@ -150,7 +151,10 @@ class SmartShelfSuggestionsPage extends StatelessWidget {
           children: [
             // Info banner
             Container(
-              margin: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+              margin: const EdgeInsets.symmetric(
+                horizontal: 24.0,
+                vertical: 16.0,
+              ),
               padding: const EdgeInsets.all(16.0),
               decoration: BoxDecoration(
                 color: const Color(0xFFE3F2FD),
@@ -184,9 +188,7 @@ class SmartShelfSuggestionsPage extends StatelessWidget {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          CircularProgressIndicator(
-                            color: Color(0xFF4CAF50),
-                          ),
+                          CircularProgressIndicator(color: Color(0xFF4CAF50)),
                           SizedBox(height: 16),
                           Text(
                             'Analyzing product placement patterns...',
@@ -265,21 +267,25 @@ class SmartShelfSuggestionsPage extends StatelessWidget {
 
                   final suggestions = snapshot.data!;
                   return ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 0),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24.0,
+                      vertical: 0,
+                    ),
                     itemCount: suggestions.length,
                     itemBuilder: (context, index) {
                       final category = suggestions.keys.elementAt(index);
                       final suggestion = suggestions[category]!;
-                      final hasValidSuggestion = suggestion['hasValidSuggestion'] as bool;
+                      final hasValidSuggestion =
+                          suggestion['hasValidSuggestion'] as bool;
                       final confidence = suggestion['confidence'] as double;
-                      
+
                       return Card(
                         elevation: 0.1,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),
-                        color: hasValidSuggestion 
-                            ? const Color(0xFFF1F8E9) 
+                        color: hasValidSuggestion
+                            ? const Color(0xFFF1F8E9)
                             : const Color(0xFFFFF3E0),
                         margin: const EdgeInsets.only(bottom: 16.0),
                         child: Padding(
@@ -289,7 +295,8 @@ class SmartShelfSuggestionsPage extends StatelessWidget {
                             children: [
                               // Category header with confidence indicator
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Expanded(
                                     child: Text(
@@ -304,8 +311,8 @@ class SmartShelfSuggestionsPage extends StatelessWidget {
                                   if (hasValidSuggestion)
                                     Container(
                                       padding: const EdgeInsets.symmetric(
-                                        horizontal: 8, 
-                                        vertical: 4
+                                        horizontal: 8,
+                                        vertical: 4,
                                       ),
                                       decoration: BoxDecoration(
                                         color: _getConfidenceColor(confidence),
@@ -323,7 +330,7 @@ class SmartShelfSuggestionsPage extends StatelessWidget {
                                 ],
                               ),
                               const SizedBox(height: 12),
-                              
+
                               // Suggestion details
                               Container(
                                 padding: const EdgeInsets.all(12),
@@ -335,22 +342,25 @@ class SmartShelfSuggestionsPage extends StatelessWidget {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      hasValidSuggestion 
-                                          ? 'Recommended Shelf Address:' 
+                                      hasValidSuggestion
+                                          ? 'Recommended Shelf Address:'
                                           : 'No Clear Pattern Found:',
                                       style: TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.w600,
-                                        color: hasValidSuggestion 
-                                            ? Colors.green.shade700 
+                                        color: hasValidSuggestion
+                                            ? Colors.green.shade700
                                             : Colors.orange.shade700,
                                       ),
                                     ),
                                     const SizedBox(height: 8),
                                     Row(
                                       children: [
-                                        const Icon(Icons.location_on, 
-                                            size: 16, color: Colors.black54),
+                                        const Icon(
+                                          Icons.location_on,
+                                          size: 16,
+                                          color: Colors.black54,
+                                        ),
                                         const SizedBox(width: 4),
                                         Text(
                                           'Floor: ${suggestion['floor']}',
@@ -363,8 +373,11 @@ class SmartShelfSuggestionsPage extends StatelessWidget {
                                     ),
                                     Row(
                                       children: [
-                                        const Icon(Icons.shelves, 
-                                            size: 16, color: Colors.black54),
+                                        const Icon(
+                                          Icons.shelves,
+                                          size: 16,
+                                          color: Colors.black54,
+                                        ),
                                         const SizedBox(width: 4),
                                         Text(
                                           'Shelf: ${suggestion['shelf']}',
@@ -377,8 +390,11 @@ class SmartShelfSuggestionsPage extends StatelessWidget {
                                     ),
                                     Row(
                                       children: [
-                                        const Icon(Icons.place, 
-                                            size: 16, color: Colors.black54),
+                                        const Icon(
+                                          Icons.place,
+                                          size: 16,
+                                          color: Colors.black54,
+                                        ),
                                         const SizedBox(width: 4),
                                         Text(
                                           'Position: ${suggestion['position']}',
@@ -392,25 +408,26 @@ class SmartShelfSuggestionsPage extends StatelessWidget {
                                   ],
                                 ),
                               ),
-                              
+
                               const SizedBox(height: 12),
-                              
+
                               // Statistics
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   _buildStatChip(
-                                    'Total Products', 
+                                    'Total Products',
                                     suggestion['productCount'].toString(),
                                     Colors.blue,
                                   ),
                                   _buildStatChip(
-                                    'Assigned', 
+                                    'Assigned',
                                     suggestion['assignedProducts'].toString(),
                                     Colors.green,
                                   ),
                                   _buildStatChip(
-                                    'Unassigned', 
+                                    'Unassigned',
                                     suggestion['unassignedProducts'].toString(),
                                     Colors.orange,
                                   ),
@@ -450,13 +467,7 @@ class SmartShelfSuggestionsPage extends StatelessWidget {
               color: color,
             ),
           ),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              color: color,
-            ),
-          ),
+          Text(label, style: TextStyle(fontSize: 12, color: color)),
         ],
       ),
     );

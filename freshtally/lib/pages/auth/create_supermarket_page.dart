@@ -161,75 +161,65 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
 
       final user = userCredential.user;
       if (user == null) {
-        throw Exception('User creation failed');
+        throw Exception("User creation failed. No user object returned.");
       }
 
-      final String uid = user.uid;
-      final String supermarketName = _supermarketNameController.text.trim();
-      final String location = _locationController.text.trim();
-      final String firstName = _firstNameController.text.trim();
-      final String lastName = _lastNameController.text.trim();
-      final String email = _emailController.text.trim();
+      final String uid = user.uid; // Get the authenticated user's UID
 
-      // Create supermarket document
-      final supermarketData = {
-        'name': supermarketName,
-        'location': location,
-        'manager': {
-          'uid': uid,
-          'firstName': firstName,
-          'lastName': lastName,
-          'email': email,
-        },
-        'createdAt': FieldValue.serverTimestamp(),
-        'staffCount': 1,
-      };
-
-      await _firestore.collection('supermarkets').doc(uid).set(supermarketData);
-
-      // Store manager details under the supermarket's user subcollection
+      // 1. Create the Supermarket document (using manager's UID as Supermarket ID)
+      // This also stores some initial manager details nested.
       await _firestore
           .collection('supermarkets')
-          .doc(uid)
-          .collection('users')
-          .doc(uid)
+          .doc(uid) // The supermarket's ID is the manager's UID
           .set({
-            'uid': uid,
-            'firstName': firstName,
-            'lastName': lastName,
-            'email': email,
-            'role': 'manager',
-            'supermarketId': uid,
-            'supermarketName': supermarketName,
-            'location': location,
+            'name': _supermarketNameController.text.trim(),
+            'name_lower': _supermarketNameController.text.trim().toLowerCase(),
+            'location': _locationController.text.trim(),
+            'manager': {
+              'uid': uid, // Store manager's UID within the supermarket document
+              'firstName': _firstNameController.text.trim(),
+              'lastName': _lastNameController.text.trim(),
+              'email': _emailController.text.trim(),
+            },
+            'createdAt': FieldValue.serverTimestamp(),
+            'staffCount': 1,
+          });
+
+      // 2. Create the Manager's User Profile document under the 'users' subcollection
+      // This is the document that your LoginPage's collectionGroup query expects.
+      await _firestore
+          .collection('supermarkets')
+          .doc(uid) // Reference the created supermarket
+          .collection('users') // Access the 'users' subcollection
+          .doc(
+            uid,
+          ) // Set the manager's UID as the document ID for their profile
+          .set({
+            'uid':
+                uid, // <--- IMPORTANT: Explicitly add the UID field here for the collectionGroup query
+            'firstName': _firstNameController.text.trim(),
+            'lastName': _lastNameController.text.trim(),
+            'email': _emailController.text.trim(),
+            'role': 'manager', // Crucial for role-based navigation
+            'supermarketId':
+                uid, // The ID of the supermarket this manager belongs to
+            'supermarketName': _supermarketNameController.text.trim(),
             'createdAt': FieldValue.serverTimestamp(),
           });
 
-      // Store user in global users collection
-      await _firestore.collection('users').doc(uid).set({
-        'uid': uid,
-        'firstName': firstName,
-        'lastName': lastName,
-        'email': email,
-        'role': 'manager',
-        'supermarketId': uid,
-        'supermarketName': supermarketName,
-        'location': location,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-
       if (!mounted) return;
 
-      // Navigate with guaranteed non-null values
+      // Navigate to the appropriate dashboard
       Navigator.pushReplacementNamed(
         context,
         '/staff/managerHome',
         arguments: {
-          'supermarketId': uid,
-          'supermarketName': supermarketName,
-          'location': location,
-          'uid': uid,
-          'managerId': uid,
+          'supermarketId':
+              uid, // Pass the supermarket ID (which is the manager's UID)
+          'supermarketName': _supermarketNameController.text.trim(),
+          'location': _locationController.text.trim(),
+          'uid':
+              uid, // Pass the manager's UID (same as supermarketId in this case)
         },
       );
     } on FirebaseAuthException catch (e) {
@@ -237,11 +227,15 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
       setState(() {
         _errorMessage = _getAuthErrorMessage(e.code);
       });
+      debugPrint(
+        'FirebaseAuthException during account creation: ${e.code} - ${e.message}',
+      );
     } catch (e) {
-      debugPrint('Error during account creation: $e');
+      debugPrint('Error during account creation (general catch): $e');
       if (!mounted) return;
       setState(() {
-        _errorMessage = 'An unexpected error occurred. Please try again.';
+        _errorMessage =
+            'An unexpected error occurred: ${e.toString()}'; // Show more specific error
       });
     } finally {
       if (mounted) {

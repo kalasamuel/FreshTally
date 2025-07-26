@@ -141,9 +141,9 @@ class _LoginPageState extends State<LoginPage> {
             .get();
 
         if (supermarketDoc.exists) {
-          final supermarketData = supermarketDoc.data()!;
-          supermarketName = supermarketData['name'] as String? ?? 'Unknown';
-          location = supermarketData['location'] as String? ?? 'Unknown';
+          final supermarketData = supermarketDoc.data();
+          supermarketName = supermarketData?['name'] as String? ?? 'Unknown';
+          location = supermarketData?['location'] as String? ?? 'Unknown';
         }
       }
 
@@ -159,8 +159,8 @@ class _LoginPageState extends State<LoginPage> {
               builder: (_) => ManagerDashboardPage(
                 supermarketName: supermarketName,
                 location: location,
-                supermarketId: supermarketId ?? '',
-                managerId: userId,
+                managerId: '',
+                supermarketId: supermarketId!,
               ),
             ),
           );
@@ -193,13 +193,21 @@ class _LoginPageState extends State<LoginPage> {
           break;
 
         case 'customer':
-          Navigator.pushReplacement(
+          if (supermarketId == null || supermarketId.isEmpty) {
+            // Show an error to the user or log it for debugging
+            setState(() {
+              _errorMessage =
+                  'Supermarket ID not found for this customer. Please contact support.';
+            });
+            return;
+          }
+          Navigator.push(
             context,
             MaterialPageRoute(
               builder: (_) => CustomerHomePage(
                 supermarketName: supermarketName,
                 location: location,
-                supermarketId: supermarketId ?? '',
+                supermarketId: supermarketId,
               ),
             ),
           );
