@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:Freshtally/pages/auth/create_supermarket_page.dart';
+import 'package:Freshtally/pages/auth/create_supermarket_page.dart  ';
 import 'package:Freshtally/pages/auth/customer_signup_page.dart';
 import 'package:Freshtally/pages/auth/staff_signup_page.dart';
 import 'package:Freshtally/pages/customer/home/customer_home_page.dart';
@@ -64,7 +64,6 @@ class _LoginPageState extends State<LoginPage> {
   bool _isLoading = false;
   String? _errorMessage;
   bool _rememberMe = false;
-  bool _obscurePassword = true; // <-- Add this line
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -116,6 +115,7 @@ class _LoginPageState extends State<LoginPage> {
       final userId = userCredential.user?.uid;
       if (userId == null) throw Exception("User ID not found");
 
+      // Improved user document query
       final userQuery = await _firestore
           .collectionGroup('users')
           .where('uid', isEqualTo: userId)
@@ -127,7 +127,7 @@ class _LoginPageState extends State<LoginPage> {
       }
 
       final userDoc = userQuery.docs.first;
-      final userData = userDoc.data();
+      final userData = userDoc.data() as Map<String, dynamic>;
       final role = userData['role'] as String? ?? 'customer';
       final supermarketId = userData['supermarketId'] as String?;
 
@@ -153,25 +153,25 @@ class _LoginPageState extends State<LoginPage> {
 
       switch (role) {
         case 'manager':
-          Navigator.push(
+          Navigator.pushReplacement(
             context,
             MaterialPageRoute(
               builder: (_) => ManagerDashboardPage(
                 supermarketName: supermarketName,
                 location: location,
-                managerId: '',
-                supermarketId: '',
+                supermarketId: supermarketId ?? '',
+                managerId: userId,
               ),
             ),
           );
           break;
 
         case 'storeManager':
-          Navigator.push(
+          Navigator.pushReplacement(
             context,
             MaterialPageRoute(
               builder: (_) => StoreManagerDashboard(
-                supermarketId: supermarketId!,
+                supermarketId: supermarketId ?? '',
                 supermarketName: supermarketName,
                 location: location,
               ),
@@ -180,11 +180,11 @@ class _LoginPageState extends State<LoginPage> {
           break;
 
         case 'staff':
-          Navigator.push(
+          Navigator.pushReplacement(
             context,
             MaterialPageRoute(
               builder: (_) => ShelfStaffDashboard(
-                supermarketId: supermarketId!,
+                supermarketId: supermarketId ?? '',
                 supermarketName: supermarketName,
                 location: location,
               ),
@@ -193,7 +193,7 @@ class _LoginPageState extends State<LoginPage> {
           break;
 
         case 'customer':
-          Navigator.push(
+          Navigator.pushReplacement(
             context,
             MaterialPageRoute(
               builder: (_) => CustomerHomePage(
@@ -225,7 +225,6 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-
   Future<void> _forgotPassword() async {
     final email = _emailController.text.trim();
     if (email.isEmpty) {
@@ -245,9 +244,10 @@ class _LoginPageState extends State<LoginPage> {
 
     try {
       await _auth.sendPasswordResetEmail(email: email);
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Password reset email sent!'),
+        SnackBar(
+          content: Text('Password reset email sent to $email.'),
           backgroundColor: Colors.green,
         ),
       );
@@ -279,8 +279,7 @@ class _LoginPageState extends State<LoginPage> {
       case 'too-many-requests':
         return 'Too many login attempts. Please try again later.';
       default:
-        return 'Check your internet connection and try again.';
-      // return 'An unexpected error occurred. Please try again.';
+        return 'An unexpected error occurred. Please try again.';
     }
   }
 
@@ -309,12 +308,12 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // appBar: AppBar(
-      //   backgroundColor: Colors.transparent,
-      //   elevation: 0,
-      //   foregroundColor: Colors.black,
-      //   automaticallyImplyLeading: false,
-      // ),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        foregroundColor: Colors.black,
+        automaticallyImplyLeading: false,
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
         child: Form(
@@ -322,9 +321,8 @@ class _LoginPageState extends State<LoginPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const SizedBox(height: 30.0),
-              Center(child: Image.asset('assets/images/logo.png', height: 200)),
-              const SizedBox(height: 1.0),
+              Center(child: Image.asset('assets/images/logo.png', height: 120)),
+              const SizedBox(height: 16.0),
               Center(
                 child: Text(
                   "Welcome to FreshTally!",
@@ -335,10 +333,10 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
               ),
-              const SizedBox(height: 10.0),
+              const SizedBox(height: 40.0),
               const Center(
                 child: Text(
-                  "",
+                  "Login",
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
@@ -362,10 +360,11 @@ class _LoginPageState extends State<LoginPage> {
                 },
               ),
               const SizedBox(height: 16.0),
-              // --- Password field with show/hide functionality ---
-              TextFormField(
+              IconTextField(
+                hintText: "Password",
+                icon: Icons.lock,
+                isPassword: true,
                 controller: _passwordController,
-                obscureText: _obscurePassword,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Password is required';
@@ -375,35 +374,7 @@ class _LoginPageState extends State<LoginPage> {
                   }
                   return null;
                 },
-                decoration: InputDecoration(
-                  hintText: "Password",
-                  prefixIcon: const Icon(Icons.lock, color: Colors.grey),
-                  filled: true,
-                  fillColor: Colors.grey[200],
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10.0),
-                    borderSide: BorderSide.none,
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    vertical: 16.0,
-                    horizontal: 16.0,
-                  ),
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _obscurePassword
-                          ? Icons.visibility_off
-                          : Icons.visibility,
-                      color: Colors.grey,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _obscurePassword = !_obscurePassword;
-                      });
-                    },
-                  ),
-                ),
               ),
-              // --- End password field ---
               const SizedBox(height: 10.0),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -506,7 +477,7 @@ class _LoginPageState extends State<LoginPage> {
                     width: double.infinity,
                     child: OutlinedButton(
                       onPressed: () {
-                        Navigator.push(
+                        Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
                             builder: (_) => const CreateSupermarketPage(),
@@ -531,7 +502,7 @@ class _LoginPageState extends State<LoginPage> {
                     width: double.infinity,
                     child: OutlinedButton(
                       onPressed: () {
-                        Navigator.push(
+                        Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
                             builder: (_) => const StaffSignupPage(),
@@ -556,7 +527,7 @@ class _LoginPageState extends State<LoginPage> {
                     width: double.infinity,
                     child: OutlinedButton(
                       onPressed: () {
-                        Navigator.push(
+                        Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(
                             builder: (_) => const CustomerSignupPage(),
@@ -581,7 +552,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ],
               ),
-            ], 
+            ],
           ),
         ),
       ),

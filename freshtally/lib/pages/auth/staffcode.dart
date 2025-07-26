@@ -133,11 +133,14 @@ class _StaffVerificationPageState extends State<StaffVerificationPage> {
             password: widget.password,
           );
 
+      final String staffUid = authResult.user!.uid;
+
+      // Create staff document
       await FirebaseFirestore.instance
           .collection('supermarkets')
           .doc(_supermarketId)
           .collection('staff')
-          .doc(authResult.user!.uid)
+          .doc(staffUid)
           .set({
             'firstName': widget.firstName,
             'lastName': widget.lastName,
@@ -146,6 +149,22 @@ class _StaffVerificationPageState extends State<StaffVerificationPage> {
             'role': 'staff',
             'createdAt': FieldValue.serverTimestamp(),
           });
+
+      // Add staff to global users collection for login
+      await FirebaseFirestore.instance.collection('users').doc(staffUid).set({
+        'uid': staffUid,
+        'firstName': widget.firstName,
+        'lastName': widget.lastName,
+        'email': widget.email,
+        'phone': widget.phone,
+        'role': 'staff',
+        'supermarketId': _supermarketId,
+        'supermarketName': widget.supermarketName,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      // Create notification for the manager
+      await _createStaffJoinNotification(staffUid);
 
       if (!mounted) return;
       Navigator.pushReplacement(
@@ -168,6 +187,51 @@ class _StaffVerificationPageState extends State<StaffVerificationPage> {
       setState(() {
         _isLoading = false;
       });
+    }
+  }
+
+  Future<void> _createStaffJoinNotification(String staffUid) async {
+    try {
+      // Get manager's UID from the supermarket document
+      final supermarketDoc = await FirebaseFirestore.instance
+          .collection('supermarkets')
+          .doc(_supermarketId)
+          .get();
+
+      if (!supermarketDoc.exists) {
+        debugPrint('Supermarket document not found for notification');
+        return;
+      }
+
+      final supermarketData = supermarketDoc.data()!;
+      final managerData = supermarketData['manager'] as Map<String, dynamic>?;
+      final managerUid = managerData?['uid'] as String?;
+
+      if (managerUid == null) {
+        debugPrint('Manager UID not found for notification');
+        return;
+      }
+
+      // Create notification document
+      await FirebaseFirestore.instance.collection('notifications').add({
+        'recipientId': managerUid,
+        'recipientType': 'manager',
+        'supermarketId': _supermarketId,
+        'type': 'staff_joined',
+        'title': 'New Staff Member Joined',
+        'message':
+            '${widget.firstName} ${widget.lastName} has joined your supermarket as staff.',
+        'staffId': staffUid,
+        'staffName': '${widget.firstName} ${widget.lastName}',
+        'staffEmail': widget.email,
+        'isRead': false,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      debugPrint('Notification created for manager: $managerUid');
+    } catch (e) {
+      debugPrint('Error creating notification: $e');
+      // Don't throw error here as it shouldn't prevent staff signup
     }
   }
 
