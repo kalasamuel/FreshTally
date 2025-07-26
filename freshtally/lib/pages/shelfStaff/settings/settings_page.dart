@@ -7,7 +7,8 @@ class SettingsPage extends StatelessWidget {
 
   Future<void> _logout(BuildContext context) async {
     await FirebaseAuth.instance.signOut();
-    Navigator.pushReplacementNamed(context, '/login');
+
+    Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
   }
 
   void _switchAccount(BuildContext context) {
@@ -75,7 +76,6 @@ class SettingsPage extends StatelessWidget {
                   leading: const Icon(Icons.lock),
                   title: const Text('Change Password'),
                   onTap: () {
-                    // Implement password change functionality
                     _showChangePasswordDialog(context);
                   },
                 ),
@@ -99,9 +99,13 @@ class SettingsPage extends StatelessWidget {
 
   Future<void> _showChangePasswordDialog(BuildContext context) async {
     final currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser == null || currentUser.email == null) return;
+    if (currentUser == null || currentUser.email == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('No user logged in')));
+      return;
+    }
 
-    final emailController = TextEditingController(text: currentUser.email);
     final oldPasswordController = TextEditingController();
     final newPasswordController = TextEditingController();
     final confirmPasswordController = TextEditingController();
@@ -115,25 +119,24 @@ class SettingsPage extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
-                controller: emailController,
-                enabled: false,
-                decoration: const InputDecoration(labelText: 'Email'),
-              ),
-              TextField(
                 controller: oldPasswordController,
                 obscureText: true,
-                decoration: const InputDecoration(labelText: 'Old Password'),
+                decoration: const InputDecoration(
+                  labelText: 'Current Password',
+                ),
               ),
+              const SizedBox(height: 10),
               TextField(
                 controller: newPasswordController,
                 obscureText: true,
                 decoration: const InputDecoration(labelText: 'New Password'),
               ),
+              const SizedBox(height: 10),
               TextField(
                 controller: confirmPasswordController,
                 obscureText: true,
                 decoration: const InputDecoration(
-                  labelText: 'Confirm Password',
+                  labelText: 'Confirm New Password',
                 ),
               ),
             ],
@@ -146,16 +149,72 @@ class SettingsPage extends StatelessWidget {
           ),
           TextButton(
             onPressed: () async {
-              // Implement password change logic here
-              if (newPasswordController.text !=
-                  confirmPasswordController.text) {
+              final oldPassword = oldPasswordController.text.trim();
+              final newPassword = newPasswordController.text.trim();
+              final confirmPassword = confirmPasswordController.text.trim();
+
+              // Validation
+              if (oldPassword.isEmpty ||
+                  newPassword.isEmpty ||
+                  confirmPassword.isEmpty) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Passwords do not match')),
+                  const SnackBar(content: Text('Please fill all fields')),
                 );
                 return;
               }
-              // Add your password change logic here
-              Navigator.pop(context);
+
+              if (newPassword != confirmPassword) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('New passwords do not match')),
+                );
+                return;
+              }
+
+              if (newPassword.length < 6) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Password must be at least 6 characters'),
+                  ),
+                );
+                return;
+              }
+
+              try {
+                // Reauthenticate user
+                final credential = EmailAuthProvider.credential(
+                  email: currentUser.email!,
+                  password: oldPassword,
+                );
+
+                await currentUser.reauthenticateWithCredential(credential);
+
+                // Update password
+                await currentUser.updatePassword(newPassword);
+
+                Navigator.pop(context);
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Password updated successfully'),
+                  ),
+                );
+              } on FirebaseAuthException catch (e) {
+                String errorMessage = 'Password change failed';
+                if (e.code == 'wrong-password') {
+                  errorMessage = 'Current password is incorrect';
+                } else if (e.code == 'requires-recent-login') {
+                  errorMessage =
+                      'This operation requires recent authentication. Please log in again.';
+                }
+
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text(errorMessage)));
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Error: ${e.toString()}')),
+                );
+              }
             },
             child: const Text('Change'),
           ),
