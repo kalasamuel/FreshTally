@@ -53,16 +53,6 @@ class FreshTallyApp extends StatelessWidget {
               body: Center(child: CircularProgressIndicator()),
             );
           }
-          // The commented out section suggests you might be trying to
-          // directly navigate to CustomerHomePage here with a hardcoded ID.
-          // This should ideally happen after a user selects a supermarket,
-          // which seems to be handled by the /customerHome route.
-          // if (snapshot.hasData) {
-          //   return const CustomerHomePage(
-          //     supermarketId: supermarketId, // This `supermarketId` is not defined here
-          //   );
-          // }
-          // User is not logged in
           return const LoginPage();
         },
       ),

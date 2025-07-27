@@ -1,21 +1,71 @@
+import 'package:Freshtally/pages/auth/supermarket_selection_page.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart'; // Import Firebase Auth
-import 'package:cloud_firestore/cloud_firestore.dart'; // Import Firestore
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:Freshtally/pages/auth/login_page.dart';
-import 'package:Freshtally/pages/customer/home/customer_home_page.dart';
+
+// Re-using IconTextField (assuming it's defined elsewhere or locally)
+class IconTextField extends StatelessWidget {
+  final String hintText;
+  final IconData icon;
+  final bool isPassword;
+  final TextEditingController? controller;
+  final String? Function(String?)? validator;
+  final TextInputType keyboardType; // Add keyboardType
+  final int? maxLength; // Add maxLength
+
+  const IconTextField({
+    super.key,
+    required this.hintText,
+    required this.icon,
+    this.isPassword = false,
+    this.controller,
+    this.validator,
+    this.keyboardType = TextInputType.text, // Default value
+    this.maxLength, // Added for phone number
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return TextFormField(
+      controller: controller,
+      obscureText: isPassword,
+      validator: validator,
+      keyboardType: keyboardType, // Apply keyboardType
+      maxLength: maxLength, // Apply maxLength
+      decoration: InputDecoration(
+        hintText: hintText,
+        prefixIcon: Icon(icon, color: Colors.grey),
+        filled: true,
+        fillColor: Colors.grey[200],
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10.0),
+          borderSide: BorderSide.none,
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          vertical: 16.0,
+          horizontal: 16.0,
+        ),
+        counterText: maxLength != null
+            ? ''
+            : null, // Hide counter if maxLength is used
+      ),
+    );
+  }
+}
 
 class CustomerSignupPage extends StatefulWidget {
   const CustomerSignupPage({super.key});
 
   @override
-  _CustomerSignupPageState createState() => _CustomerSignupPageState();
+  State<CustomerSignupPage> createState() => _CustomerSignupPageState();
 }
 
 class _CustomerSignupPageState extends State<CustomerSignupPage> {
   final _formKey = GlobalKey<FormState>();
 
-  bool _isLoading = false; // State to manage loading indicator
-  String? _errorMessage; // State to manage error messages
+  bool _isLoading = false;
+  String? _errorMessage;
 
   final TextEditingController _firstNameController = TextEditingController();
   final TextEditingController _lastNameController = TextEditingController();
@@ -25,7 +75,6 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
       TextEditingController();
   final TextEditingController _phoneNumberController = TextEditingController();
 
-  // Firebase instances
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
@@ -63,33 +112,48 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
 
       final user = userCredential.user;
       if (user != null) {
-        // 2. Store user details in Firestore
-        await _firestore.collection('users').doc(user.uid).set({
+        // 2. Store customer details in the dedicated 'customers' collection
+        // Initialize 'associatedSupermarketIds' as an empty array
+        await _firestore.collection('customers').doc(user.uid).set({
           'uid': user.uid,
           'firstName': _firstNameController.text.trim(),
           'lastName': _lastNameController.text.trim(),
           'email': _emailController.text.trim(),
-          'phoneNumber': _phoneNumberController.text
-              .trim(), // Store phone number
-          'role': 'customer',
+          'phoneNumber': _phoneNumberController.text.trim(),
+          'role': 'customer', // Explicitly set role
+          'associatedSupermarketIds': [], // Initialize with an empty list
           'createdAt': FieldValue.serverTimestamp(),
         });
 
+        // Optionally, update Firebase Auth profile display name
+        await user.updateDisplayName(
+          '${_firstNameController.text.trim()} ${_lastNameController.text.trim()}',
+        );
+
         if (!mounted) {
-          return; // Check if widget is still mounted before navigating
+          return;
         }
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Account created successfully!'),
+            content: Text(
+              'Account created successfully! Please select your supermarket.',
+            ),
             backgroundColor: Colors.green,
+            duration: Duration(seconds: 3),
           ),
         );
 
-        // Navigate to login page after successful signup
+        // Navigate the new customer to the SupermarketSelectionPage
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const LoginPage()),
+          MaterialPageRoute(
+            builder: (context) => SupermarketSelectionPage(
+              customerId: user.uid,
+              initialMessage:
+                  'Welcome! Please select or join a supermarket to start shopping.',
+            ),
+          ),
         );
       }
     } on FirebaseAuthException catch (e) {
@@ -98,13 +162,19 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
           _errorMessage = 'The password provided is too weak.';
         } else if (e.code == 'email-already-in-use') {
           _errorMessage = 'The account already exists for that email.';
+        } else if (e.code == 'invalid-email') {
+          _errorMessage = 'The email address is not valid.';
         } else {
-          _errorMessage = 'Firebase Auth Error: ${e.message}';
+          _errorMessage = 'Authentication Error: ${e.message}';
+          debugPrint(
+            'Firebase Auth Error during signup: ${e.code} - ${e.message}',
+          );
         }
       });
     } catch (e) {
       setState(() {
         _errorMessage = 'An unexpected error occurred: ${e.toString()}';
+        debugPrint('General Error during signup: $e');
       });
     } finally {
       setState(() {
@@ -116,7 +186,7 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFFFFFF), // Set background color
+      backgroundColor: const Color(0xFFFFFFFF),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -142,7 +212,7 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const SizedBox(height: 40.0),
+              const SizedBox(height: 20.0), // Reduced height slightly
               const Center(
                 child: Text(
                   "Join and explore discounts and shelf locations instantly!",
@@ -151,10 +221,10 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
                     fontWeight: FontWeight.normal,
                     color: Colors.black87,
                   ),
+                  textAlign: TextAlign.center,
                 ),
               ),
-              const SizedBox(height: 16.0),
-
+              const SizedBox(height: 24.0), // Adjusted spacing
               // First Name
               IconTextField(
                 hintText: 'First Name',
@@ -241,10 +311,9 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
               IconTextField(
                 hintText: 'Phone No. (Optional)',
                 icon: Icons.phone,
-                isPassword: false,
-                controller: _phoneNumberController,
                 keyboardType: TextInputType.phone,
-                maxLength: 15,
+                controller: _phoneNumberController,
+                maxLength: 15, // Max length for international numbers
               ),
               const SizedBox(height: 32.0),
 
@@ -262,9 +331,7 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: _isLoading
-                      ? null
-                      : _signUpCustomer, // Call signup function
+                  onPressed: _isLoading ? null : _signUpCustomer,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green[600],
                     padding: const EdgeInsets.symmetric(vertical: 16.0),
@@ -304,14 +371,22 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
                       color: Colors.blue,
                     ),
                     onPressed: () {
-                      // Implement Facebook sign-in
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Facebook sign-in not implemented'),
+                        ),
+                      );
                     },
                   ),
                   const SizedBox(width: 20),
                   IconButton(
                     icon: Image.asset('assets/icons/google.png', height: 35),
                     onPressed: () {
-                      // Implement Google sign-in
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Google sign-in not implemented'),
+                        ),
+                      );
                     },
                   ),
                   const SizedBox(width: 20),
@@ -322,7 +397,11 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
                       color: Colors.black,
                     ),
                     onPressed: () {
-                      // Implement Apple sign-in
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Apple sign-in not implemented'),
+                        ),
+                      );
                     },
                   ),
                 ],
@@ -335,61 +414,16 @@ class _CustomerSignupPageState extends State<CustomerSignupPage> {
                     MaterialPageRoute(builder: (context) => const LoginPage()),
                   );
                 },
-                child: const Text(
-                  'Already have an account? Sign In',
-                  style: TextStyle(color: Colors.green),
+                child: const Center(
+                  child: Text(
+                    'Already have an account? Sign In',
+                    style: TextStyle(color: Colors.green),
+                  ),
                 ),
               ),
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class IconTextField extends StatelessWidget {
-  final String hintText;
-  final IconData icon;
-  final bool isPassword;
-  final TextEditingController? controller;
-  final String? Function(String?)? validator;
-  final TextInputType keyboardType;
-  final int? maxLength;
-
-  const IconTextField({
-    super.key,
-    required this.hintText,
-    required this.icon,
-    this.isPassword = false,
-    this.controller,
-    this.validator,
-    this.keyboardType = TextInputType.text,
-    this.maxLength,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return TextFormField(
-      controller: controller,
-      obscureText: isPassword,
-      validator: validator,
-      keyboardType: keyboardType,
-      maxLength: maxLength,
-      decoration: InputDecoration(
-        hintText: hintText,
-        prefixIcon: Icon(icon, color: Colors.grey),
-        filled: true,
-        fillColor: Colors.grey[200],
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(10.0),
-          borderSide: BorderSide.none,
-        ),
-        contentPadding: const EdgeInsets.symmetric(
-          vertical: 16.0,
-          horizontal: 16.0,
-        ),
-        counterText: '',
       ),
     );
   }
