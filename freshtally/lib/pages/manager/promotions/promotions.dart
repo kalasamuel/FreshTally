@@ -321,14 +321,19 @@ class _PromotionsPageState extends State<PromotionsPage> {
                         suggestionsCallback: (pattern) async {
                           if (pattern.trim().isEmpty) return [];
 
+                          final lowercasePattern = pattern.toLowerCase();
+
                           final querySnapshot = await FirebaseFirestore.instance
                               .collection('supermarkets')
                               .doc(widget.supermarketId)
                               .collection('products')
-                              .where('name', isGreaterThanOrEqualTo: pattern)
                               .where(
-                                'name',
-                                isLessThanOrEqualTo: '$pattern\uf8ff',
+                                'name_lower',
+                                isGreaterThanOrEqualTo: lowercasePattern,
+                              )
+                              .where(
+                                'name_lower',
+                                isLessThanOrEqualTo: '$lowercasePattern\uf8ff',
                               )
                               .limit(10)
                               .get();
