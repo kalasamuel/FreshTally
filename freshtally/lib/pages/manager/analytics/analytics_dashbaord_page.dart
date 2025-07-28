@@ -162,8 +162,9 @@ class _AnalyticsDashboardPageState extends State<AnalyticsDashboardPage> {
       final stockQuantity = (data['stock_quantity'] ?? 0).toDouble();
       final currentPrice = (data['current_price'] ?? 0).toDouble();
 
-      if (stockQuantity <= 0 || currentPrice <= 0)
+      if (stockQuantity <= 0 || currentPrice <= 0) {
         continue; // Skip if no stock or no value
+      }
 
       final potentialLoss = stockQuantity * currentPrice;
 
@@ -291,8 +292,9 @@ class _AnalyticsDashboardPageState extends State<AnalyticsDashboardPage> {
                                     getTitlesWidget: (value, meta) {
                                       final index = value.toInt();
                                       if (index < 0 ||
-                                          index >= _dailySalesData.length)
+                                          index >= _dailySalesData.length) {
                                         return const Text('');
+                                      }
                                       final date = _dailySalesData[index].date;
                                       return Padding(
                                         padding: const EdgeInsets.only(

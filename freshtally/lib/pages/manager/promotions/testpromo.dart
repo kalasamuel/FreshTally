@@ -86,7 +86,7 @@ class PromotionModel {
     // of recommended products which you then map to names.
     // For now, we'll keep the static mapping as a placeholder until your ML model
     // provides this functionality directly.
-    final Map<String, List<String>> _staticProductSuggestions = {
+    final Map<String, List<String>> staticProductSuggestions = {
       'Organic Milk (1L)': ['Cereal', 'Coffee Powder', 'Sugar'],
       'Artisan Bread': ['Butter', 'Jam', 'Cheese'],
       'Premium Coffee Beans': ['Coffee Maker', 'Milk Frother', 'Sugar'],
@@ -94,7 +94,7 @@ class PromotionModel {
       'Canned Tuna': ['Mayonnaise', 'Bread', 'Salad Greens'],
       'Assorted Chocolates': ['Wine', 'Flowers', 'Gift Wrap'],
     };
-    return _staticProductSuggestions[productName] ?? [];
+    return staticProductSuggestions[productName] ?? [];
   }
 
   void dispose() {

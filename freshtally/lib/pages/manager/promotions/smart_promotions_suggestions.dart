@@ -5,7 +5,10 @@ import 'package:Freshtally/pages/manager/promotions/testpromo.dart';
 class SmartPromotionsSuggestionsPage extends StatefulWidget {
   final String supermarketName;
 
-  SmartPromotionsSuggestionsPage({super.key, required this.supermarketName});
+  const SmartPromotionsSuggestionsPage({
+    super.key,
+    required this.supermarketName,
+  });
 
   @override
   State<SmartPromotionsSuggestionsPage> createState() =>
@@ -77,7 +80,7 @@ class _SmartPromotionsSuggestionsPageState
     },
   ];
 
-  List<Map<String, dynamic>> _promotions = [];
+  final List<Map<String, dynamic>> _promotions = [];
 
   @override
   void initState() {
