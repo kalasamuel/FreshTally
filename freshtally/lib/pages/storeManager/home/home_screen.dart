@@ -1,5 +1,4 @@
 import 'package:Freshtally/pages/customer/customerNotifications/customer_notifications.dart';
-import 'package:Freshtally/pages/shelfStaff/notifications/notifications_shelfstaff.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -29,8 +28,6 @@ class _StoreManagerDashboardState extends State<StoreManagerDashboard> {
   String _displaySupermarketName = 'Loading Supermarket...';
   String _displaySupermarketLocation = '';
   String _managerDisplayName = 'Manager';
-  String _managerPhotoUrl =
-      'https://i.pravatar.cc/150?img=52'; // Default placeholder
 
   @override
   void initState() {
@@ -81,9 +78,6 @@ class _StoreManagerDashboardState extends State<StoreManagerDashboard> {
             _currentUser!.displayName ??
             _currentUser!.email?.split('@')[0] ??
             'Manager';
-        _managerPhotoUrl =
-            _currentUser!.photoURL ??
-            'https://i.pravatar.cc/150?img=52'; // Use actual photoURL if available
       });
     }
   }
@@ -106,21 +100,6 @@ class _StoreManagerDashboardState extends State<StoreManagerDashboard> {
                 child: Row(
                   children: [
                     // Profile Image
-                    CircleAvatar(
-                      radius: 24,
-                      backgroundImage: NetworkImage(_managerPhotoUrl),
-                      onBackgroundImageError: (exception, stackTrace) {
-                        // Fallback to a default icon if image fails to load
-                        debugPrint('Error loading profile image: $exception');
-                        setState(() {
-                          _managerPhotoUrl =
-                              ''; // Clear URL to show default icon
-                        });
-                      },
-                      child: _managerPhotoUrl.isEmpty
-                          ? const Icon(Icons.person, size: 24)
-                          : null,
-                    ),
                     const SizedBox(width: 12),
                     // Supermarket Name and Manager Role
                     Expanded(

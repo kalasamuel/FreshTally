@@ -568,7 +568,7 @@ class _LoginPageState extends State<LoginPage> {
                     width: double.infinity,
                     child: OutlinedButton(
                       onPressed: () {
-                        Navigator.pushReplacement(
+                        Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (_) => const CreateSupermarketPage(),
@@ -593,7 +593,7 @@ class _LoginPageState extends State<LoginPage> {
                     width: double.infinity,
                     child: OutlinedButton(
                       onPressed: () {
-                        Navigator.pushReplacement(
+                        Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (_) => const StaffSignupPage(),

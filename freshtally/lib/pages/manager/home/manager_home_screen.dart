@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:Freshtally/pages/manager/analytics/analytics_dashbaord_page.dart';
+import 'package:flutter/material.dart';
 import 'package:Freshtally/pages/manager/managerNotifications/notifications.dart';
 import 'package:Freshtally/pages/manager/staffManagement/staff_managementJoin_code.dart';
 import 'package:Freshtally/pages/shelfStaff/settings/settings_page.dart';
@@ -42,15 +42,7 @@ class ManagerDashboardPage extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    // Profile Image
-                    const CircleAvatar(
-                      radius: 24,
-                      backgroundImage: NetworkImage(
-                        'https://i.pravatar.cc/150?img=48',
-                      ), // Placeholder image
-                    ),
                     const SizedBox(width: 12),
-                    // Supermarket Name
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -143,7 +135,9 @@ class ManagerDashboardPage extends StatelessWidget {
                           context,
                           MaterialPageRoute(
                             builder: (context) {
-                              return AnalyticsDashboardPage();
+                              return AnalyticsDashboardPage(
+                                supermarketId: supermarketId,
+                              );
                             },
                           ),
                         );

@@ -1,18 +1,30 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart'; // Still needed for currency formatting
+import 'package:intl/intl.dart';
+import 'package:Freshtally/pages/manager/promotions/testpromo.dart';
 
-class SmartPromotionsSuggestionsPage extends StatelessWidget {
-  // supermarketName is kept for consistency in the constructor, but not used for data fetching
+class SmartPromotionsSuggestionsPage extends StatefulWidget {
   final String supermarketName;
 
   SmartPromotionsSuggestionsPage({super.key, required this.supermarketName});
 
+  @override
+  State<SmartPromotionsSuggestionsPage> createState() =>
+      _SmartPromotionsSuggestionsPageState();
+}
+
+class _SmartPromotionsSuggestionsPageState
+    extends State<SmartPromotionsSuggestionsPage> {
+  final _currencyFormat = NumberFormat.currency(symbol: 'UGX ');
+  late PromotionModel _promotionModel;
+  bool _isLoading = true; // To show loading state
+
   // Hardcoded static product data for demonstration
+  // In a real application, this would come from a backend or local database
   static final List<Map<String, dynamic>> _staticProducts = [
     {
       'name': 'Organic Milk (1L)',
       'price': 4500.0,
-      'discountPercentage': 0, // Initial discount
+      'discountPercentage': 0, // Initial discount (will be overwritten by ML)
       'expiryDate': DateTime.now().add(const Duration(days: 5)),
       'salesVelocity': 1.5, // units/day
       'stock': 70, // units
@@ -65,61 +77,67 @@ class SmartPromotionsSuggestionsPage extends StatelessWidget {
     },
   ];
 
-  // Hardcoded static product suggestions (customers also buy)
-  static final Map<String, List<String>> _staticProductSuggestions = {
-    'Organic Milk (1L)': ['Cereal', 'Coffee Powder', 'Sugar'],
-    'Artisan Bread': ['Butter', 'Jam', 'Cheese'],
-    'Premium Coffee Beans': ['Coffee Maker', 'Milk Frother', 'Sugar'],
-    'Fresh Strawberries': ['Yogurt', 'Whipped Cream', 'Pancake Mix'],
-    'Canned Tuna': ['Mayonnaise', 'Bread', 'Salad Greens'],
-    'Assorted Chocolates': ['Wine', 'Flowers', 'Gift Wrap'],
-  };
+  List<Map<String, dynamic>> _promotions = [];
 
-  final _currencyFormat = NumberFormat.currency(symbol: 'UGX ');
+  @override
+  void initState() {
+    super.initState();
+    _promotionModel = PromotionModel();
+    _initModelAndCalculatePromotions();
+  }
 
-  // AI logic for discount calculation (retained from original)
-  int _calculateAiDiscount({
-    required int daysToExpiry,
-    required double salesVelocity,
-    required int stock,
-    required String category,
-  }) {
-    double discount = 0;
+  Future<void> _initModelAndCalculatePromotions() async {
+    await _promotionModel.loadModel();
+    _calculatePromotions();
+    setState(() {
+      _isLoading = false;
+    });
+  }
 
-    // Factor 1: Expiry date urgency
-    if (daysToExpiry <= 7) {
-      discount += 30; // High discount for expiring soon
-    } else if (daysToExpiry <= 14) {
-      discount += 15;
-    } else if (daysToExpiry <= 30) {
-      discount += 5;
+  void _calculatePromotions() {
+    _promotions.clear();
+    for (var productData in _staticProducts) {
+      final productName = productData['name'] ?? 'Unknown Product';
+      final price = (productData['price'] ?? 0).toDouble();
+      final expiryDate = productData['expiryDate'] as DateTime?;
+      final salesVelocity = (productData['salesVelocity'] ?? 0).toDouble();
+      final stock = (productData['stock'] ?? 0).toInt();
+      final category = productData['category'] ?? 'Uncategorized';
+
+      final daysToExpiry = expiryDate != null
+          ? expiryDate.difference(DateTime.now()).inDays
+          : 999;
+
+      // Use the ML model for discount prediction
+      final aiRecommendedDiscount = _promotionModel.predictDiscount(
+        daysToExpiry: daysToExpiry,
+        salesVelocity: salesVelocity,
+        stock: stock,
+        category: category,
+      );
+
+      // Use the ML model for associated products (or keep static for now if your model doesn't do this)
+      final List<String> associatedProducts = _promotionModel
+          .predictAssociatedProducts(productName);
+
+      _promotions.add({
+        'name': productName,
+        'price': price,
+        'aiRecommendedDiscount': aiRecommendedDiscount,
+        'expiryDate': expiryDate,
+        'daysToExpiry': daysToExpiry,
+        'stock': stock,
+        'salesVelocity': salesVelocity,
+        'category': category,
+        'associatedProducts': associatedProducts,
+      });
     }
+  }
 
-    // Factor 2: Slow moving products
-    if (salesVelocity < 2) {
-      discount += 10 + (2 - salesVelocity) * 5;
-    }
-
-    // Factor 3: High stock levels
-    if (stock > 50) {
-      discount += 5 + (stock / 50).floor() * 2;
-    }
-
-    // Factor 4: Category-based adjustments
-    switch (category.toLowerCase()) {
-      case 'dairy':
-      case 'meat':
-      case 'produce':
-        discount += 5; // Perishable goods get higher discounts
-        break;
-      case 'canned goods':
-      case 'dry goods':
-        discount -= 3; // Non-perishables get smaller discounts
-        break;
-    }
-
-    // Clamp between 5% and 50% discount
-    return discount.clamp(5, 50).round();
+  @override
+  void dispose() {
+    _promotionModel.dispose();
+    super.dispose();
   }
 
   @override
@@ -142,12 +160,10 @@ class SmartPromotionsSuggestionsPage extends StatelessWidget {
           icon: const Icon(Icons.arrow_back, color: Colors.black87),
           onPressed: () => Navigator.pop(context),
         ),
-        // Removed actions as there's no dynamic AI generation button
       ),
       body: SafeArea(
         child: Column(
           children: [
-            // Info banner
             Container(
               margin: const EdgeInsets.symmetric(
                 horizontal: 24.0,
@@ -176,9 +192,10 @@ class SmartPromotionsSuggestionsPage extends StatelessWidget {
                 ],
               ),
             ),
-            // Suggestions list
             Expanded(
-              child: _staticProducts.isEmpty
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _promotions.isEmpty
                   ? const Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -213,35 +230,20 @@ class SmartPromotionsSuggestionsPage extends StatelessWidget {
                         horizontal: 24.0,
                         vertical: 0,
                       ),
-                      itemCount: _staticProducts.length,
+                      itemCount: _promotions.length,
                       itemBuilder: (context, index) {
-                        final data = _staticProducts[index];
-                        final productName = data['name'] ?? 'Unknown Product';
-
-                        final name = data['name'] ?? 'Unknown Product';
-                        final price = (data['price'] ?? 0).toDouble();
-                        final currentDiscount =
-                            (data['discountPercentage'] ?? 0).toInt();
-                        final expiryDate =
-                            data['expiryDate']
-                                as DateTime?; // Directly use DateTime
-                        final salesVelocity = (data['salesVelocity'] ?? 0)
-                            .toDouble();
-                        final stock = (data['stock'] ?? 0).toInt();
-                        final category = data['category'] ?? 'Uncategorized';
-
-                        final daysToExpiry = expiryDate != null
-                            ? expiryDate.difference(DateTime.now()).inDays
-                            : 999;
-                        final aiRecommendedDiscount = _calculateAiDiscount(
-                          daysToExpiry: daysToExpiry,
-                          salesVelocity: salesVelocity,
-                          stock: stock,
-                          category: category,
-                        );
-
+                        final data = _promotions[index];
+                        final name = data['name'];
+                        final price = data['price'];
+                        final aiRecommendedDiscount =
+                            data['aiRecommendedDiscount'];
+                        final expiryDate = data['expiryDate'] as DateTime?;
+                        final daysToExpiry = data['daysToExpiry'];
+                        final stock = data['stock'];
+                        final salesVelocity = data['salesVelocity'];
+                        final category = data['category'];
                         final List<String> associatedProducts =
-                            _staticProductSuggestions[productName] ?? [];
+                            data['associatedProducts'];
 
                         return Card(
                           elevation: 0.1,
@@ -266,7 +268,7 @@ class SmartPromotionsSuggestionsPage extends StatelessWidget {
                                         ),
                                       ),
                                     ),
-                                    if (currentDiscount > 0)
+                                    if (aiRecommendedDiscount > 0)
                                       Container(
                                         padding: const EdgeInsets.symmetric(
                                           horizontal: 8,
@@ -279,7 +281,7 @@ class SmartPromotionsSuggestionsPage extends StatelessWidget {
                                           ),
                                         ),
                                         child: Text(
-                                          '$currentDiscount% OFF',
+                                          '$aiRecommendedDiscount% OFF',
                                           style: TextStyle(
                                             color: Colors.green[800],
                                             fontWeight: FontWeight.bold,
@@ -333,15 +335,9 @@ class SmartPromotionsSuggestionsPage extends StatelessWidget {
                                     Text(
                                       '$aiRecommendedDiscount% discount',
                                       style: TextStyle(
-                                        color:
-                                            aiRecommendedDiscount >
-                                                currentDiscount
-                                            ? Colors
-                                                  .red
-                                                  .shade700 // Suggest higher discount
-                                            : Colors
-                                                  .green
-                                                  .shade700, // Suggest lower or same
+                                        color: Colors
+                                            .green
+                                            .shade700, // Now always green, as it's the AI's best recommendation
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
@@ -391,9 +387,6 @@ class SmartPromotionsSuggestionsPage extends StatelessWidget {
                                       ),
                                   ],
                                 ),
-                                const SizedBox(height: 12),
-                                // Removed the "Apply AI Suggestion" button as it's a static screen
-                                // and there's no backend to apply changes to.
                               ],
                             ),
                           ),
