@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>How It Works | Freshtally</title>
+    <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f0f3f1;
+      color: #573f3f;
+      line-height: 1.8;
+      padding: 40px 20px;
+      max-width: 900px;
+      margin: auto;
+    }
+    h1, h2 {
+      color: #47c54d;
+    }
+    h1 {
+      font-size: 2.5em;
+      margin-bottom: 0.3em;
+    }
+    h2 {
+      margin-top: 2em;
+      font-size: 1.6em;
+    }
+    p {
+      margin-bottom: 1.5em;
+
+    }
+    h3 {
+      color: #3e656e;
+      font-size: 1.4em;
+      margin-top: 1.5em;
+    }
+    /* Navbar styles */
+    .navbar {
+      background: #3e656e;
+      color: #dbeee2;
+      display: flex;
+      align-items: center;
+      padding: 0 2vw;
+      height: 56px;
+      justify-content: space-between;
+      margin: -40px -20px 40px -20px;
+      max-width: none;
+    }
+    .navbar h1 {
+      color: #50f58c;
+      font-size: 1.7em;
+      margin: 0;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    .nav-links {
+      display: flex;
+      gap: 2vw;
+    }
+    .nav-toggle {
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      width: 40px;
+      height: 40px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      margin-left: 10px;
+    }
+    .nav-toggle span {
+      display: block;
+      width: 28px;
+      height: 4px;
+      margin: 4px 0;
+      background: #fff;
+      border-radius: 2px;
+      transition: 0.3s;
+    }
+    .nav-links a {
+      color: #89fab2;
+      text-decoration: none;
+      font-size: 1.1em;
+      font-weight: 500;
+      padding: 0 0.2em;
+      transition: color 0.2s;
+      position: relative;
+    }
+    .nav-links a.active, .nav-links a:focus, .nav-links a:hover {
+      color: #fff;
+      font-weight: 700;
+    }
+    .nav-links a.active::after {
+      content: '';
+      display: block;
+      margin: 0 auto;
+      width: 70%;
+      border-bottom: 2.5px solid #dbeee2;
+      border-radius: 2px;
+      margin-top: 2px;
+    }
+    @media (max-width: 600px) {
+      .navbar {
+        flex-direction: row;
+        align-items: center;
+        height: auto;
+        padding: 10px 2vw;
+      }
+      .nav-links {
+        display: none;
+        flex-direction: column;
+        gap: 0.5em;
+        width: 100%;
+        margin-top: 0.5em;
+        background: #222;
+        position: absolute;
+        top: 56px;
+        left: 0;
+        z-index: 100;
+        padding: 10px 0 10px 20px;
+      }
+      .nav-links.open {
+        display: flex;
+      }
+      .nav-links a {
+        padding: 0.3em 0;
+        font-size: 1em;
+      }
+      .nav-toggle {
+        display: flex;
+      }
+    }
+
+    .slide-in {
+      opacity: 0;
+      transform: translateX(60px);
+      transition: opacity 0.7s ease, transform 0.7s cubic-bezier(0.23, 1, 0.32, 1);
+      will-change: opacity, transform;
+    }
+    .slide-in.visible {
+      opacity: 1;
+      transform: none;
+    }
+    .slide-section {
+      display: flex;
+      align-items: left;
+      gap: 40px;
+      margin: 60px 0;
+     }
+    .slide-section img {
+      max-width: 320px;
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    }
+    .slide-section .slide-text {
+      flex: 1;
+    }
+    @media (max-width: 800px) {
+      .slide-section {
+          flex-direction: column;
+          gap: 20px;
+        }
+      .slide-section img {
+        max-width: 90vw;
+      }
+    }
+    </style>
+    
+  </style>
+
+</head>
+<script src = "js/slide.js"></script>
+<body>
+
+  <div class="navbar">
+    <h1>FreshTally</h1>
+    <button class="nav-toggle" aria-label="Toggle navigation" onclick="document.querySelector('.nav-links').classList.toggle('open')">
+      <span></span>
+      <span></span>
+      <span></span>
+   </button>
+    <div class="nav-links">
+      <a href="index.html">Overview</a>
+      <a  class="active" href="how_it_works.html" >How it Works</a>
+      <a href="data.html" >Data</a>
+      <a href="visualization.html" >Visualization</a>
+      <a href="analysis.html" >Analysis</a>
+    </div>
+  </div>
+
+  <div>
+    <h2><em>How It Works</em></h2>
+
+    <p>
+      Freshtally is a smart retail management solution designed to bring efficiency, clarity, and control to supermarket operations. It connects the different roles within a supermarket—managers, shelf attendants, store managers and customers—through a unified platform. Underneath, it relies on a powerful data pipeline driven by our lightweight desktop **connector app**, which fetches sales data directly from existing POS systems and syncs it seamlessly to the cloud. This is the data used by the FreshTally to track sales and suggest promotions.</p>
+
+    <h3 class="slide-text"><em> Data Collection via Connector App </em></h3>
+
+      At the heart of Freshtally is the ability to collect sales and inventory data effortlessly. The **Freshtally Connector App**, installed on supermarket desktop systems, reads data from supported sources like CSV, SQLite, MySQL databases, or even live APIs exposed by POS systems. This data is then automatically sent to the Freshtally backend (Firebase), where it's used to generate insights, trigger alerts, and populate the app with accurate information.
+      <img class="slide-in" src="images/connector.png" alt="Freshtally Connector App" class="slide-in" style="width: 100%; max-width: 320px; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); box-shadow: 0 2px 16p;">
+    </p>
+
+
+    <h3><em> Store Manager </em></h3>
+    <p>
+      The Store Manager oversees system setup and core data input. They are responsible for adding new products, entering batch numbers and expiry dates, and linking products to their respective suppliers.
+    </p>
+    <img class="slide-in" src="images/store_manager.jpeg" alt="Store Manager" class="slide-in" style="width: 100%; max-width: 320px; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.08);">
+
+
+    <h3><em> Manager </em></h3>
+    <p>
+      Managers, firstly handle how the invloved supermarket staff join and use the app in that capacity.This done through secure one-time user codes.
+    </p>
+    <img class="slide-in" src="images/joining_code.jpeg" alt="Manage Dashboard" class="slide-in" style="width: 100%; max-width: 320px; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.08);">
+    <p>
+      The manager can access smart insights and tools to drive sales and inventory health. They can create promotions, track stock levels, and receive smart suggestions on what items to promote or discount. With analytics from the collected data, they can also monitor products nearing expiry or ones that aren’t selling well—helping them make timely decisions.
+    </p>
+    <img class="slide-in" src="images/suggested_discounts.jpeg" alt="Manager Dashboard" class="slide-in" style="width: 100%; max-width: 320px; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.08);">
+    <img class="slide-in" src="images/apply_discount.jpeg" alt="Manager Dashboard" class="slide-in" style="width: 100%; max-width: 320px; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.08);">
+    <p>
+      The manager can also view and update product information, track stock levels, and receive smart suggestions on what items to promote or discount. With analytics from the connector data, they can also monitor products nearing expiry or ones that aren’t selling well—helping them make timely decisions.
+      <p>
+        The manager can also view and edit all product information.
+      </p>
+      <img class="slide-in" src="images/product_details.jpeg" alt="Manager Product Info" class="slide-in" style="width: 100%; max-width: 320px; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.08);">
+
+
+
+    <h3><em>Shelf Attendant</em></h3>
+    <p>
+      Shelf attendants use the app to know exactly where to place products. This is through smart suggestions provided by the app. Smart suggestions also guide optimal shelf arrangements for visibility and sales.
+    </p>
+    <img class="slide-in" src="images/shelving_suggestions.jpeg" alt="Shelf Attendant" class="slide-in" style="width: 100%; max-width: 320px; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.08);">
+    <p>
+       They record shelf locations for each item and receive notifications when items need to be relocated for promotions or when price changes occur. 
+    </p>
+    <img class="slide-in" src="images/shelf_mapping.jpeg" alt="Shelf Attendant" class="slide-in" style="width: 100%; max-width: 320px; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.08);">
+    <img class="slide-in" src="images/discounted_products.jpeg" alt="Shelf Attendant" class="slide-in" style="width: 100%; max-width: 320px; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.08);">
+
+    <h3><em>Customer</em></h3>
+    <p>
+      Customers enjoy a modern shopping experience. They can search for products, view promotional offers, view prices, and build a personal shopping list.  
+    </p>
+    <!--to add image for viewing products and promos-->
+    <p>
+      Customers always see updated information including current deals and availability, reducing time spent wandering the aisles.
+    </p>
+    
+
+    
