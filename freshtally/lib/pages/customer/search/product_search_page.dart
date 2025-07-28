@@ -133,7 +133,7 @@ class _ProductSearchPageState extends State<ProductSearchPage> {
                       child: Text(
                         _searchQuery.isEmpty
                             ? 'No products available in this supermarket.'
-                            : 'No products found matching "${_searchQuery}" in this supermarket.',
+                            : 'No products found matching "$_searchQuery" in this supermarket.',
                         textAlign: TextAlign.center,
                         style: const TextStyle(
                           color: Colors.grey,

@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:Freshtally/pages/customer/product/products_details_page.dart';
-import 'package:intl/intl.dart'; // Import for DateFormat
+// Import for DateFormat
 
 class DiscountsAndPromotionsPage extends StatefulWidget {
   final String?
