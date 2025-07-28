@@ -193,7 +193,9 @@ class ManagerDashboardPage extends StatelessWidget {
                           context,
                           MaterialPageRoute(
                             builder: (context) {
-                              return ProductAllocationView();
+                              return ProductAllocationView(
+                                supermarketId: supermarketId,
+                              );
                             },
                           ),
                         );
