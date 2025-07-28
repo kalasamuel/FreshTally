@@ -1,0 +1,9 @@
+2025-07-24 02:15:30,713 DEBUG: === App Started ===
+2025-07-24 02:15:30,713 DEBUG: Loading configuration...
+2025-07-24 02:15:30,714 DEBUG: Loaded config: {'source_type': 'csv', 'store_id': 'Capital shoppers nakasero', 'field_mapping': {'product_id': 'id', 'name': 'item', 'qty': 'quantity', 'price': 'price', 'timestamp': 'timestamp'}, 'csv_path': 'C:/Users/user/Downloads/sales.csv'}
+2025-07-24 02:15:30,714 DEBUG: Using store ID: Capital shoppers nakasero
+2025-07-24 02:15:30,714 DEBUG: Sales read: 3 records
+2025-07-24 02:15:32,039 DEBUG: Starting new HTTPS connection (1): oauth2.googleapis.com:443
+2025-07-24 02:15:33,589 DEBUG: https://oauth2.googleapis.com:443 "POST /token HTTP/1.1" 200 None
+2025-07-24 02:15:36,766 DEBUG: Sales uploaded successfully
+2025-07-24 02:15:42,355 DEBUG: === App Ended ===
