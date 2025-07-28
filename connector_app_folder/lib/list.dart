@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'quotes.dart';
 
 class QuoteList extends StatefulWidget {
+  const QuoteList({super.key});
+
   //const QuoteList({super.key});
 
   @override

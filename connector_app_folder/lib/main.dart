@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 void main() => runApp(MaterialApp(home: WhatsApp()));
 
 class WhatsApp extends StatefulWidget {
+  const WhatsApp({super.key});
+
   @override
   State<WhatsApp> createState() => _WhatsAppState();
 }
@@ -55,9 +57,9 @@ class _WhatsAppState extends State<WhatsApp> {
             level += 1;
           });
         },
-        child: Icon(Icons.add),
 
         backgroundColor: Colors.cyan[300],
+        child: Icon(Icons.add),
       ),
 
       body: Padding(
