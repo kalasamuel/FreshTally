@@ -1,182 +1,287 @@
-// import 'package:flutter/material.dart';
-// import 'package:cloud_firestore/cloud_firestore.dart';
-
-// class NotificationsPage extends StatelessWidget {
-//   const NotificationsPage({super.key});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(title: const Text('Notifications')),
-//       body: StreamBuilder<QuerySnapshot>(
-//         stream: FirebaseFirestore.instance
-//             .collection('notifications')
-//             .snapshots(),
-//         builder: (context, snapshot) {
-//           if (!snapshot.hasData) {
-//             return const Center(child: CircularProgressIndicator());
-//           }
-
-//           final notifications = snapshot.data!.docs;
-
-//           if (notifications.isEmpty) {
-//             return const Center(child: Text('No notifications'));
-//           }
-
-//           return ListView.builder(
-//             itemCount: notifications.length,
-//             itemBuilder: (context, index) {
-//               final n = notifications[index];
-//               return ListTile(
-//                 title: Text(n['type']),
-//                 subtitle: Text(n['status']),
-//                 trailing: Text(
-//                   (n['timestamp'] as Timestamp).toDate().toString(),
-//                 ),
-//               );
-//             },
-//           );
-//         },
-//       ),
-//     );
-//   }
-// }
-
-// import 'package:flutter/material.dart';
-
-// class NotificationsPage extends StatelessWidget {
-//   const NotificationsPage({super.key});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     // Example static notifications data
-//     final notifications = [
-//       {
-//         'type': 'Stock Alert',
-//         'status': 'Low stock on Milk',
-//         'timestamp': DateTime.now().subtract(const Duration(minutes: 10)),
-//       },
-//       {
-//         'type': 'Expiry Warning',
-//         'status': 'Eggs expiring soon',
-//         'timestamp': DateTime.now().subtract(const Duration(hours: 2)),
-//       },
-//       {
-//         'type': 'System',
-//         'status': 'New update available',
-//         'timestamp': DateTime.now().subtract(const Duration(days: 1)),
-//       },
-//     ];
-
-//     return Scaffold(
-//       appBar: AppBar(title: const Text('Notifications')),
-//       body: notifications.isEmpty
-//           ? const Center(child: Text('No notifications'))
-//           : ListView.builder(
-//               itemCount: notifications.length,
-//               itemBuilder: (context, index) {
-//                 final n = notifications[index];
-//                 return ListTile(
-//                   title: Text(n['type'].toString()),
-//                   subtitle: Text(n['status'].toString()),
-//                   trailing: Text(
-//                     _formatTimestamp(n['timestamp'] as DateTime),
-//                     style: const TextStyle(fontSize: 12),
-//                   ),
-//                 );
-//               },
-//             ),
-//     );
-//   }
-
-//   String _formatTimestamp(DateTime dt) {
-//     return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')} '
-//         '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
-//   }
-// }
-
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart'; // For formatting dates
 
-void main() {
-  runApp(
-    MaterialApp(debugShowCheckedModeBanner: false, home: NotificationsPage()),
-  );
+// The NotificationsPage needs to be a StatefulWidget to manage its state,
+// including the selected filter and the list of notifications.
+class NotificationsPage extends StatefulWidget {
+  final String supermarketId;
+
+  const NotificationsPage({super.key, required this.supermarketId});
+
+  @override
+  State<NotificationsPage> createState() => _NotificationsPageState();
 }
 
-class NotificationsPage extends StatelessWidget {
-  const NotificationsPage({super.key});
+class _NotificationsPageState extends State<NotificationsPage> {
+  // Only include the relevant filters for the manager
+  final List<String> _availableFilters = ['All', 'Expiry', 'Sync'];
+  String _selectedFilter = 'All'; // State for the selected filter chip
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () {},
+          icon: const Icon(Icons.arrow_back, color: Colors.black87),
+          onPressed: () {
+            Navigator.pop(context); // Go back to the previous screen
+          },
         ),
-        title: Text('Notifications', style: TextStyle(color: Colors.black)),
+        title: const Text(
+          'Notifications',
+          style: TextStyle(color: Colors.black87),
+        ),
         backgroundColor: Colors.white,
         elevation: 0,
+        centerTitle: true,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            FilterChips(),
-            SizedBox(height: 16),
+            // Filter Chips - now uses the limited _availableFilters
+            FilterChips(
+              filters: _availableFilters, // Pass only the relevant filters
+              selectedFilter: _selectedFilter,
+              onFilterSelected: (filter) {
+                setState(() {
+                  _selectedFilter = filter;
+                });
+              },
+            ),
+            const SizedBox(height: 16),
+            // Notifications List
             Expanded(
-              child: ListView(
-                children: [
-                  NotificationCard(
-                    title: 'Fresh Milk 500ml',
-                    description:
-                        'Expires in 1 day. Qty: 15 units\nRecovery: UGX 25,000',
-                    time: 'Today, 8:30 AM',
-                    color: Colors.red[50],
-                    icon: Icons.error_outline,
-                    iconColor: Colors.red,
-                    buttons: [
-                      ActionButton(label: 'Snooze', color: Colors.grey[300]!),
-                      ActionButton(
-                        label: 'Mark Done',
-                        color: Colors.yellow[200]!,
+              child: StreamBuilder<QuerySnapshot>(
+                // Fetch notifications for the specific supermarket
+                stream: _getNotificationsStream(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}'));
+                  }
+                  if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                    return const Center(
+                      child: Text('No notifications available.'),
+                    );
+                  }
+
+                  // Filter notifications based on selected chip and allowed types
+                  final filteredNotifications = snapshot.data!.docs.where((
+                    doc,
+                  ) {
+                    final data = doc.data() as Map<String, dynamic>;
+                    final type =
+                        data['type'] as String? ?? 'general'; // Default type
+
+                    // Define the types relevant for the manager
+                    const managerRelevantTypes = {
+                      'expiry_warning',
+                      'expired_product',
+                      'sync_reminder',
+                      'sync_error', // Added sync_error type
+                    };
+
+                    // First, filter by manager-relevant types
+                    if (!managerRelevantTypes.contains(type)) {
+                      return false; // Exclude types not relevant to manager
+                    }
+
+                    // Then, apply the selected filter chip
+                    if (_selectedFilter == 'All') {
+                      return true;
+                    } else if (_selectedFilter == 'Expiry' &&
+                        (type == 'expiry_warning' ||
+                            type == 'expired_product')) {
+                      return true;
+                    } else if (_selectedFilter == 'Sync' &&
+                        (type == 'sync_reminder' || type == 'sync_error')) {
+                      return true;
+                    }
+                    return false; // Should not be reached if logic is sound
+                  }).toList();
+
+                  if (filteredNotifications.isEmpty) {
+                    return Center(
+                      child: Text(
+                        'No ${_selectedFilter.toLowerCase()} notifications.',
                       ),
-                      ActionButton(label: 'Dismiss', color: Colors.green[100]!),
-                    ],
-                  ),
-                  SizedBox(height: 12),
-                  NotificationCard(
-                    title: 'Sync Reminder',
-                    description: '3 items pending sync',
-                    time: 'Today, 7:45 AM',
-                    color: Colors.green[50],
-                    icon: Icons.sync,
-                    iconColor: Colors.green,
-                    buttons: [
-                      ActionButton(label: 'Sync Now', color: Colors.blue[100]!),
-                      ActionButton(label: 'Snooze', color: Colors.grey[300]!),
-                      ActionButton(label: 'Dismiss', color: Colors.green[100]!),
-                    ],
-                  ),
-                  SizedBox(height: 12),
-                  NotificationCard(
-                    title: 'Rice 10kg',
-                    description:
-                        'Low stock: Only 2 left\nEstimated loss: UGX 18,000',
-                    time: 'Yesterday, 10:15 PM',
-                    color: Colors.green[50],
-                    icon: Icons.info_outline,
-                    iconColor: Colors.orange,
-                    buttons: [
-                      ActionButton(
-                        label: 'Mark Done',
-                        color: Colors.blue[100]!,
-                      ),
-                      ActionButton(label: 'Dismiss', color: Colors.green[100]!),
-                    ],
-                  ),
-                ],
+                    );
+                  }
+
+                  return ListView.builder(
+                    itemCount: filteredNotifications.length,
+                    itemBuilder: (context, index) {
+                      final doc = filteredNotifications[index];
+                      final data = doc.data() as Map<String, dynamic>;
+
+                      // Parse notification data
+                      final String title = data['title'] ?? 'No Title';
+                      final String description =
+                          data['description'] ?? 'No Description';
+                      final Timestamp? timestamp =
+                          data['timestamp'] as Timestamp?;
+                      final String time = timestamp != null
+                          ? DateFormat(
+                              'MMM d, HH:mm',
+                            ).format(timestamp.toDate())
+                          : 'N/A';
+                      final String type = data['type'] ?? 'general';
+                      final String priority = data['priority'] ?? 'medium';
+                      final bool isRead = data['isRead'] ?? false;
+
+                      // Determine icon, color based on type and priority
+                      IconData icon;
+                      Color iconColor;
+                      Color cardColor;
+                      List<ActionButton> buttons = [];
+
+                      switch (type) {
+                        case 'expiry_warning':
+                          icon = Icons.error_outline;
+                          iconColor = Colors.orange;
+                          cardColor = Colors.orange[50]!;
+                          buttons.add(
+                            ActionButton(
+                              label: 'Snooze',
+                              color: Colors.grey[300]!,
+                              onPressed: () => _snoozeNotification(doc.id),
+                            ),
+                          );
+                          buttons.add(
+                            ActionButton(
+                              label: 'Mark Done',
+                              color: Colors.yellow[200]!,
+                              onPressed: () => _markNotificationAsRead(doc.id),
+                            ),
+                          );
+                          buttons.add(
+                            ActionButton(
+                              label: 'Dismiss',
+                              color: Colors.green[100]!,
+                              onPressed: () => _dismissNotification(doc.id),
+                            ),
+                          );
+                          break;
+                        case 'expired_product':
+                          icon = Icons.warning;
+                          iconColor = Colors.red;
+                          cardColor = Colors.red[50]!;
+                          buttons.add(
+                            ActionButton(
+                              label: 'Mark Done',
+                              color: Colors.yellow[200]!,
+                              onPressed: () => _markNotificationAsRead(doc.id),
+                            ),
+                          );
+                          buttons.add(
+                            ActionButton(
+                              label: 'Dismiss',
+                              color: Colors.green[100]!,
+                              onPressed: () => _dismissNotification(doc.id),
+                            ),
+                          );
+                          break;
+                        case 'sync_reminder':
+                          icon = Icons.sync;
+                          iconColor = Colors.green;
+                          cardColor = Colors.green[50]!;
+                          buttons.add(
+                            ActionButton(
+                              label: 'Sync Now',
+                              color: Colors.blue[100]!,
+                              onPressed: () => _triggerSync(doc.id),
+                            ),
+                          );
+                          buttons.add(
+                            ActionButton(
+                              label: 'Snooze',
+                              color: Colors.grey[300]!,
+                              onPressed: () => _snoozeNotification(doc.id),
+                            ),
+                          );
+                          buttons.add(
+                            ActionButton(
+                              label: 'Dismiss',
+                              color: Colors.green[100]!,
+                              onPressed: () => _dismissNotification(doc.id),
+                            ),
+                          );
+                          break;
+                        case 'sync_error': // New case for sync errors
+                          icon = Icons.cloud_off;
+                          iconColor = Colors.deepOrange;
+                          cardColor = Colors.deepOrange[50]!;
+                          buttons.add(
+                            ActionButton(
+                              label: 'Retry Sync',
+                              color: Colors.blue[100]!,
+                              onPressed: () => _triggerSync(doc.id),
+                            ),
+                          );
+                          buttons.add(
+                            ActionButton(
+                              label: 'Dismiss',
+                              color: Colors.green[100]!,
+                              onPressed: () => _dismissNotification(doc.id),
+                            ),
+                          );
+                          break;
+                        default: // Fallback for any unexpected types (though filtered out by `where` clause)
+                          icon = Icons.notifications;
+                          iconColor = Colors.grey;
+                          cardColor = Colors.grey[50]!;
+                          buttons.add(
+                            ActionButton(
+                              label: 'Mark Done',
+                              color: Colors.yellow[200]!,
+                              onPressed: () => _markNotificationAsRead(doc.id),
+                            ),
+                          );
+                          buttons.add(
+                            ActionButton(
+                              label: 'Dismiss',
+                              color: Colors.green[100]!,
+                              onPressed: () => _dismissNotification(doc.id),
+                            ),
+                          );
+                          break;
+                      }
+
+                      // Override color for high priority
+                      if (priority == 'high' &&
+                          type != 'expired_product' &&
+                          type != 'sync_error') {
+                        cardColor = Colors.red[100]!;
+                        iconColor = Colors.red;
+                      }
+
+                      // If already read, make it visually distinct
+                      if (isRead) {
+                        cardColor = Colors.grey[200]!;
+                        iconColor = Colors.grey;
+                      }
+
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 12.0),
+                        child: NotificationCard(
+                          title: title,
+                          description: description,
+                          time: time,
+                          color: cardColor,
+                          icon: icon,
+                          iconColor: iconColor,
+                          buttons: buttons,
+                          isRead: isRead,
+                        ),
+                      );
+                    },
+                  );
+                },
               ),
             ),
           ],
@@ -184,34 +289,151 @@ class NotificationsPage extends StatelessWidget {
       ),
     );
   }
-}
 
-class FilterChips extends StatelessWidget {
-  final filters = ['All', 'Expiry', 'Restock', 'Sync', 'Suggestions'];
+  // Firestore stream for notifications, filtered by supermarketId and sorted by timestamp.
+  Stream<QuerySnapshot> _getNotificationsStream() {
+    // Only query for the specific types the manager should receive
+    return FirebaseFirestore.instance
+        .collection('notifications')
+        .where('supermarketId', isEqualTo: widget.supermarketId)
+        .where(
+          'type',
+          whereIn: [
+            'expiry_warning',
+            'expired_product',
+            'sync_reminder',
+            'sync_error',
+          ],
+        ) // Filter by allowed types
+        .orderBy('timestamp', descending: true) // Show newest first
+        .snapshots();
+  }
 
-  FilterChips({super.key});
+  // --- Notification Actions (Firebase Update Logic) ---
 
-  @override
-  Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 8.0,
-      children: filters.map((filter) {
-        final isSelected = filter == 'Suggestions';
-        return ChoiceChip(
-          label: Text(filter),
-          selected: isSelected,
-          selectedColor: Colors.green,
-          backgroundColor: Colors.grey[200],
-          labelStyle: TextStyle(
-            color: isSelected ? Colors.white : Colors.black,
-          ),
-          onSelected: (_) {},
+  Future<void> _updateNotificationStatus(
+    String notificationId,
+    Map<String, dynamic> updates,
+  ) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('notifications')
+          .doc(notificationId)
+          .update(updates);
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Notification updated.')));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to update notification: $e')),
         );
-      }).toList(),
+      }
+      debugPrint('Error updating notification $notificationId: $e');
+    }
+  }
+
+  void _markNotificationAsRead(String notificationId) {
+    _updateNotificationStatus(notificationId, {'isRead': true});
+  }
+
+  void _dismissNotification(String notificationId) {
+    _updateNotificationStatus(notificationId, {
+      'isRead': true,
+      'isDismissed': true,
+    });
+  }
+
+  void _snoozeNotification(String notificationId) {
+    final snoozeUntil = Timestamp.fromDate(
+      DateTime.now().add(const Duration(days: 1)),
+    );
+    _updateNotificationStatus(notificationId, {
+      'snoozeUntil': snoozeUntil,
+      'isRead': false,
+    });
+  }
+
+  void _triggerSync(String notificationId) {
+    // This is the _showSnackBar that was causing the error.
+    // It's now correctly defined within this class.
+    _showSnackBar('Initiating sync process...');
+    _markNotificationAsRead(notificationId);
+  }
+
+  // Define _showSnackBar here within _NotificationsPageState
+  void _showSnackBar(String message, {bool isError = false}) {
+    if (!mounted) return; // Ensure widget is still in the tree
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? Colors.red.shade700 : Colors.green.shade700,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 3),
+      ),
     );
   }
 }
 
+// --- FilterChips Widget ---
+class FilterChips extends StatefulWidget {
+  final List<String> filters;
+  final String selectedFilter;
+  final ValueChanged<String> onFilterSelected;
+
+  const FilterChips({
+    super.key,
+    required this.filters,
+    required this.selectedFilter,
+    required this.onFilterSelected,
+  });
+
+  @override
+  State<FilterChips> createState() => _FilterChipsState();
+}
+
+class _FilterChipsState extends State<FilterChips> {
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Wrap(
+        spacing: 8.0,
+        children: widget.filters.map((filter) {
+          final isSelected = filter == widget.selectedFilter;
+          return ChoiceChip(
+            label: Text(filter),
+            selected: isSelected,
+            selectedColor: Colors.green.shade700,
+            backgroundColor: Colors.grey[200],
+            labelStyle: TextStyle(
+              color: isSelected ? Colors.white : Colors.black87,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+            ),
+            onSelected: (selected) {
+              if (selected) {
+                widget.onFilterSelected(filter);
+              }
+            },
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+              side: BorderSide(
+                color: isSelected
+                    ? Colors.green.shade700
+                    : Colors.grey.shade300,
+              ),
+            ),
+            elevation: isSelected ? 2 : 0,
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
+
+// --- NotificationCard Widget ---
 class NotificationCard extends StatelessWidget {
   final String title;
   final String description;
@@ -220,6 +442,7 @@ class NotificationCard extends StatelessWidget {
   final IconData icon;
   final Color iconColor;
   final List<ActionButton> buttons;
+  final bool isRead;
 
   const NotificationCard({
     super.key,
@@ -230,16 +453,33 @@ class NotificationCard extends StatelessWidget {
     required this.icon,
     required this.iconColor,
     required this.buttons,
+    this.isRead = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.all(12),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: color ?? Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.grey[300]!),
+        boxShadow:
+            isRead // Less prominent shadow for read notifications
+            ? [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.1),
+                  blurRadius: 2,
+                  offset: const Offset(0, 1),
+                ),
+              ]
+            : [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.2),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -247,43 +487,59 @@ class NotificationCard extends StatelessWidget {
           Row(
             children: [
               Icon(icon, color: iconColor),
-              SizedBox(width: 8),
+              const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   title,
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: isRead ? Colors.grey : Colors.black87,
+                    decoration: isRead ? TextDecoration.lineThrough : null,
+                  ),
                 ),
               ),
             ],
           ),
-          SizedBox(height: 8),
-          Text(description),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
+          Text(
+            description,
+            style: TextStyle(
+              color: isRead ? Colors.grey : Colors.black87,
+              fontStyle: isRead ? FontStyle.italic : FontStyle.normal,
+            ),
+          ),
+          const SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Row(
-                children: buttons.map((btn) {
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 6.0),
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: btn.color,
-                        foregroundColor: Colors.black,
-                        padding: EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
+              Expanded(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: buttons.map((btn) {
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 6.0),
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: btn.color,
+                            foregroundColor: Colors.black,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                            elevation: 0,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          onPressed: isRead ? null : btn.onPressed,
+                          child: Text(btn.label),
                         ),
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      onPressed: () {},
-                      child: Text(btn.label),
-                    ),
-                  );
-                }).toList(),
+                      );
+                    }).toList(),
+                  ),
+                ),
               ),
               Text(
                 time,
@@ -297,9 +553,15 @@ class NotificationCard extends StatelessWidget {
   }
 }
 
+// --- ActionButton Class ---
 class ActionButton {
   final String label;
   final Color color;
+  final VoidCallback onPressed;
 
-  ActionButton({required this.label, required this.color});
+  ActionButton({
+    required this.label,
+    required this.color,
+    required this.onPressed,
+  });
 }

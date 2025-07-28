@@ -1,7 +1,8 @@
+import 'package:Freshtally/pages/auth/supermarket_selection_page.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:Freshtally/pages/auth/create_supermarket_page.dart  ';
+import 'package:Freshtally/pages/auth/create_supermarket_page.dart';
 import 'package:Freshtally/pages/auth/customer_signup_page.dart';
 import 'package:Freshtally/pages/auth/staff_signup_page.dart';
 import 'package:Freshtally/pages/customer/home/customer_home_page.dart';
@@ -10,7 +11,8 @@ import 'package:Freshtally/pages/shelfStaff/home/shelf_staff_home_screen.dart';
 import 'package:Freshtally/pages/storeManager/home/home_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class IconTextField extends StatelessWidget {
+// --- IconTextField (Fixed) ---
+class IconTextField extends StatefulWidget {
   final String hintText;
   final IconData icon;
   final bool isPassword;
@@ -27,29 +29,51 @@ class IconTextField extends StatelessWidget {
   });
 
   @override
+  State<IconTextField> createState() => _IconTextFieldState();
+}
+
+class _IconTextFieldState extends State<IconTextField> {
+  bool _isObscure = true;
+
+  @override
   Widget build(BuildContext context) {
     return TextFormField(
-      controller: controller,
-      obscureText: isPassword,
-      validator: validator,
+      controller: widget.controller,
+      obscureText: widget.isPassword ? _isObscure : false,
+      validator: widget.validator,
       decoration: InputDecoration(
-        hintText: hintText,
-        prefixIcon: Icon(icon, color: Colors.grey),
+        hintText: widget.hintText,
+        prefixIcon: Icon(widget.icon, color: Colors.grey),
         filled: true,
         fillColor: Colors.grey[200],
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10.0),
           borderSide: BorderSide.none,
         ),
+        // Moved contentPadding and suffixIcon directly under InputDecoration
         contentPadding: const EdgeInsets.symmetric(
           vertical: 16.0,
           horizontal: 16.0,
         ),
+        suffixIcon: widget.isPassword
+            ? IconButton(
+                icon: Icon(
+                  _isObscure ? Icons.visibility_off : Icons.visibility,
+                  color: Colors.grey,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _isObscure = !_isObscure;
+                  });
+                },
+              )
+            : null,
       ),
     );
   }
 }
 
+// --- LoginPage (Unchanged, provided for completeness) ---
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -113,108 +137,196 @@ class _LoginPageState extends State<LoginPage> {
       );
 
       final userId = userCredential.user?.uid;
-      if (userId == null) throw Exception("User ID not found");
+      if (userId == null) throw Exception("User ID not found after login.");
 
-      // Improved user document query
-      final userQuery = await _firestore
-          .collectionGroup('users')
-          .where('uid', isEqualTo: userId)
-          .limit(1)
+      // --- NEW CUSTOMER LOGIN FLOW LOGIC ---
+      // First, try to find the user in the central 'customers' collection
+      final customerDoc = await _firestore
+          .collection('customers')
+          .doc(userId)
           .get();
 
-      if (userQuery.docs.isEmpty) {
-        throw Exception('User document not found. Contact support.');
-      }
+      String role;
+      List<String> associatedSupermarketIds = [];
+      String? staffOrManagerSupermarketId; // For staff/manager roles
 
-      final userDoc = userQuery.docs.first;
-      final userData = userDoc.data() as Map<String, dynamic>;
-      final role = userData['role'] as String? ?? 'customer';
-      final supermarketId = userData['supermarketId'] as String?;
-
-      String supermarketName = 'Unknown';
-      String location = 'Unknown';
-
-      if (supermarketId != null) {
-        final supermarketDoc = await _firestore
-            .collection('supermarkets')
-            .doc(supermarketId)
+      if (customerDoc.exists) {
+        // User is a customer (document found in top-level 'customers' collection)
+        final customerData = customerDoc.data();
+        role =
+            customerData?['role'] as String? ??
+            'customer'; // Should be 'customer'
+        associatedSupermarketIds = List<String>.from(
+          customerData?['associatedSupermarketIds'] ?? [],
+        );
+        debugPrint(
+          'Customer logged in: $userId, Role: $role, Supermarkets: $associatedSupermarketIds',
+        );
+      } else {
+        // User is not in 'customers' collection, so they must be staff or manager
+        // Check 'supermarkets/{id}/users' subcollections using collectionGroup
+        final userQuery = await _firestore
+            .collectionGroup('users')
+            .where('uid', isEqualTo: userId)
+            .limit(1)
             .get();
 
-        if (supermarketDoc.exists) {
-          final supermarketData = supermarketDoc.data()!;
-          supermarketName = supermarketData['name'] as String? ?? 'Unknown';
-          location = supermarketData['location'] as String? ?? 'Unknown';
+        if (userQuery.docs.isEmpty) {
+          throw Exception(
+            'User document not found in Firestore for UID: $userId. Contact support.',
+          );
         }
+
+        final userDoc = userQuery.docs.first;
+        final userData = userDoc.data();
+        role = userData['role'] as String? ?? 'unknown';
+        // Extract supermarketId from the path for staff/managers
+        staffOrManagerSupermarketId = userDoc.reference.parent.parent?.id;
+
+        if (staffOrManagerSupermarketId == null) {
+          throw Exception(
+            'Supermarket ID not found for staff/manager user: $userId.',
+          );
+        }
+        debugPrint(
+          'Staff/Manager logged in: $userId, Role: $role, Supermarket: $staffOrManagerSupermarketId',
+        );
       }
+      // --- END NEW CUSTOMER LOGIN FLOW LOGIC ---
 
       await _saveRememberMePreferences(_emailController.text.trim());
 
       if (!mounted) return;
 
+      // Navigate based on role
       switch (role) {
         case 'manager':
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (_) => ManagerDashboardPage(
-                supermarketName: supermarketName,
-                location: location,
-                supermarketId: supermarketId ?? '',
-                managerId: userId,
-              ),
-            ),
-          );
-          break;
-
         case 'storeManager':
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (_) => StoreManagerDashboard(
-                supermarketId: supermarketId ?? '',
-                supermarketName: supermarketName,
-                location: location,
-              ),
-            ),
-          );
-          break;
-
         case 'staff':
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (_) => ShelfStaffDashboard(
-                supermarketId: supermarketId ?? '',
-                supermarketName: supermarketName,
-                location: location,
+          String supermarketName = 'Unknown';
+          String location = 'Unknown';
+          if (staffOrManagerSupermarketId != null) {
+            final supermarketDoc = await _firestore
+                .collection('supermarkets')
+                .doc(staffOrManagerSupermarketId)
+                .get();
+            if (supermarketDoc.exists) {
+              final supermarketData = supermarketDoc.data();
+              supermarketName =
+                  supermarketData?['name'] as String? ?? 'Unknown';
+              location = supermarketData?['location'] as String? ?? 'Unknown';
+            }
+          }
+
+          if (role == 'manager') {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (_) => ManagerDashboardPage(
+                  supermarketName: supermarketName,
+                  location: location,
+                  managerId: userId,
+                  supermarketId: staffOrManagerSupermarketId!,
+                ),
               ),
-            ),
-          );
+            );
+          } else if (role == 'storeManager') {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (_) => StoreManagerDashboard(
+                  supermarketId: staffOrManagerSupermarketId!,
+                  supermarketName: supermarketName,
+                  location: location,
+                ),
+              ),
+            );
+          } else if (role == 'staff') {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (_) => ShelfStaffDashboard(
+                  supermarketId: staffOrManagerSupermarketId!,
+                  supermarketName: supermarketName,
+                  location: location,
+                ),
+              ),
+            );
+          }
           break;
 
         case 'customer':
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (_) => CustomerHomePage(
-                supermarketName: supermarketName,
-                location: location,
-                supermarketId: supermarketId ?? '',
+          if (associatedSupermarketIds.isEmpty) {
+            // Customer has no associated supermarkets, direct to selection/joining
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (_) => SupermarketSelectionPage(
+                  customerId: userId,
+                  initialMessage:
+                      'No supermarkets linked to your account. Please join one.',
+                ),
               ),
-            ),
-          );
+            );
+          } else if (associatedSupermarketIds.length == 1) {
+            // Customer has only one associated supermarket, go directly to it
+            final String singleSupermarketId = associatedSupermarketIds.first;
+            final supermarketDoc = await _firestore
+                .collection('supermarkets')
+                .doc(singleSupermarketId)
+                .get();
+            String supermarketName = 'Unknown';
+            String location = 'Unknown';
+            if (supermarketDoc.exists) {
+              final supermarketData = supermarketDoc.data();
+              supermarketName =
+                  supermarketData?['name'] as String? ?? 'Unknown';
+              location = supermarketData?['location'] as String? ?? 'Unknown';
+            }
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (_) => CustomerHomePage(
+                  supermarketName: supermarketName,
+                  location: location,
+                  supermarketId: singleSupermarketId,
+                ),
+              ),
+            );
+          } else {
+            // Customer has multiple associated supermarkets, show selection page
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (_) => SupermarketSelectionPage(
+                  customerId: userId,
+                  associatedSupermarketIds: associatedSupermarketIds,
+                ),
+              ),
+            );
+          }
           break;
 
         default:
+          // This will catch any roles not explicitly handled
           throw Exception("Unknown user role: $role. Contact support.");
       }
     } on FirebaseAuthException catch (e) {
+      // Catch specific Firebase Auth exceptions
       setState(() {
         _errorMessage = _getAuthErrorMessage(e.code);
+        debugPrint(
+          'FirebaseAuthException: Code: ${e.code}, Message: ${e.message}',
+        ); // Log the Firebase Auth error
       });
     } catch (e) {
+      // Catch any other unexpected errors
       setState(() {
-        _errorMessage = 'Login failed: ${e.toString()}';
+        _errorMessage =
+            'An unexpected error occurred: ${e.toString()}'; // Include the actual error message
+        debugPrint(
+          'General Login Error: ${e.toString()}',
+        ); // Log the general error
       });
     } finally {
       if (mounted) {
@@ -278,7 +390,12 @@ class _LoginPageState extends State<LoginPage> {
         return 'This account has been disabled. Please contact support.';
       case 'too-many-requests':
         return 'Too many login attempts. Please try again later.';
+      case 'network-request-failed':
+        return 'Network error. Please check your internet connection.';
+      case 'requires-recent-login':
+        return 'Please log in again to perform this action.';
       default:
+        debugPrint('Unhandled FirebaseAuthException code: $code');
         return 'An unexpected error occurred. Please try again.';
     }
   }
@@ -287,14 +404,6 @@ class _LoginPageState extends State<LoginPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Google Sign-In not fully implemented yet.'),
-      ),
-    );
-  }
-
-  Future<void> _signInWithFacebook() async {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Facebook Sign-In not fully implemented yet.'),
       ),
     );
   }
@@ -308,12 +417,6 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        foregroundColor: Colors.black,
-        automaticallyImplyLeading: false,
-      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
         child: Form(
@@ -321,8 +424,9 @@ class _LoginPageState extends State<LoginPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Center(child: Image.asset('assets/images/logo.png', height: 120)),
-              const SizedBox(height: 16.0),
+              const SizedBox(height: 20.0),
+              Center(child: Image.asset('assets/images/logo.png', height: 150)),
+              const SizedBox(height: 5.0),
               Center(
                 child: Text(
                   "Welcome to FreshTally!",
@@ -338,7 +442,7 @@ class _LoginPageState extends State<LoginPage> {
                 child: Text(
                   "Login",
                   style: TextStyle(
-                    fontSize: 28,
+                    fontSize: 25,
                     fontWeight: FontWeight.bold,
                     color: Colors.black87,
                   ),
@@ -446,24 +550,11 @@ class _LoginPageState extends State<LoginPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  IconButton(
-                    icon: const Icon(
-                      Icons.facebook,
-                      size: 40,
-                      color: Colors.blue,
-                    ),
-                    onPressed: _signInWithFacebook,
-                  ),
-                  const SizedBox(width: 20),
-                  IconButton(
-                    icon: Image.asset('assets/icons/google.png', height: 35),
-                    onPressed: _signInWithGoogle,
-                  ),
-                  const SizedBox(width: 20),
+                  Image.asset('assets/icons/google.png', height: 35),
                   IconButton(
                     icon: const Icon(
                       Icons.apple,
-                      size: 40,
+                      size: 45,
                       color: Colors.black,
                     ),
                     onPressed: _signInWithApple,
@@ -527,7 +618,7 @@ class _LoginPageState extends State<LoginPage> {
                     width: double.infinity,
                     child: OutlinedButton(
                       onPressed: () {
-                        Navigator.pushReplacement(
+                        Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (_) => const CustomerSignupPage(),

@@ -51,8 +51,8 @@ class _StaffSignupPageState extends State<StaffSignupPage> {
           email: _emailController.text.trim(),
           password: _passwordController.text,
           phone: _phoneController.text.trim(),
-          supermarketName: _supermarketController.text.trim(),
-          location: '',
+          // supermarketName: _supermarketController.text.trim(),
+          // location: '',
         ),
       ),
     );
@@ -180,17 +180,17 @@ class _StaffSignupPageState extends State<StaffSignupPage> {
                   ),
                   const SizedBox(height: 16.0),
 
-                  IconTextField(
-                    hintText: 'Supermarket Name',
-                    icon: Icons.store,
-                    controller: _supermarketController,
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Supermarket name is required';
-                      }
-                      return null;
-                    },
-                  ),
+                  // IconTextField(
+                  //   hintText: 'Supermarket Name',
+                  //   icon: Icons.store,
+                  //   controller: _supermarketController,
+                  //   validator: (value) {
+                  //     if (value == null || value.trim().isEmpty) {
+                  //       return 'Supermarket name is required';
+                  //     }
+                  //     return null;
+                  //   },
+                  // ),
                   const SizedBox(height: 16.0),
 
                   IconTextField(

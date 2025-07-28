@@ -4,7 +4,11 @@ import 'package:flutter/material.dart';
 class ProductDetailsPage extends StatefulWidget {
   final String productId;
 
-  const ProductDetailsPage({super.key, required this.productId});
+  const ProductDetailsPage({
+    super.key,
+    required this.productId,
+    required String supermarketId,
+  });
 
   @override
   State<ProductDetailsPage> createState() => _ProductDetailsPageState();

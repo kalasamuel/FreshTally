@@ -1,16 +1,19 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
-import 'package:intl/intl.dart'; // Add this import for date formatting
+import 'package:intl/intl.dart';
 
 class SupplierBatchEntryPage extends StatefulWidget {
   final DocumentSnapshot? batchToEdit;
-  final DocumentSnapshot? supplierOfBatch;
+  final DocumentSnapshot?
+  supplierOfBatch; // This is the actual supplier doc for the batch
+  final String supermarketId; // Crucial for multi-supermarket support
 
   const SupplierBatchEntryPage({
     super.key,
     this.batchToEdit,
     this.supplierOfBatch,
+    required this.supermarketId,
   });
 
   @override
@@ -37,35 +40,48 @@ class _SupplierBatchEntryPageState extends State<SupplierBatchEntryPage> {
   @override
   void initState() {
     super.initState();
-    if (widget.batchToEdit != null && widget.supplierOfBatch != null) {
+    if (widget.batchToEdit != null) {
       _isEditing = true;
       _initializeEditMode();
     }
   }
 
-  void _initializeEditMode() {
+  Future<void> _initializeEditMode() async {
     final batchData = widget.batchToEdit!.data() as Map<String, dynamic>;
-    final supplierData = widget.supplierOfBatch!.data() as Map<String, dynamic>;
 
-    selectedSupplier = widget.supplierOfBatch;
-    supplierNameController.text = supplierData['name'] ?? '';
-    contactController.text = supplierData['contact'] ?? '';
-    addressController.text = supplierData['address'] ?? '';
-
-    productNameController.text = batchData['product_name'] ?? '';
-    quantityController.text = batchData['quantity']?.toString() ?? '';
-
-    final expiryDateString = batchData['expiry_date'] as String?;
-    if (expiryDateString != null && expiryDateString.isNotEmpty) {
-      try {
-        _selectedExpiryDate = DateTime.parse(expiryDateString);
-        expiryDateController.text = DateFormat(
-          'yyyy-MM-dd',
-        ).format(_selectedExpiryDate!);
-      } catch (e) {
-        print('Error parsing expiry date: $e');
+    final productRef = batchData['product_ref'] as DocumentReference?;
+    if (productRef != null) {
+      final productDoc = await productRef.get();
+      if (productDoc.exists) {
+        selectedProduct = productDoc;
+        productNameController.text =
+            (productDoc.data() as Map<String, dynamic>)['name'] ?? '';
       }
     }
+
+    final supplierRef = batchData['supplier_ref'] as DocumentReference?;
+    if (supplierRef != null) {
+      final supplierDoc = await supplierRef.get();
+      if (supplierDoc.exists) {
+        selectedSupplier = supplierDoc;
+        final supplierData = supplierDoc.data() as Map<String, dynamic>;
+        supplierNameController.text = supplierData['name'] ?? '';
+        contactController.text = supplierData['contact'] ?? '';
+        addressController.text = supplierData['address'] ?? '';
+      }
+    }
+
+    quantityController.text = batchData['quantity']?.toString() ?? '';
+
+    final expiryTimestamp = batchData['expiry_date'] as Timestamp?;
+    if (expiryTimestamp != null) {
+      _selectedExpiryDate = expiryTimestamp.toDate();
+      expiryDateController.text = DateFormat(
+        'yyyy-MM-dd',
+      ).format(_selectedExpiryDate!);
+    }
+
+    setState(() {});
   }
 
   @override
@@ -80,20 +96,30 @@ class _SupplierBatchEntryPageState extends State<SupplierBatchEntryPage> {
   }
 
   Future<List<DocumentSnapshot>> _searchSuppliers(String pattern) async {
+    if (pattern.isEmpty) return [];
     final snapshot = await FirebaseFirestore.instance
         .collection('suppliers')
-        .where('name', isGreaterThanOrEqualTo: pattern)
-        .where('name', isLessThanOrEqualTo: '$pattern\uf8ff')
+        .where('supermarketId', isEqualTo: widget.supermarketId)
+        .where('name_lower', isGreaterThanOrEqualTo: pattern.toLowerCase())
+        .where(
+          'name_lower',
+          isLessThanOrEqualTo: '${pattern.toLowerCase()}\uf8ff',
+        )
         .limit(5)
         .get();
     return snapshot.docs;
   }
 
   Future<List<DocumentSnapshot>> _searchProducts(String pattern) async {
+    if (pattern.isEmpty) return [];
     final snapshot = await FirebaseFirestore.instance
         .collection('products')
-        .where('name', isGreaterThanOrEqualTo: pattern)
-        .where('name', isLessThanOrEqualTo: '$pattern\uf8ff')
+        .where('supermarketId', isEqualTo: widget.supermarketId)
+        .where('name_lower', isGreaterThanOrEqualTo: pattern.toLowerCase())
+        .where(
+          'name_lower',
+          isLessThanOrEqualTo: '${pattern.toLowerCase()}\uf8ff',
+        )
         .limit(5)
         .get();
     return snapshot.docs;
@@ -107,6 +133,7 @@ class _SupplierBatchEntryPageState extends State<SupplierBatchEntryPage> {
       contactController.text = data['contact'] ?? '';
       addressController.text = data['address'] ?? '';
     });
+    FocusScope.of(context).unfocus();
   }
 
   void _selectProduct(DocumentSnapshot product) {
@@ -115,6 +142,7 @@ class _SupplierBatchEntryPageState extends State<SupplierBatchEntryPage> {
       selectedProduct = product;
       productNameController.text = data['name'] ?? '';
     });
+    FocusScope.of(context).unfocus();
   }
 
   Future<void> _selectDate(BuildContext context) async {
@@ -176,12 +204,33 @@ class _SupplierBatchEntryPageState extends State<SupplierBatchEntryPage> {
         false;
   }
 
+  void _showSnackBar(String message, {bool isError = false}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? Colors.red.shade700 : Colors.green.shade700,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
   Future<void> _saveData() async {
     if (!_formKey.currentState!.validate()) {
       _showSnackBar(
         'Please fill all required fields correctly.',
         isError: true,
       );
+      return;
+    }
+
+    if (selectedProduct == null) {
+      _showSnackBar('Please select a product.', isError: true);
+      return;
+    }
+    if (selectedSupplier == null) {
+      _showSnackBar('Please select a supplier.', isError: true);
       return;
     }
 
@@ -202,13 +251,14 @@ class _SupplierBatchEntryPageState extends State<SupplierBatchEntryPage> {
     try {
       final supplierData = {
         'name': supplierNameController.text.trim(),
+        'name_lower': supplierNameController.text.trim().toLowerCase(),
         'contact': contactController.text.trim(),
         'address': addressController.text.trim(),
+        'supermarketId': widget.supermarketId,
       };
 
       DocumentReference supplierRef;
-
-      if (selectedSupplier != null) {
+      if (selectedSupplier != null && _isEditing) {
         await selectedSupplier!.reference.update(supplierData);
         supplierRef = selectedSupplier!.reference;
       } else {
@@ -219,11 +269,12 @@ class _SupplierBatchEntryPageState extends State<SupplierBatchEntryPage> {
 
       final batchData = {
         'supplier_ref': supplierRef,
-        'product_name': productNameController.text.trim(),
+        'product_ref': selectedProduct!.reference,
         'quantity': int.tryParse(quantityController.text) ?? 0,
         'expiry_date': _selectedExpiryDate != null
-            ? DateFormat('yyyy-MM-dd').format(_selectedExpiryDate!)
+            ? Timestamp.fromDate(_selectedExpiryDate!)
             : null,
+        'supermarketId': widget.supermarketId,
         'created_at': FieldValue.serverTimestamp(),
       };
 
@@ -244,18 +295,23 @@ class _SupplierBatchEntryPageState extends State<SupplierBatchEntryPage> {
     } on FirebaseException catch (e) {
       if (!mounted) return;
       _showSnackBar('❌ Firestore Error: ${e.message}', isError: true);
-      print('Firestore Error: $e');
+      debugPrint('Firestore Error: $e');
     } catch (e) {
       if (!mounted) return;
       _showSnackBar('❌ An unexpected error occurred: $e', isError: true);
-      print('General Error: $e');
+      debugPrint('General Error: $e');
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
   Future<void> _deleteBatch() async {
-    if (widget.batchToEdit == null) return;
+    if (widget.batchToEdit == null) {
+      _showSnackBar('No batch selected for deletion.', isError: true);
+      return;
+    }
 
     final bool confirmDelete = await _showConfirmationDialog(
       title: 'Confirm Deletion',
@@ -277,26 +333,37 @@ class _SupplierBatchEntryPageState extends State<SupplierBatchEntryPage> {
     } on FirebaseException catch (e) {
       if (!mounted) return;
       _showSnackBar('❌ Error deleting batch: ${e.message}', isError: true);
-      print('Firestore Delete Error: $e');
+      debugPrint('Firestore Delete Error: $e');
     } catch (e) {
       if (!mounted) return;
       _showSnackBar(
         '❌ An unexpected error occurred during deletion: $e',
         isError: true,
       );
-      print('General Delete Error: $e');
+      debugPrint('General Delete Error: $e');
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
-  void _showSnackBar(String message, {bool isError = false}) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: isError ? Colors.red.shade700 : Colors.green.shade700,
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 3),
+  InputDecoration _inputDecoration(String label) {
+    return InputDecoration(
+      labelText: label,
+      labelStyle: const TextStyle(
+        fontWeight: FontWeight.w600,
+        color: Colors.black87,
+      ),
+      filled: true,
+      fillColor: const Color(0xFFF5F6FA),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFF4CAF50), width: 1.5),
       ),
     );
   }
@@ -353,7 +420,6 @@ class _SupplierBatchEntryPageState extends State<SupplierBatchEntryPage> {
                         validator: (val) => val == null || val.isEmpty
                             ? 'Enter supplier name'
                             : null,
-                        // Apply the enabled property to TextFormField
                         enabled: !_isEditing || selectedSupplier == null,
                       );
                     },
@@ -368,6 +434,9 @@ class _SupplierBatchEntryPageState extends State<SupplierBatchEntryPage> {
                       );
                     },
                     onSelected: _selectSupplier,
+                    // These properties are removed in flutter_typeahead 5.x.x+
+                    // hideSuggestionsOnSelect: _isEditing && selectedSupplier != null,
+                    // hideOnEmpty: _isEditing && selectedSupplier != null,
                   ),
 
                   const SizedBox(height: 12),
@@ -376,6 +445,7 @@ class _SupplierBatchEntryPageState extends State<SupplierBatchEntryPage> {
                     decoration: _inputDecoration('Contact'),
                     validator: (val) =>
                         val == null || val.isEmpty ? 'Enter contact' : null,
+                    enabled: !_isEditing || selectedSupplier == null,
                   ),
                   const SizedBox(height: 12),
                   TextFormField(
@@ -383,6 +453,7 @@ class _SupplierBatchEntryPageState extends State<SupplierBatchEntryPage> {
                     decoration: _inputDecoration('Address'),
                     validator: (val) =>
                         val == null || val.isEmpty ? 'Enter address' : null,
+                    enabled: !_isEditing || selectedSupplier == null,
                   ),
 
                   const SizedBox(height: 24),
@@ -411,7 +482,6 @@ class _SupplierBatchEntryPageState extends State<SupplierBatchEntryPage> {
                         validator: (val) => val == null || val.isEmpty
                             ? 'Enter product name'
                             : null,
-                        // Apply the enabled property to TextFormField
                         enabled: !_isEditing || selectedProduct == null,
                       );
                     },
@@ -426,6 +496,9 @@ class _SupplierBatchEntryPageState extends State<SupplierBatchEntryPage> {
                       );
                     },
                     onSelected: _selectProduct,
+                    // These properties are removed in flutter_typeahead 5.x.x+
+                    // hideSuggestionsOnSelect: _isEditing && selectedProduct != null,
+                    // hideOnEmpty: _isEditing && selectedProduct != null,
                   ),
                   const SizedBox(height: 12),
 
@@ -434,9 +507,15 @@ class _SupplierBatchEntryPageState extends State<SupplierBatchEntryPage> {
                     controller: quantityController,
                     decoration: _inputDecoration('Quantity'),
                     keyboardType: TextInputType.number,
-                    validator: (val) => val == null || int.tryParse(val) == null
-                        ? 'Enter valid quantity'
-                        : null,
+                    validator: (val) {
+                      if (val == null || val.isEmpty) {
+                        return 'Enter quantity';
+                      }
+                      if (int.tryParse(val) == null || int.parse(val) <= 0) {
+                        return 'Enter a valid positive quantity';
+                      }
+                      return null;
+                    },
                   ),
                   const SizedBox(height: 12),
 
@@ -523,26 +602,6 @@ class _SupplierBatchEntryPageState extends State<SupplierBatchEntryPage> {
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  InputDecoration _inputDecoration(String label) {
-    return InputDecoration(
-      labelText: label,
-      labelStyle: const TextStyle(
-        fontWeight: FontWeight.w600,
-        color: Colors.black87,
-      ),
-      filled: true,
-      fillColor: const Color(0xFFF5F6FA),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide.none,
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(color: Color(0xFF4CAF50), width: 1.5),
       ),
     );
   }
