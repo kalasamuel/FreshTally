@@ -86,6 +86,7 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
 
   Future<void> _validateSupermarket() async {
     final name = _supermarketNameController.text.trim();
+    final nameLower = name.toLowerCase();
     final location = _locationController.text.trim();
 
     if (name.isEmpty || location.isEmpty) {
@@ -100,7 +101,7 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
       // Query for supermarkets with the same name
       final nameQuery = await _firestore
           .collection('supermarkets')
-          .where('name', isEqualTo: name)
+          .where('name_lower', isEqualTo: nameLower)
           .get();
 
       if (nameQuery.docs.isEmpty) {
@@ -115,7 +116,7 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
       // If name exists, check if the same location exists for that name
       final locationQuery = await _firestore
           .collection('supermarkets')
-          .where('name', isEqualTo: name)
+          .where('name_lower', isEqualTo: nameLower)
           .where('location', isEqualTo: location)
           .limit(1)
           .get();
