@@ -2,6 +2,46 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+class Promotion {
+  final String promotionId;
+  final String productId;
+  final String productName;
+  final String? productImageUrl;
+  final double originalPrice;
+  final double discountPercentage;
+  final double discountedPrice;
+  final DateTime discountExpiry;
+  final DateTime createdAt;
+
+  Promotion({
+    required this.promotionId,
+    required this.productId,
+    required this.productName,
+    this.productImageUrl,
+    required this.originalPrice,
+    required this.discountPercentage,
+    required this.discountedPrice,
+    required this.discountExpiry,
+    required this.createdAt,
+  });
+
+  factory Promotion.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    return Promotion(
+      promotionId: doc.id,
+      productId: data['productId'] ?? '',
+      productName: data['productName'] ?? 'Unnamed Promotion',
+      productImageUrl: data['imageUrl'], // Using 'imageUrl' from Promotion
+      originalPrice: (data['originalPrice'] ?? 0).toDouble(),
+      discountPercentage: (data['discountPercentage'] ?? 0).toDouble(),
+      discountedPrice: (data['discountedPrice'] ?? 0).toDouble(),
+      discountExpiry: (data['discountExpiry'] as Timestamp).toDate(),
+      createdAt: (data['createdAt'] as Timestamp).toDate(),
+    );
+  }
+}
+
+// --- DiscountedProductsScreen Widget ---
 class DiscountedProductsScreen extends StatelessWidget {
   final String supermarketId;
 
@@ -33,14 +73,19 @@ class DiscountedProductsScreen extends StatelessWidget {
         // Use SafeArea for consistent padding
         child: StreamBuilder<QuerySnapshot>(
           stream: FirebaseFirestore.instance
+              .collection('supermarkets')
+              .doc(supermarketId)
               .collection(
-                'products',
-              ) // Assuming products are top-level and filtered by supermarketId
-              .where('supermarketId', isEqualTo: supermarketId)
+                'promotions',
+              ) // Fetch from the 'promotions' subcollection
               .where(
                 'discountPercentage',
                 isGreaterThan: 0,
-              ) // Filter by discountPercentage > 0
+              ) // Ensure there's a discount
+              .where(
+                'discountExpiry',
+                isGreaterThanOrEqualTo: Timestamp.fromDate(DateTime.now()),
+              ) // Only show active promotions
               .orderBy(
                 'discountExpiry',
                 descending: false,
@@ -58,29 +103,25 @@ class DiscountedProductsScreen extends StatelessWidget {
             if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
               return const Center(
                 child: Text(
-                  'No discounted products at the moment for this supermarket.',
+                  'No active discounted products at the moment for this supermarket.',
                   style: TextStyle(fontSize: 16, color: Colors.grey),
                 ),
               );
             }
 
-            final products = snapshot.data!.docs;
+            // Map the QuerySnapshot documents to Promotion objects
+            final promotions = snapshot.data!.docs
+                .map((doc) => Promotion.fromFirestore(doc))
+                .toList();
 
             return ListView.builder(
               padding: const EdgeInsets.symmetric(
                 horizontal: 24.0,
                 vertical: 24.0,
               ), // Consistent padding
-              itemCount: products.length,
+              itemCount: promotions.length,
               itemBuilder: (context, index) {
-                final data = products[index].data() as Map<String, dynamic>;
-                final name = data['name'] ?? 'Unnamed Product';
-                final originalPrice = (data['price'] ?? 0).toDouble();
-                final discountedPrice = (data['discountedPrice'] ?? 0)
-                    .toDouble();
-                final discountPercentage = data['discountPercentage'] ?? 0;
-                final expiryTimestamp = data['discountExpiry'] as Timestamp?;
-                final expiryDate = expiryTimestamp?.toDate();
+                final promotion = promotions[index];
 
                 return Card(
                   elevation: 0.1, // Slight elevation
@@ -108,10 +149,10 @@ class DiscountedProductsScreen extends StatelessWidget {
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(8),
                             child:
-                                (data['image_url'] != null &&
-                                    data['image_url'].isNotEmpty)
+                                (promotion.productImageUrl != null &&
+                                    promotion.productImageUrl!.isNotEmpty)
                                 ? Image.network(
-                                    data['image_url'],
+                                    promotion.productImageUrl!,
                                     fit: BoxFit.cover,
                                     errorBuilder:
                                         (context, error, stackTrace) =>
@@ -134,7 +175,8 @@ class DiscountedProductsScreen extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                name,
+                                promotion
+                                    .productName, // Use promotion's product name
                                 style: const TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
@@ -144,7 +186,7 @@ class DiscountedProductsScreen extends StatelessWidget {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                'Original: UGX ${originalPrice.toStringAsFixed(0)}',
+                                'Original: UGX ${promotion.originalPrice.toStringAsFixed(0)}', // Use promotion's original price
                                 style: const TextStyle(
                                   fontSize: 14,
                                   color: Colors.grey,
@@ -153,7 +195,7 @@ class DiscountedProductsScreen extends StatelessWidget {
                                 ),
                               ),
                               Text(
-                                'Discounted: UGX ${discountedPrice.toStringAsFixed(0)}',
+                                'Discounted: UGX ${promotion.discountedPrice.toStringAsFixed(0)}', // Use promotion's discounted price
                                 style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
@@ -162,17 +204,16 @@ class DiscountedProductsScreen extends StatelessWidget {
                                   ), // Red accent for discounted price
                                 ),
                               ),
-                              if (expiryDate != null)
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 4.0),
-                                  child: Text(
-                                    'Expires: ${DateFormat('MMM dd, yyyy').format(expiryDate)}',
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.black54,
-                                    ),
+                              Padding(
+                                padding: const EdgeInsets.only(top: 4.0),
+                                child: Text(
+                                  'Expires: ${DateFormat('MMM dd, yyyy').format(promotion.discountExpiry)}', // Use promotion's expiry date
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.black54,
                                   ),
                                 ),
+                              ),
                             ],
                           ),
                         ),
@@ -190,7 +231,7 @@ class DiscountedProductsScreen extends StatelessWidget {
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
-                            '-${discountPercentage.toStringAsFixed(0)}%',
+                            '-${promotion.discountPercentage.toStringAsFixed(0)}%', // Use promotion's discount percentage
                             style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,

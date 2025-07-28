@@ -15,7 +15,13 @@ class NotificationsPage extends StatefulWidget {
 
 class _NotificationsPageState extends State<NotificationsPage> {
   // Only include the relevant filters for the manager
-  final List<String> _availableFilters = ['All', 'Expiry', 'Sync'];
+  // Added 'Promotions' to the available filters
+  final List<String> _availableFilters = [
+    'All',
+    'Expiry',
+    'Sync',
+    'Promotions',
+  ];
   String _selectedFilter = 'All'; // State for the selected filter chip
 
   @override
@@ -78,12 +84,13 @@ class _NotificationsPageState extends State<NotificationsPage> {
                     final type =
                         data['type'] as String? ?? 'general'; // Default type
 
-                    // Define the types relevant for the manager
+                    // Define the types relevant for the manager, including 'promotion'
                     const managerRelevantTypes = {
                       'expiry_warning',
                       'expired_product',
                       'sync_reminder',
-                      'sync_error', // Added sync_error type
+                      'sync_error',
+                      'promotion', // Added promotion type
                     };
 
                     // First, filter by manager-relevant types
@@ -100,6 +107,10 @@ class _NotificationsPageState extends State<NotificationsPage> {
                       return true;
                     } else if (_selectedFilter == 'Sync' &&
                         (type == 'sync_reminder' || type == 'sync_error')) {
+                      return true;
+                    } else if (_selectedFilter == 'Promotions' &&
+                        type == 'promotion') {
+                      // Filter for promotions
                       return true;
                     }
                     return false; // Should not be reached if logic is sound
@@ -231,6 +242,28 @@ class _NotificationsPageState extends State<NotificationsPage> {
                             ),
                           );
                           break;
+                        case 'promotion': // New case for promotional notifications
+                          icon = Icons.local_offer; // Icon for promotions
+                          iconColor = Colors.purple; // Color for promotions
+                          cardColor = Colors.purple[50]!;
+                          buttons.add(
+                            ActionButton(
+                              label: 'View Deal',
+                              color: Colors.blue[100]!,
+                              onPressed: () => _viewPromotion(
+                                doc.id,
+                                data['productId'],
+                              ), // Assuming productId is available
+                            ),
+                          );
+                          buttons.add(
+                            ActionButton(
+                              label: 'Dismiss',
+                              color: Colors.green[100]!,
+                              onPressed: () => _dismissNotification(doc.id),
+                            ),
+                          );
+                          break;
                         default: // Fallback for any unexpected types (though filtered out by `where` clause)
                           icon = Icons.notifications;
                           iconColor = Colors.grey;
@@ -255,7 +288,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
                       // Override color for high priority
                       if (priority == 'high' &&
                           type != 'expired_product' &&
-                          type != 'sync_error') {
+                          type != 'sync_error' &&
+                          type != 'promotion') {
+                        // Ensure promotion doesn't override its specific high priority
                         cardColor = Colors.red[100]!;
                         iconColor = Colors.red;
                       }
@@ -292,7 +327,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
   // Firestore stream for notifications, filtered by supermarketId and sorted by timestamp.
   Stream<QuerySnapshot> _getNotificationsStream() {
-    // Only query for the specific types the manager should receive
+    // Only query for the specific types the manager should receive, including 'promotion'
     return FirebaseFirestore.instance
         .collection('notifications')
         .where('supermarketId', isEqualTo: widget.supermarketId)
@@ -303,6 +338,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
             'expired_product',
             'sync_reminder',
             'sync_error',
+            'promotion', // Added 'promotion' to the query filter
           ],
         ) // Filter by allowed types
         .orderBy('timestamp', descending: true) // Show newest first
@@ -357,10 +393,22 @@ class _NotificationsPageState extends State<NotificationsPage> {
   }
 
   void _triggerSync(String notificationId) {
-    // This is the _showSnackBar that was causing the error.
-    // It's now correctly defined within this class.
     _showSnackBar('Initiating sync process...');
     _markNotificationAsRead(notificationId);
+    // Add actual sync logic here if needed
+  }
+
+  // New method to handle 'View Deal' for promotion notifications
+  void _viewPromotion(String notificationId, String? productId) {
+    _showSnackBar('Navigating to product details for deal...');
+    _markNotificationAsRead(notificationId);
+    // Implement navigation to a product detail page or promotion page
+    // if (productId != null) {
+    //   Navigator.push(
+    //     context,
+    //     MaterialPageRoute(builder: (context) => ProductDetailPage(productId: productId)),
+    //   );
+    // }
   }
 
   // Define _showSnackBar here within _NotificationsPageState

@@ -1,8 +1,54 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:Freshtally/pages/customer/product/products_details_page.dart';
-// Import for DateFormat
+import 'package:intl/intl.dart'; // Import for DateFormat
 
+// --- Models (If not already defined and imported) ---
+// You might already have this defined from the previous response.
+// Including it here for completeness.
+class Promotion {
+  final String promotionId;
+  final String productId; // This will link to the actual product
+  final String productName;
+  final String? productImageUrl;
+  final double originalPrice;
+  final double discountPercentage;
+  final double discountedPrice;
+  final DateTime discountExpiry;
+  final DateTime createdAt;
+
+  Promotion({
+    required this.promotionId,
+    required this.productId,
+    required this.productName,
+    this.productImageUrl,
+    required this.originalPrice,
+    required this.discountPercentage,
+    required this.discountedPrice,
+    required this.discountExpiry,
+    required this.createdAt,
+  });
+
+  factory Promotion.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    return Promotion(
+      promotionId: doc.id,
+      productId:
+          data['productId'] ??
+          '', // Make sure this field exists in your promotion document
+      productName: data['productName'] ?? 'Unnamed Promotion',
+      productImageUrl:
+          data['imageUrl'], // Make sure this field exists in your promotion document
+      originalPrice: (data['originalPrice'] ?? 0).toDouble(),
+      discountPercentage: (data['discountPercentage'] ?? 0).toDouble(),
+      discountedPrice: (data['discountedPrice'] ?? 0).toDouble(),
+      discountExpiry: (data['discountExpiry'] as Timestamp).toDate(),
+      createdAt: (data['createdAt'] as Timestamp).toDate(),
+    );
+  }
+}
+
+// --- DiscountsAndPromotionsPage Widget ---
 class DiscountsAndPromotionsPage extends StatefulWidget {
   final String?
   highlightProductName; // For highlighting specific products, if used
@@ -45,16 +91,19 @@ class _DiscountsAndPromotionsPageState
       return const Stream.empty();
     }
 
+    // Corrected Firestore query to fetch from 'promotions' subcollection
     return FirebaseFirestore.instance
-        .collection('products')
-        .where(
-          'supermarketId',
-          isEqualTo: widget.supermarketId,
-        ) // Filter by current supermarket
+        .collection('supermarkets')
+        .doc(widget.supermarketId)
+        .collection('promotions') // Target the 'promotions' subcollection
         .where(
           'discountPercentage',
           isGreaterThan: 0,
-        ) // Only show products with an active discount
+        ) // Only show promotions with an active discount
+        .where(
+          'discountExpiry',
+          isGreaterThanOrEqualTo: Timestamp.fromDate(DateTime.now()),
+        ) // Only show active promotions that haven't expired
         .orderBy(
           'discountExpiry',
           descending: false,
@@ -89,7 +138,20 @@ class _DiscountsAndPromotionsPageState
 
     return Scaffold(
       backgroundColor: const Color(0xFFFFFFFF),
-      // AppBar is placed here as it's part of this page's UI
+      appBar: AppBar(
+        backgroundColor: const Color(0xFFFFFFFF),
+        elevation: 0.0,
+        title: const Text(
+          'Discounts & Promotions',
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+          ),
+        ),
+        centerTitle: true,
+        iconTheme: const IconThemeData(color: Colors.black87),
+      ),
       body: SafeArea(
         child: StreamBuilder<QuerySnapshot>(
           stream: _getSupermarketDiscountsStream(), // Use the stream method
@@ -98,7 +160,6 @@ class _DiscountsAndPromotionsPageState
               return const Center(child: CircularProgressIndicator());
             }
             if (snapshot.hasError) {
-              // Display a more informative error message
               return Center(
                 child: Padding(
                   padding: const EdgeInsets.all(24.0),
@@ -122,7 +183,6 @@ class _DiscountsAndPromotionsPageState
               );
             }
             if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-              // Display message if no discounts are found
               return const Center(
                 child: Padding(
                   padding: EdgeInsets.all(24.0),
@@ -136,7 +196,7 @@ class _DiscountsAndPromotionsPageState
                       ),
                       SizedBox(height: 16),
                       Text(
-                        'No active discounts available for this supermarket at the moment. Check back later!',
+                        'No active discounts or promotions available for this supermarket at the moment. Check back later!',
                         textAlign: TextAlign.center,
                         style: TextStyle(fontSize: 16, color: Colors.grey),
                       ),
@@ -146,7 +206,10 @@ class _DiscountsAndPromotionsPageState
               );
             }
 
-            final products = snapshot.data!.docs;
+            // Map the QuerySnapshot documents to Promotion objects
+            final promotions = snapshot.data!.docs
+                .map((doc) => Promotion.fromFirestore(doc))
+                .toList();
 
             return SingleChildScrollView(
               padding: const EdgeInsets.all(24.0),
@@ -162,31 +225,16 @@ class _DiscountsAndPromotionsPageState
                     ),
                   ),
                   const SizedBox(height: 24),
-                  // Use ListView.builder for efficient rendering of many items
                   ListView.builder(
-                    shrinkWrap:
-                        true, // Important for ListView inside SingleChildScrollView
-                    physics:
-                        const NeverScrollableScrollPhysics(), // Disable ListView's own scrolling
-                    itemCount: products.length,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: promotions.length,
                     itemBuilder: (context, index) {
-                      final doc = products[index];
-                      final data = doc.data() as Map<String, dynamic>;
+                      final promotion = promotions[index];
 
-                      final name = data['name'] ?? '';
-                      final imageUrl =
-                          data['image_url'] ?? ''; // Assuming this field name
-                      final originalPrice = (data['price'] ?? 0).toDouble();
-                      final discountedPrice = (data['discountedPrice'] ?? 0)
-                          .toDouble();
-                      final discountPercentage =
-                          (data['discountPercentage'] ?? 0).toDouble();
-                      final expiryTimestamp =
-                          data['discountExpiry'] as Timestamp?;
-                      final expiry = expiryTimestamp?.toDate();
-                      final daysLeft = expiry != null
-                          ? expiry.difference(DateTime.now()).inDays
-                          : -1;
+                      final daysLeft = promotion.discountExpiry
+                          .difference(DateTime.now())
+                          .inDays;
 
                       String expiryText;
                       if (daysLeft >= 1) {
@@ -195,36 +243,39 @@ class _DiscountsAndPromotionsPageState
                       } else if (daysLeft == 0) {
                         expiryText = 'Expires Today!';
                       } else {
-                        expiryText = 'Expired';
+                        expiryText =
+                            'Expired'; // This case should ideally be filtered out by the query
                       }
 
                       return DiscountCard(
                         title:
-                            '$name: UGX ${discountedPrice.toStringAsFixed(0)}',
+                            '${promotion.productName}: UGX ${promotion.discountedPrice.toStringAsFixed(0)}',
                         subtitle:
-                            'Was UGX ${originalPrice.toStringAsFixed(0)} • $expiryText',
+                            'Was UGX ${promotion.originalPrice.toStringAsFixed(0)} • $expiryText',
                         cardColor: daysLeft <= 0
-                            ? Colors
-                                  .red
-                                  .shade50 // Fixed: Use .shade50
+                            ? Colors.red.shade50
                             : const Color(0xFFFFE0E6),
                         iconColor: daysLeft <= 0
                             ? Colors.red
                             : const Color(0xFFE91E63),
                         onTap: () {
+                          // Ensure ProductDetailsPage can handle the productId from promotion
                           Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (_) => ProductDetailsPage(
-                                productId: doc.id,
+                                productId: promotion
+                                    .productId, // Pass the productId from the promotion
                                 supermarketId: widget.supermarketId,
                               ),
                             ),
                           );
                         },
-                        image: imageUrl, // Pass image for the card
-                        discountPercentage:
-                            discountPercentage, // Pass discount percentage for display
+                        image:
+                            promotion.productImageUrl ??
+                            '', // Pass image for the card
+                        discountPercentage: promotion
+                            .discountPercentage, // Pass discount percentage
                       );
                     },
                   ),
@@ -238,7 +289,7 @@ class _DiscountsAndPromotionsPageState
   }
 }
 
-// --- Reusing DiscountCard, but adding image and discountPercentage parameters ---
+// --- DiscountCard Widget (No changes needed if it supports the new parameters) ---
 class DiscountCard extends StatelessWidget {
   final String title;
   final String? subtitle;

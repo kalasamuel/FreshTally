@@ -39,7 +39,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
     return _firestore
         .collection('customers')
         .doc(userId)
-        .collection('shopping-list') // Changed to shopping-list
+        .collection('shopping-list')
         .where(
           'supermarketId',
           isEqualTo: widget.supermarketId,

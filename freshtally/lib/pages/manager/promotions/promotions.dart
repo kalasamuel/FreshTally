@@ -3,6 +3,128 @@ import 'package:flutter/material.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:intl/intl.dart';
 
+// --- Models ---
+/// Represents a product with all its attributes.
+class Product {
+  final String productId;
+  final String productName;
+  final String? productImageUrl;
+  final double productOriginalPrice;
+  final DateTime? productExpiryDate;
+  final String productSku;
+  final String productDescription;
+  final String productCategory;
+  final DateTime productCreatedAt;
+  final DateTime productLastSoldAt;
+  final String productLowerName;
+
+  Product({
+    required this.productId,
+    required this.productName,
+    this.productImageUrl,
+    required this.productOriginalPrice,
+    this.productExpiryDate,
+    required this.productSku,
+    required this.productDescription,
+    required this.productCategory,
+    required this.productCreatedAt,
+    required this.productLastSoldAt,
+    required this.productLowerName,
+  });
+
+  /// Factory constructor to create a [Product] from a Firestore [DocumentSnapshot].
+  factory Product.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    return Product(
+      productId: doc.id,
+      productName: data['name'] ?? 'Unnamed Product',
+      productImageUrl: data['imageUrl'],
+      productOriginalPrice: (data['price'] ?? 0.0).toDouble(),
+      productExpiryDate: (data['expiryDate'] as Timestamp?)?.toDate(),
+      productSku: data['sku'] ?? '',
+      productDescription: data['description'] ?? '',
+      productCategory: data['category'] ?? '',
+      productCreatedAt: (data['created_at'] as Timestamp).toDate(),
+      productLastSoldAt: (data['last_sold_at'] as Timestamp).toDate(),
+      productLowerName: data['name_lower'] ?? '',
+    );
+  }
+
+  /// Converts this [Product] instance into a map for Firestore.
+  Map<String, dynamic> toFirestore() {
+    return {
+      'name': productName,
+      'imageUrl': productImageUrl,
+      'price': productOriginalPrice,
+      'expiryDate': productExpiryDate != null
+          ? Timestamp.fromDate(productExpiryDate!)
+          : null,
+      'sku': productSku,
+      'description': productDescription,
+      'category': productCategory,
+      'created_at': Timestamp.fromDate(productCreatedAt),
+      'last_sold_at': Timestamp.fromDate(productLastSoldAt),
+      'name_lower': productLowerName,
+    };
+  }
+}
+
+/// Represents a promotion or discount.
+class Promotion {
+  final String promotionId;
+  final String productId;
+  final String productName;
+  final String? productImageUrl;
+  final double originalPrice;
+  final double discountPercentage;
+  final double discountedPrice;
+  final DateTime discountExpiry;
+  final DateTime createdAt;
+
+  Promotion({
+    required this.promotionId,
+    required this.productId,
+    required this.productName,
+    this.productImageUrl,
+    required this.originalPrice,
+    required this.discountPercentage,
+    required this.discountedPrice,
+    required this.discountExpiry,
+    required this.createdAt,
+  });
+
+  /// Factory constructor to create a [Promotion] from a Firestore [DocumentSnapshot].
+  factory Promotion.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    return Promotion(
+      promotionId: doc.id,
+      productId: data['productId'] ?? '',
+      productName: data['productName'] ?? 'Unnamed Promotion',
+      productImageUrl: data['imageUrl'],
+      originalPrice: (data['originalPrice'] ?? 0).toDouble(),
+      discountPercentage: (data['discountPercentage'] ?? 0).toDouble(),
+      discountedPrice: (data['discountedPrice'] ?? 0).toDouble(),
+      discountExpiry: (data['discountExpiry'] as Timestamp).toDate(),
+      createdAt: (data['createdAt'] as Timestamp).toDate(),
+    );
+  }
+
+  /// Converts this [Promotion] instance into a map for Firestore.
+  Map<String, dynamic> toFirestore() {
+    return {
+      'productId': productId,
+      'productName': productName,
+      'imageUrl': productImageUrl,
+      'originalPrice': originalPrice,
+      'discountPercentage': discountPercentage,
+      'discountedPrice': discountedPrice,
+      'discountExpiry': Timestamp.fromDate(discountExpiry),
+      'createdAt': Timestamp.fromDate(createdAt),
+    };
+  }
+}
+
+// --- PromotionsPage Widget ---
 class PromotionsPage extends StatefulWidget {
   final String supermarketId;
 
@@ -44,32 +166,27 @@ class _PromotionsPageState extends State<PromotionsPage> {
             return const Center(child: CircularProgressIndicator());
           }
 
-          final docs = snapshot.data!.docs;
+          final promotions = snapshot.data!.docs
+              .map((doc) => Promotion.fromFirestore(doc))
+              .toList();
 
-          if (docs.isEmpty) {
+          if (promotions.isEmpty) {
             return const Center(child: Text('No promotions added yet.'));
           }
 
           return ListView.builder(
-            itemCount: docs.length,
+            itemCount: promotions.length,
             itemBuilder: (context, index) {
-              final doc = docs[index];
-              final data = doc.data() as Map<String, dynamic>;
-
-              final productName = data['productName'] ?? 'Unnamed';
-              final productId = data['productId'] ?? '';
-              final discount = (data['discountPercentage'] ?? 0).toDouble();
-              final expiry = (data['discountExpiry'] as Timestamp).toDate();
-              final imageUrl = data['imageUrl'] ?? '';
-              final discountedPrice = (data['discountedPrice'] ?? 0).toDouble();
-              final originalPrice = (data['originalPrice'] ?? 0).toDouble();
+              final promotion = promotions[index];
 
               return Card(
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: ListTile(
-                  leading: imageUrl.isNotEmpty
+                  leading:
+                      promotion.productImageUrl != null &&
+                          promotion.productImageUrl!.isNotEmpty
                       ? Image.network(
-                          imageUrl,
+                          promotion.productImageUrl!,
                           width: 50,
                           height: 50,
                           fit: BoxFit.cover,
@@ -85,23 +202,25 @@ class _PromotionsPageState extends State<PromotionsPage> {
                           height: 50,
                         ),
                   title: Text(
-                    productName,
+                    promotion.productName,
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Original Price: UGX ${originalPrice.toStringAsFixed(0)}',
-                      ),
-                      Text('Discount: ${discount.toStringAsFixed(0)}%'),
-                      Text(
-                        'Discounted Price: UGX ${discountedPrice.toStringAsFixed(0)}',
+                        'Original Price: UGX ${promotion.originalPrice.toStringAsFixed(0)}',
                       ),
                       Text(
-                        'Expires: ${DateFormat('yyyy-MM-dd').format(expiry)}',
+                        'Discount: ${promotion.discountPercentage.toStringAsFixed(0)}%',
                       ),
-                      if (expiry.isBefore(DateTime.now()))
+                      Text(
+                        'Discounted Price: UGX ${promotion.discountedPrice.toStringAsFixed(0)}',
+                      ),
+                      Text(
+                        'Expires: ${DateFormat('yyyy-MM-dd').format(promotion.discountExpiry)}',
+                      ),
+                      if (promotion.discountExpiry.isBefore(DateTime.now()))
                         const Text(
                           'EXPIRED',
                           style: TextStyle(
@@ -112,7 +231,7 @@ class _PromotionsPageState extends State<PromotionsPage> {
                     ],
                   ),
                   trailing: const Icon(Icons.edit),
-                  onTap: () => _showEditDialog(context, doc, data),
+                  onTap: () => _showEditDialog(context, promotion),
                 ),
               );
             },
@@ -126,17 +245,13 @@ class _PromotionsPageState extends State<PromotionsPage> {
     );
   }
 
-  void _showEditDialog(
-    BuildContext context,
-    DocumentSnapshot doc,
-    Map<String, dynamic> data,
-  ) {
+  void _showEditDialog(BuildContext context, Promotion promotion) {
     final formKey = GlobalKey<FormState>();
-    double discount = (data['discountPercentage'] ?? 0).toDouble();
+    double discountPercentage = promotion.discountPercentage;
     _expiryDateDialogController.text = DateFormat(
       'yyyy-MM-dd',
-    ).format((data['discountExpiry'] as Timestamp).toDate());
-    DateTime expiry = (data['discountExpiry'] as Timestamp).toDate();
+    ).format(promotion.discountExpiry);
+    DateTime discountExpiry = promotion.discountExpiry;
 
     showDialog(
       context: context,
@@ -144,14 +259,14 @@ class _PromotionsPageState extends State<PromotionsPage> {
         return StatefulBuilder(
           builder: (context, setStateDialog) {
             return AlertDialog(
-              title: Text('Edit Promotion - ${data['productName']}'),
+              title: Text('Edit Promotion - ${promotion.productName}'),
               content: Form(
                 key: formKey,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     TextFormField(
-                      initialValue: discount.toString(),
+                      initialValue: discountPercentage.toString(),
                       decoration: const InputDecoration(
                         labelText: 'Discount %',
                       ),
@@ -166,7 +281,8 @@ class _PromotionsPageState extends State<PromotionsPage> {
                         }
                         return null;
                       },
-                      onSaved: (value) => discount = double.parse(value!),
+                      onSaved: (value) =>
+                          discountPercentage = double.parse(value!),
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
@@ -178,7 +294,7 @@ class _PromotionsPageState extends State<PromotionsPage> {
                           onPressed: () async {
                             final picked = await showDatePicker(
                               context: context,
-                              initialDate: expiry,
+                              initialDate: discountExpiry,
                               firstDate: DateTime.now(),
                               lastDate: DateTime.now().add(
                                 const Duration(days: 365 * 5),
@@ -186,7 +302,7 @@ class _PromotionsPageState extends State<PromotionsPage> {
                             );
                             if (picked != null) {
                               setStateDialog(() {
-                                expiry = picked;
+                                discountExpiry = picked;
                                 _expiryDateDialogController.text = DateFormat(
                                   'yyyy-MM-dd',
                                 ).format(picked);
@@ -197,7 +313,9 @@ class _PromotionsPageState extends State<PromotionsPage> {
                       ),
                       onChanged: (value) {
                         try {
-                          expiry = DateFormat('yyyy-MM-dd').parseStrict(value);
+                          discountExpiry = DateFormat(
+                            'yyyy-MM-dd',
+                          ).parseStrict(value);
                           formKey.currentState!.validate();
                         } catch (e) {}
                       },
@@ -214,7 +332,7 @@ class _PromotionsPageState extends State<PromotionsPage> {
                           )) {
                             return 'Date cannot be in the past';
                           }
-                          expiry = parsedDate;
+                          discountExpiry = parsedDate;
                         } catch (e) {
                           return 'Enter a valid date (YYYY-MM-DD)';
                         }
@@ -234,23 +352,22 @@ class _PromotionsPageState extends State<PromotionsPage> {
                     if (formKey.currentState!.validate()) {
                       formKey.currentState!.save();
 
-                      final originalPrice = (data['originalPrice'] ?? 0)
-                          .toDouble();
-                      final discountedPrice =
-                          (originalPrice * (1 - discount / 100)).clamp(
-                            0,
-                            originalPrice,
-                          );
+                      final newDiscountedPrice =
+                          (promotion.originalPrice *
+                                  (1 - discountPercentage / 100))
+                              .clamp(0, promotion.originalPrice);
 
                       await FirebaseFirestore.instance
                           .collection('supermarkets')
                           .doc(widget.supermarketId)
                           .collection('promotions')
-                          .doc(doc.id)
+                          .doc(promotion.promotionId)
                           .update({
-                            'discountPercentage': discount,
-                            'discountExpiry': Timestamp.fromDate(expiry),
-                            'discountedPrice': discountedPrice,
+                            'discountPercentage': discountPercentage,
+                            'discountExpiry': Timestamp.fromDate(
+                              discountExpiry,
+                            ),
+                            'discountedPrice': newDiscountedPrice,
                           });
 
                       if (!mounted) return;
@@ -258,7 +375,7 @@ class _PromotionsPageState extends State<PromotionsPage> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(
-                            'Updated promotion for ${data['productName']}',
+                            'Updated promotion for ${promotion.productName}',
                           ),
                         ),
                       );
@@ -276,12 +393,12 @@ class _PromotionsPageState extends State<PromotionsPage> {
 
   void _showAddDiscountDialog(BuildContext context) {
     final formKey = GlobalKey<FormState>();
-    String productName = '';
-    String productId = '';
-    String imageUrl = '';
-    double discount = 0;
-    DateTime? expiryDate;
-    double originalPrice = 0;
+    String selectedProductName = '';
+    String selectedProductId = '';
+    String? selectedProductImageUrl;
+    double newDiscountPercentage = 0;
+    DateTime? newDiscountExpiryDate;
+    double selectedProductOriginalPrice = 0;
 
     _productNameDialogController.clear();
     _expiryDateDialogController.clear();
@@ -299,7 +416,7 @@ class _PromotionsPageState extends State<PromotionsPage> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      TypeAheadField<Map<String, dynamic>>(
+                      TypeAheadField<Product>(
                         controller: _productNameDialogController,
                         builder: (context, controller, focusNode) {
                           return TextFormField(
@@ -311,7 +428,7 @@ class _PromotionsPageState extends State<PromotionsPage> {
                             validator: (value) {
                               if (value == null ||
                                   value.isEmpty ||
-                                  productId.isEmpty) {
+                                  selectedProductId.isEmpty) {
                                 return 'Please select a product from suggestions';
                               }
                               return null;
@@ -338,23 +455,17 @@ class _PromotionsPageState extends State<PromotionsPage> {
                               .limit(10)
                               .get();
 
-                          return querySnapshot.docs.map((doc) {
-                            final data = doc.data();
-                            return {
-                              'id': doc.id,
-                              'name': data['name'] ?? '',
-                              'imageUrl': data['imageUrl'] ?? '',
-                              'price': (data['price'] ?? 0).toDouble(),
-                              'expiryDate': data['expiryDate'],
-                            };
-                          }).toList();
+                          return querySnapshot.docs
+                              .map((doc) => Product.fromFirestore(doc))
+                              .toList();
                         },
                         itemBuilder: (context, suggestion) {
                           return ListTile(
                             leading:
-                                suggestion['imageUrl'].toString().isNotEmpty
+                                suggestion.productImageUrl != null &&
+                                    suggestion.productImageUrl!.isNotEmpty
                                 ? Image.network(
-                                    suggestion['imageUrl'],
+                                    suggestion.productImageUrl!,
                                     width: 40,
                                     height: 40,
                                     fit: BoxFit.cover,
@@ -364,34 +475,24 @@ class _PromotionsPageState extends State<PromotionsPage> {
                                     ),
                                   )
                                 : const Icon(Icons.image, size: 40),
-                            title: Text(suggestion['name'] ?? 'Unnamed'),
+                            title: Text(suggestion.productName),
                           );
                         },
                         onSelected: (suggestion) async {
-                          productName = suggestion['name'] ?? '';
-                          productId = suggestion['id'] ?? '';
-                          imageUrl = suggestion['imageUrl'] ?? '';
-                          originalPrice = (suggestion['price'] ?? 0.0);
+                          selectedProductName = suggestion.productName;
+                          selectedProductId = suggestion.productId;
+                          selectedProductImageUrl = suggestion.productImageUrl;
+                          selectedProductOriginalPrice =
+                              suggestion.productOriginalPrice;
+                          newDiscountExpiryDate = suggestion.productExpiryDate;
 
-                          _productNameDialogController.text = productName;
-
-                          final productDoc = await FirebaseFirestore.instance
-                              .collection('supermarkets')
-                              .doc(widget.supermarketId)
-                              .collection('products')
-                              .doc(productId)
-                              .get();
-
-                          final productData = productDoc.data();
-                          if (productData != null &&
-                              productData['expiryDate'] != null) {
-                            final Timestamp ts = productData['expiryDate'];
-                            expiryDate = ts.toDate();
+                          _productNameDialogController.text =
+                              selectedProductName;
+                          if (newDiscountExpiryDate != null) {
                             _expiryDateDialogController.text = DateFormat(
                               'yyyy-MM-dd',
-                            ).format(expiryDate!);
+                            ).format(newDiscountExpiryDate!);
                           } else {
-                            expiryDate = null;
                             _expiryDateDialogController.clear();
                             if (!mounted) return;
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -408,7 +509,7 @@ class _PromotionsPageState extends State<PromotionsPage> {
                       ),
                       const SizedBox(height: 12),
                       TextFormField(
-                        initialValue: discount.toString(),
+                        initialValue: newDiscountPercentage.toString(),
                         decoration: const InputDecoration(
                           labelText: 'Discount %',
                         ),
@@ -423,7 +524,8 @@ class _PromotionsPageState extends State<PromotionsPage> {
                           }
                           return null;
                         },
-                        onSaved: (value) => discount = double.parse(value!),
+                        onSaved: (value) =>
+                            newDiscountPercentage = double.parse(value!),
                       ),
                       const SizedBox(height: 12),
                       TextFormField(
@@ -436,7 +538,8 @@ class _PromotionsPageState extends State<PromotionsPage> {
                             onPressed: () async {
                               final picked = await showDatePicker(
                                 context: context,
-                                initialDate: expiryDate ?? DateTime.now(),
+                                initialDate:
+                                    newDiscountExpiryDate ?? DateTime.now(),
                                 firstDate: DateTime.now(),
                                 lastDate: DateTime.now().add(
                                   const Duration(days: 365 * 5),
@@ -444,7 +547,7 @@ class _PromotionsPageState extends State<PromotionsPage> {
                               );
                               if (picked != null) {
                                 setStateDialog(() {
-                                  expiryDate = picked;
+                                  newDiscountExpiryDate = picked;
                                   _expiryDateDialogController.text = DateFormat(
                                     'yyyy-MM-dd',
                                   ).format(picked);
@@ -455,7 +558,7 @@ class _PromotionsPageState extends State<PromotionsPage> {
                         ),
                         onChanged: (value) {
                           try {
-                            expiryDate = DateFormat(
+                            newDiscountExpiryDate = DateFormat(
                               'yyyy-MM-dd',
                             ).parseStrict(value);
                             formKey.currentState!.validate();
@@ -474,7 +577,7 @@ class _PromotionsPageState extends State<PromotionsPage> {
                             )) {
                               return 'Date cannot be in the past';
                             }
-                            expiryDate = parsedDate;
+                            newDiscountExpiryDate = parsedDate;
                           } catch (e) {
                             return 'Enter a valid date (YYYY-MM-DD)';
                           }
@@ -495,7 +598,7 @@ class _PromotionsPageState extends State<PromotionsPage> {
                     if (formKey.currentState!.validate()) {
                       formKey.currentState!.save();
 
-                      if (productId.isEmpty) {
+                      if (selectedProductId.isEmpty) {
                         if (!mounted) return;
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
@@ -508,7 +611,7 @@ class _PromotionsPageState extends State<PromotionsPage> {
                         return;
                       }
 
-                      if (expiryDate == null) {
+                      if (newDiscountExpiryDate == null) {
                         if (!mounted) return;
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
@@ -521,11 +624,10 @@ class _PromotionsPageState extends State<PromotionsPage> {
                         return;
                       }
 
-                      final discountedPrice =
-                          (originalPrice * (1 - discount / 100)).clamp(
-                            0,
-                            originalPrice,
-                          );
+                      final newDiscountedPrice =
+                          (selectedProductOriginalPrice *
+                                  (1 - newDiscountPercentage / 100))
+                              .clamp(0, selectedProductOriginalPrice);
 
                       try {
                         final promotionRef = FirebaseFirestore.instance
@@ -534,23 +636,26 @@ class _PromotionsPageState extends State<PromotionsPage> {
                             .collection('promotions')
                             .doc();
 
-                        await promotionRef.set({
-                          'productId': productId,
-                          'productName': productName,
-                          'imageUrl': imageUrl,
-                          'originalPrice': originalPrice,
-                          'discountPercentage': discount,
-                          'discountedPrice': discountedPrice,
-                          'discountExpiry': Timestamp.fromDate(expiryDate!),
-                          'createdAt': Timestamp.now(),
-                        });
+                        await promotionRef.set(
+                          Promotion(
+                            promotionId: promotionRef.id,
+                            productId: selectedProductId,
+                            productName: selectedProductName,
+                            productImageUrl: selectedProductImageUrl,
+                            originalPrice: selectedProductOriginalPrice,
+                            discountPercentage: newDiscountPercentage,
+                            discountedPrice: newDiscountedPrice.toDouble(),
+                            discountExpiry: newDiscountExpiryDate!,
+                            createdAt: DateTime.now(),
+                          ).toFirestore(),
+                        );
 
                         if (!mounted) return;
                         Navigator.of(context).pop();
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(
-                              'Successfully created promotion for $productName!',
+                              'Successfully created promotion for $selectedProductName!',
                             ),
                             backgroundColor: Colors.green,
                           ),

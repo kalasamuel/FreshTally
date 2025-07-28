@@ -95,11 +95,13 @@ class _SupplierBatchEntryPageState extends State<SupplierBatchEntryPage> {
     super.dispose();
   }
 
+  // MODIFIED: Search for suppliers within the supermarket's subcollection
   Future<List<DocumentSnapshot>> _searchSuppliers(String pattern) async {
     if (pattern.isEmpty) return [];
     final snapshot = await FirebaseFirestore.instance
-        .collection('suppliers')
-        .where('supermarketId', isEqualTo: widget.supermarketId)
+        .collection('supermarkets')
+        .doc(widget.supermarketId)
+        .collection('suppliers') // Corrected path
         .where('name_lower', isGreaterThanOrEqualTo: pattern.toLowerCase())
         .where(
           'name_lower',
@@ -110,11 +112,13 @@ class _SupplierBatchEntryPageState extends State<SupplierBatchEntryPage> {
     return snapshot.docs;
   }
 
+  // MODIFIED: Search for products within the supermarket's subcollection
   Future<List<DocumentSnapshot>> _searchProducts(String pattern) async {
     if (pattern.isEmpty) return [];
     final snapshot = await FirebaseFirestore.instance
-        .collection('products')
-        .where('supermarketId', isEqualTo: widget.supermarketId)
+        .collection('supermarkets')
+        .doc(widget.supermarketId)
+        .collection('products') // Corrected path
         .where('name_lower', isGreaterThanOrEqualTo: pattern.toLowerCase())
         .where(
           'name_lower',
@@ -229,9 +233,15 @@ class _SupplierBatchEntryPageState extends State<SupplierBatchEntryPage> {
       _showSnackBar('Please select a product.', isError: true);
       return;
     }
-    if (selectedSupplier == null) {
-      _showSnackBar('Please select a supplier.', isError: true);
-      return;
+    if (selectedSupplier == null && !_isEditing) {
+      // If not editing, and no supplier is selected, it means we're creating a new one
+      if (supplierNameController.text.trim().isEmpty) {
+        _showSnackBar(
+          'Please select an existing supplier or enter details for a new one.',
+          isError: true,
+        );
+        return;
+      }
     }
 
     final bool confirmSave = await _showConfirmationDialog(
@@ -254,16 +264,24 @@ class _SupplierBatchEntryPageState extends State<SupplierBatchEntryPage> {
         'name_lower': supplierNameController.text.trim().toLowerCase(),
         'contact': contactController.text.trim(),
         'address': addressController.text.trim(),
-        'supermarketId': widget.supermarketId,
+        // 'supermarketId' is implicitly handled by the path now, but can be kept for queries if needed
       };
 
       DocumentReference supplierRef;
-      if (selectedSupplier != null && _isEditing) {
+      // If editing and a supplier was selected
+      if (_isEditing && selectedSupplier != null) {
+        // Update the existing supplier document within its supermarket subcollection
         await selectedSupplier!.reference.update(supplierData);
         supplierRef = selectedSupplier!.reference;
+      } else if (selectedSupplier != null) {
+        // This case handles selecting an existing supplier when adding a new batch
+        supplierRef = selectedSupplier!.reference;
       } else {
+        // If no supplier was selected (meaning a new one needs to be created)
         supplierRef = await FirebaseFirestore.instance
-            .collection('suppliers')
+            .collection('supermarkets')
+            .doc(widget.supermarketId)
+            .collection('suppliers') // Corrected path for new supplier
             .add(supplierData);
       }
 
@@ -274,14 +292,20 @@ class _SupplierBatchEntryPageState extends State<SupplierBatchEntryPage> {
         'expiry_date': _selectedExpiryDate != null
             ? Timestamp.fromDate(_selectedExpiryDate!)
             : null,
-        'supermarketId': widget.supermarketId,
         'created_at': FieldValue.serverTimestamp(),
+        // 'supermarketId' is implicitly handled by the path here as well.
       };
 
       if (_isEditing && widget.batchToEdit != null) {
+        // Update the existing batch document within its supermarket subcollection
         await widget.batchToEdit!.reference.update(batchData);
       } else {
-        await FirebaseFirestore.instance.collection('batches').add(batchData);
+        // Add a new batch document to the supermarket's batches subcollection
+        await FirebaseFirestore.instance
+            .collection('supermarkets')
+            .doc(widget.supermarketId)
+            .collection('batches') // Corrected path for new batch
+            .add(batchData);
       }
 
       if (!mounted) return;
@@ -326,6 +350,7 @@ class _SupplierBatchEntryPageState extends State<SupplierBatchEntryPage> {
 
     setState(() => _isLoading = true);
     try {
+      // The reference of batchToEdit is already correct, as it was fetched from the subcollection.
       await widget.batchToEdit!.reference.delete();
       if (!mounted) return;
       _showSnackBar('🗑️ Batch deleted successfully!');

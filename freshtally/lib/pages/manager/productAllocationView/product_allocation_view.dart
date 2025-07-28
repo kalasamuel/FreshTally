@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ProductAllocationView extends StatefulWidget {
-  final String supermarketId; // Add supermarketId parameter
+  final String supermarketId;
 
   const ProductAllocationView({super.key, required this.supermarketId});
 
