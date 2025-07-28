@@ -1,12 +1,12 @@
-import 'package:flutter/material.dart';
 import 'package:Freshtally/pages/manager/analytics/analytics_dashbaord_page.dart';
+import 'package:flutter/material.dart';
 import 'package:Freshtally/pages/manager/managerNotifications/notifications.dart';
 import 'package:Freshtally/pages/manager/staffManagement/staff_managementJoin_code.dart';
 import 'package:Freshtally/pages/shelfStaff/settings/settings_page.dart';
 import 'package:Freshtally/pages/manager/productAllocationView/product_allocation_view.dart';
 import 'package:Freshtally/pages/manager/promotions/smart_promotions_suggestions.dart';
 
-import 'package:Freshtally/pages/shelfStaff/sync/sync_status_page.dart';
+// import 'package:Freshtally/pages/shelfStaff/sync/sync_status_page.dart';
 import 'package:Freshtally/pages/manager/promotions/promotions.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -42,15 +42,7 @@ class ManagerDashboardPage extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    // Profile Image
-                    const CircleAvatar(
-                      radius: 24,
-                      backgroundImage: NetworkImage(
-                        'https://i.pravatar.cc/150?img=48',
-                      ), // Placeholder image
-                    ),
                     const SizedBox(width: 12),
-                    // Supermarket Name
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -82,6 +74,7 @@ class ManagerDashboardPage extends StatelessWidget {
                             builder: (context) {
                               return ManagerNotificationCenterPage(
                                 supermarketName: supermarketName,
+                                managerId: managerId,
                               );
                             },
                           ),
@@ -97,7 +90,7 @@ class ManagerDashboardPage extends StatelessWidget {
                           context,
                           MaterialPageRoute(
                             builder: (context) {
-                              return SettingsPage(supermarketId: '');
+                              return SettingsPage(supermarketId: supermarketId);
                             },
                           ),
                         );
@@ -136,13 +129,15 @@ class ManagerDashboardPage extends StatelessWidget {
                     _buildDashboardTile(
                       title: 'Analytics Dashboard',
                       icon: Icons.bar_chart,
-                      color: const Color(0xFFE8E8E8), // Grey color from image
+                      color: const Color(0xFFE8E8E8),
                       onTap: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
                             builder: (context) {
-                              return AnalyticsDashboardPage();
+                              return AnalyticsDashboardPage(
+                                supermarketId: supermarketId,
+                              );
                             },
                           ),
                         );
@@ -157,7 +152,9 @@ class ManagerDashboardPage extends StatelessWidget {
                           context,
                           MaterialPageRoute(
                             builder: (context) {
-                              return PromotionsPage();
+                              return PromotionsPage(
+                                supermarketId: supermarketId,
+                              );
                             },
                           ),
                         );
@@ -167,7 +164,7 @@ class ManagerDashboardPage extends StatelessWidget {
                     _buildDashboardTile(
                       title: 'Smart promotions',
                       icon: Icons.lightbulb,
-                      color: const Color(0xFFE8E8E8), // Grey color
+                      color: const Color(0xFFE8E8E8),
                       onTap: () {
                         Navigator.push(
                           context,
@@ -182,7 +179,7 @@ class ManagerDashboardPage extends StatelessWidget {
                       },
                     ),
                     _buildDashboardTile(
-                      title: 'product allocation',
+                      title: 'Product allocation',
                       icon: Icons.assignment,
                       color: const Color(0xFFFFF3E0),
                       onTap: () {
@@ -190,7 +187,9 @@ class ManagerDashboardPage extends StatelessWidget {
                           context,
                           MaterialPageRoute(
                             builder: (context) {
-                              return ProductAllocationView();
+                              return ProductAllocationView(
+                                supermarketId: supermarketId,
+                              );
                             },
                           ),
                         );
@@ -216,50 +215,25 @@ class ManagerDashboardPage extends StatelessWidget {
                       },
                     ),
 
-                    _buildDashboardTile(
-                      title: 'Sync Status',
-                      icon: Icons.sync,
-                      color: const Color(0xFFE0F2F1), // Light green color
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) {
-                              return SyncStatusPage(supermarketId: '');
-                            },
-                          ),
-                        );
-                      },
-                    ),
+                    // _buildDashboardTile(
+                    //   title: 'Sync Status',
+                    //   icon: Icons.sync,
+                    //   color: const Color(0xFFE0F2F1), // Light green color
+                    //   onTap: () {
+                    //     Navigator.push(
+                    //       context,
+                    //       MaterialPageRoute(
+                    //         builder: (context) {
+                    //           return SyncStatusPage(supermarketId: '');
+                    //         },
+                    //       ),
+                    //     );
+                    //   },
+                    // ),
                   ],
                 ),
               ),
 
-              const SizedBox(height: 32),
-
-              // // "Sync Now" Button
-              // Center(
-              //   child: Padding(
-              //     padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              //     child: ElevatedButton(
-              //       onPressed: () {
-              //         // Handle Sync Now
-              //       },
-              //       style: ElevatedButton.styleFrom(
-              //         backgroundColor: const Color(0xFF4CAF50), // Green color
-              //         minimumSize: const Size(50, 60), // Full width and height
-              //         shape: RoundedRectangleBorder(
-              //           borderRadius: BorderRadius.circular(50),
-              //         ),
-              //         elevation: 0.1,
-              //       ),
-              //       child: const Text(
-              //         'Sync Now',
-              //         style: TextStyle(fontSize: 18, color: Colors.white),
-              //       ),
-              //     ),
-              //   ),
-              // ),
               const SizedBox(height: 32),
             ],
           ),
@@ -332,15 +306,18 @@ Widget _buildDashboardTile({
               Icon(icon, size: 60, color: Colors.black87),
               const SizedBox(height: 8),
 
-              Text(
-                title,
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  title,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  ),
                 ),
               ),
             ],

@@ -1,16 +1,94 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class ShoppingListPage extends StatefulWidget {
-  const ShoppingListPage({super.key});
+  final String supermarketId;
+  const ShoppingListPage({super.key, required this.supermarketId});
 
   @override
   State<ShoppingListPage> createState() => _ShoppingListPageState();
 }
 
 class _ShoppingListPageState extends State<ShoppingListPage> {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  User? _currentUser;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentUser = FirebaseAuth.instance.currentUser;
+  }
+
+  void _showSnackBar(String message, {bool isError = false}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? Colors.red.shade700 : Colors.green.shade700,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
+  // Updated to use shopping-list subcollection
+  Stream<List<Map<String, dynamic>>> _getShoppingListItems() {
+    final String userId = _currentUser!.uid;
+
+    return _firestore
+        .collection('customers')
+        .doc(userId)
+        .collection('shopping-list') // Changed to shopping-list
+        .where(
+          'supermarketId',
+          isEqualTo: widget.supermarketId,
+        ) // Filter by supermarket
+        .snapshots()
+        .asyncMap((snapshot) async {
+          List<Map<String, dynamic>> items = [];
+          for (var doc in snapshot.docs) {
+            final itemData = doc.data();
+            final productId = itemData['productId'];
+            final quantity = itemData['quantity'] ?? 1;
+            final checked = itemData['checked'] ?? false;
+
+            if (productId != null && productId.isNotEmpty) {
+              final productDoc = await _firestore
+                  .collection('products')
+                  .doc(productId)
+                  .get();
+
+              if (productDoc.exists) {
+                final productData = productDoc.data();
+                items.add({
+                  'id': doc.id,
+                  'productName': productData?['name'] ?? 'Unknown Product',
+                  'price': (productData?['price'] ?? 0).toDouble(),
+                  'imageUrl': productData?['image_url'] ?? '',
+                  'quantity': quantity,
+                  'checked': checked,
+                  'location': productData?['location'],
+                  'productId': productId,
+                });
+              } else {
+                debugPrint(
+                  'Product $productId not found in "products" collection.',
+                );
+              }
+            }
+          }
+          return items;
+        });
+  }
+
   Future<void> _clearAll() async {
-    // Show confirmation dialog first
+    if (_currentUser == null) {
+      _showSnackBar('Login required to clear list.', isError: true);
+      return;
+    }
+    final String userId = _currentUser!.uid;
+
     bool? confirmDelete = await showDialog<bool>(
       context: context,
       builder: (BuildContext context) {
@@ -21,11 +99,12 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
           ),
           actions: <Widget>[
             TextButton(
-              onPressed: () => Navigator.of(context).pop(false), // User cancels
+              onPressed: () => Navigator.of(context).pop(false),
               child: const Text('Cancel'),
             ),
             TextButton(
-              onPressed: () => Navigator.of(context).pop(true), // User confirms
+              onPressed: () => Navigator.of(context).pop(true),
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
               child: const Text('Delete All'),
             ),
           ],
@@ -33,171 +112,359 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
       },
     );
 
-    // Only proceed with deletion if the user confirmed
     if (confirmDelete == true) {
       try {
-        final snapshot = await FirebaseFirestore.instance
-            .collection('shopping_list')
+        final shoppingListItemsSnapshot = await _firestore
+            .collection('customers')
+            .doc(userId)
+            .collection('shopping-list')
+            .where('supermarketId', isEqualTo: widget.supermarketId)
             .get();
-        for (final doc in snapshot.docs) {
-          await doc.reference.delete();
-        }
-        if (!mounted) return;
 
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('All items cleared')));
+        final writeBatch = _firestore.batch();
+        for (final doc in shoppingListItemsSnapshot.docs) {
+          writeBatch.delete(doc.reference);
+        }
+        await writeBatch.commit();
+
+        if (!mounted) return;
+        _showSnackBar('✅ All items cleared from your shopping list.');
       } catch (e) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to clear all items: $e')),
-        );
+        _showSnackBar('❌ Failed to clear all items: $e', isError: true);
+        debugPrint('Failed to clear shopping list: $e');
       }
     }
   }
 
   Future<void> _updateChecked(String docId, bool checked) async {
-    await FirebaseFirestore.instance
-        .collection('shopping_list')
-        .doc(docId)
-        .update({'checked': checked});
+    if (_currentUser == null) {
+      _showSnackBar('Login required to update item status.', isError: true);
+      return;
+    }
+    final String userId = _currentUser!.uid;
+    try {
+      await _firestore
+          .collection('customers')
+          .doc(userId)
+          .collection('shopping-list')
+          .doc(docId)
+          .update({'checked': checked});
+    } catch (e) {
+      if (!mounted) return;
+      _showSnackBar('Failed to update item status: $e', isError: true);
+      debugPrint('Error updating shopping list item $docId: $e');
+    }
   }
 
   Future<void> _deleteItem(String docId) async {
-    await FirebaseFirestore.instance
-        .collection('shopping_list')
-        .doc(docId)
-        .delete();
-
-    if (!mounted) return;
-
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Removed from shopping list')));
+    if (_currentUser == null) {
+      _showSnackBar('Login required to delete item.', isError: true);
+      return;
+    }
+    final String userId = _currentUser!.uid;
+    try {
+      await _firestore
+          .collection('customers')
+          .doc(userId)
+          .collection('shopping-list')
+          .doc(docId)
+          .delete();
+      if (!mounted) return;
+      _showSnackBar('Removed from shopping list.');
+    } catch (e) {
+      if (!mounted) return;
+      _showSnackBar('Failed to remove item: $e', isError: true);
+      debugPrint('Error deleting shopping list item $docId: $e');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('shopping_list')
-          .snapshots(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
+    if (_currentUser == null) {
+      return const Scaffold(
+        body: Center(
+          child: Padding(
+            padding: EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.person_off, size: 60, color: Colors.grey),
+                SizedBox(height: 16),
+                Text(
+                  'Please log in to view your shopping list.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 18, color: Colors.grey),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
 
-        final items = snapshot.data?.docs ?? [];
+    if (widget.supermarketId.isEmpty) {
+      return const Scaffold(
+        body: Center(
+          child: Padding(
+            padding: EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.store_mall_directory_outlined,
+                  size: 60,
+                  color: Colors.grey,
+                ),
+                SizedBox(height: 16),
+                Text(
+                  'Supermarket not selected. Please go back and select a supermarket first.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 18, color: Colors.grey),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
 
-        return Scaffold(
-          body: items.isEmpty
-              ? const Center(child: Text('Your shopping list is empty.'))
-              : ListView.builder(
-                  itemCount: items.length,
-                  itemBuilder: (context, index) {
-                    final item = items[index];
-                    final data = item.data() as Map<String, dynamic>;
-                    final checked = data['checked'] ?? false;
+    return Scaffold(
+      body: StreamBuilder<List<Map<String, dynamic>>>(
+        stream: _getShoppingListItems(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-                    final location = data['location'] as Map<String, dynamic>?;
+          if (snapshot.hasError) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.error_outline,
+                      size: 60,
+                      color: Colors.red,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Error loading shopping list: ${snapshot.error}',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontSize: 16, color: Colors.red),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
 
-                    String locationText = '';
-                    if (location != null) {
-                      locationText =
-                          'Floor: ${location['floor']}, Shelf: ${location['shelf']}, Position: ${location['position'].toString().toUpperCase()}';
-                    }
+          final items = snapshot.data ?? [];
 
-                    return Dismissible(
-                      key: Key(item.id),
-                      direction: DismissDirection.endToStart,
-                      background: Container(
-                        alignment: Alignment.centerRight,
-                        color: Colors.red,
-                        padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: const Icon(Icons.delete, color: Colors.white),
-                      ),
-                      onDismissed: (_) => _deleteItem(item.id),
-                      child: Card(
-                        margin: const EdgeInsets.symmetric(
-                          vertical: 6,
-                          horizontal: 8,
+          if (items.isEmpty) {
+            return const Center(
+              child: Padding(
+                padding: EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.shopping_cart_outlined,
+                      size: 60,
+                      color: Colors.grey,
+                    ),
+                    SizedBox(height: 16),
+                    Text(
+                      'Your shopping list for this supermarket is empty. Add some items!',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 16, color: Colors.grey),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
+
+          return ListView.builder(
+            itemCount: items.length,
+            itemBuilder: (context, index) {
+              final item = items[index];
+              final String docId = item['id'];
+              final String productName = item['productName'];
+              final double price = item['price'];
+              final String imageUrl = item['imageUrl'];
+              final int quantity = item['quantity'];
+              final bool checked = item['checked'];
+              final Map<String, dynamic>? productLocation = item['location'];
+
+              String locationText = '';
+              if (productLocation != null &&
+                  productLocation['floor'] != null &&
+                  productLocation['shelf'] != null) {
+                locationText =
+                    'Floor: ${productLocation['floor']}, Shelf: ${productLocation['shelf']}';
+                if (productLocation['position'] != null &&
+                    productLocation['position'].toString().isNotEmpty) {
+                  locationText +=
+                      ', Pos: ${productLocation['position'].toString().toUpperCase()}';
+                }
+              }
+
+              return Dismissible(
+                key: Key(docId),
+                direction: DismissDirection.endToStart,
+                background: Container(
+                  alignment: Alignment.centerRight,
+                  color: Colors.red.shade700,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: const Icon(Icons.delete, color: Colors.white),
+                ),
+                onDismissed: (_) => _deleteItem(docId),
+                confirmDismiss: (direction) async {
+                  return await showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: const Text('Confirm Delete'),
+                        content: Text(
+                          'Are you sure you want to delete "$productName"?',
                         ),
-                        elevation: 0.1,
-                        child: CheckboxListTile(
-                          value: checked,
-                          onChanged: (val) =>
-                              _updateChecked(item.id, val ?? false),
-                          title: Text(
-                            data['name'] ?? '',
-                            style: TextStyle(
-                              decoration: checked
-                                  ? TextDecoration.lineThrough
-                                  : null,
-                            ),
+                        actions: <Widget>[
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(false),
+                            child: const Text('Cancel'),
                           ),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('${data['price']} UGX'),
-                              if (locationText.isNotEmpty)
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 6.0),
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 4,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Colors.green.shade50,
-                                      borderRadius: BorderRadius.circular(8),
-                                      border: Border.all(
-                                        color: Colors.green.shade400,
-                                        width: 1,
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(true),
+                            style: TextButton.styleFrom(
+                              foregroundColor: Colors.red,
+                            ),
+                            child: const Text('Delete'),
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                },
+                child: Card(
+                  margin: const EdgeInsets.symmetric(
+                    vertical: 6,
+                    horizontal: 8,
+                  ),
+                  elevation: 0.1,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: CheckboxListTile(
+                    value: checked,
+                    onChanged: (val) => _updateChecked(docId, val ?? false),
+                    title: Text(
+                      '$productName (x$quantity)',
+                      style: TextStyle(
+                        decoration: checked ? TextDecoration.lineThrough : null,
+                        color: checked ? Colors.grey : Colors.black87,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'UGX ${price.toStringAsFixed(0)}',
+                          style: const TextStyle(fontSize: 14),
+                        ),
+                        if (locationText.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 6.0),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.green.shade50,
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: Colors.green.shade400,
+                                  width: 1,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.location_on,
+                                    color: Colors.green,
+                                    size: 18,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Flexible(
+                                    child: Text(
+                                      locationText,
+                                      style: const TextStyle(
+                                        color: Colors.green,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 13,
                                       ),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        const Icon(
-                                          Icons.location_on,
-                                          color: Colors.green,
-                                          size: 18,
-                                        ),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          locationText,
-                                          style: const TextStyle(
-                                            color: Colors.green,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ],
+                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
-                                ),
-                            ],
+                                ],
+                              ),
+                            ),
                           ),
-                          secondary: Image.network(
-                            data['image_url'] ?? '',
-                            width: 50,
-                            height: 50,
-                            errorBuilder: (_, __, ___) =>
-                                const Icon(Icons.image_not_supported),
+                      ],
+                    ),
+                    secondary: imageUrl.isNotEmpty
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.network(
+                              imageUrl,
+                              width: 50,
+                              height: 50,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => const Icon(
+                                Icons.image_not_supported,
+                                size: 50,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          )
+                        : const Icon(
+                            Icons.image_not_supported,
+                            size: 50,
+                            color: Colors.grey,
                           ),
-                        ),
-                      ),
-                    );
-                  },
+                  ),
                 ),
-          floatingActionButton: items.isNotEmpty
+              );
+            },
+          );
+        },
+      ),
+      floatingActionButton: StreamBuilder<List<Map<String, dynamic>>>(
+        stream: _getShoppingListItems(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting ||
+              snapshot.hasError ||
+              _currentUser == null ||
+              widget.supermarketId.isEmpty) {
+            return Container();
+          }
+          final items = snapshot.data ?? [];
+          return items.isNotEmpty
               ? FloatingActionButton(
                   tooltip: 'Clear All',
-                  onPressed: _clearAll, // Now calls the modified _clearAll
-                  child: const Icon(Icons.delete),
+                  onPressed: _clearAll,
+                  backgroundColor: Colors.red.shade600,
+                  foregroundColor: Colors.white,
+                  child: const Icon(Icons.delete_forever),
                 )
-              : null,
-        );
-      },
+              : Container();
+        },
+      ),
     );
   }
 }

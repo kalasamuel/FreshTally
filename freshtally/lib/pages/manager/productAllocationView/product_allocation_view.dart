@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class ProductAllocationView extends StatefulWidget {
-  const ProductAllocationView({super.key});
+  final String supermarketId; // Add supermarketId parameter
+
+  const ProductAllocationView({super.key, required this.supermarketId});
 
   @override
   State<ProductAllocationView> createState() => _ProductAllocationViewState();
@@ -52,7 +54,12 @@ class _ProductAllocationViewState extends State<ProductAllocationView> {
           ),
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
-              stream: _firestore.collection('products').snapshots(),
+              // Updated to use supermarket-specific products collection
+              stream: _firestore
+                  .collection('supermarkets')
+                  .doc(widget.supermarketId)
+                  .collection('products')
+                  .snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.hasError) {
                   return Center(child: Text('Error: ${snapshot.error}'));
@@ -124,6 +131,16 @@ class _ProductAllocationViewState extends State<ProductAllocationView> {
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
+                                const Spacer(),
+                                if (product['discountPercentage'] != null &&
+                                    product['discountPercentage'] > 0)
+                                  Text(
+                                    '${product['discountPercentage']}% OFF',
+                                    style: const TextStyle(
+                                      color: Colors.green,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                               ],
                             ),
                             const SizedBox(height: 12),
@@ -171,7 +188,6 @@ class _ProductAllocationViewState extends State<ProductAllocationView> {
   }
 
   String _formatPosition(String position) {
-    // Convert "TOP" to "Top", "MIDDLE" to "Middle", etc.
     if (position.isEmpty) return position;
     return position[0].toUpperCase() + position.substring(1).toLowerCase();
   }

@@ -57,6 +57,7 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
   bool _isLoading = false;
   String? _errorMessage;
   bool _isSupermarketValid = true;
+  String? _supermarketValidationError;
 
   final TextEditingController _supermarketNameController =
       TextEditingController();
@@ -85,27 +86,59 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
 
   Future<void> _validateSupermarket() async {
     final name = _supermarketNameController.text.trim();
+    final nameLower = name.toLowerCase();
     final location = _locationController.text.trim();
 
     if (name.isEmpty || location.isEmpty) {
-      setState(() => _isSupermarketValid = true);
+      setState(() {
+        _isSupermarketValid = true;
+        _supermarketValidationError = null;
+      });
       return;
     }
 
     try {
-      final query = await _firestore
+      // Query for supermarkets with the same name
+      final nameQuery = await _firestore
           .collection('supermarkets')
-          .where('name', isEqualTo: name)
+          .where('name_lower', isEqualTo: nameLower)
+          .get();
+
+      if (nameQuery.docs.isEmpty) {
+        // Name is unique
+        setState(() {
+          _isSupermarketValid = true;
+          _supermarketValidationError = null;
+        });
+        return;
+      }
+
+      // If name exists, check if the same location exists for that name
+      final locationQuery = await _firestore
+          .collection('supermarkets')
+          .where('name_lower', isEqualTo: nameLower)
           .where('location', isEqualTo: location)
           .limit(1)
           .get();
 
-      setState(() {
-        _isSupermarketValid = query.docs.isEmpty;
-      });
+      if (locationQuery.docs.isEmpty) {
+        // Location is unique for this name
+        setState(() {
+          _isSupermarketValid = true;
+          _supermarketValidationError = null;
+        });
+      } else {
+        // Both name and location are already used together
+        setState(() {
+          _isSupermarketValid = false;
+          _supermarketValidationError =
+              'A supermarket with this name already exists at this location.';
+        });
+      }
     } catch (e) {
       setState(() {
         _isSupermarketValid = true;
+        _supermarketValidationError = null;
       });
     }
   }
@@ -126,71 +159,68 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
             email: _emailController.text.trim(),
             password: _passwordController.text.trim(),
           );
+
       final user = userCredential.user;
-      if (user != null) {
-        await FirebaseFirestore.instance
-            .collection('supermarkets')
-            .doc(user.uid) // or your supermarketId variable
-            .set({
-              'name': _supermarketNameController.text.trim(),
-              'location': _locationController.text.trim(),
-              'manager': {
-                'uid': user.uid,
-                'firstName': _firstNameController.text.trim(),
-                'lastName': _lastNameController.text.trim(),
-                'email': _emailController.text.trim(),
-              },
-              'createdAt': FieldValue.serverTimestamp(),
-              'staffCount': 1,
-            });
+      if (user == null) {
+        throw Exception("User creation failed. No user object returned.");
       }
 
-      if (!mounted) return;
+      final String uid = user.uid; // Get the authenticated user's UID
 
-      final String uid = userCredential.user!.uid;
-
-      final supermarketData = {
-        'name': _supermarketNameController.text.trim(),
-        'location': _locationController.text.trim(),
-        'manager': {
-          'uid': uid,
-          'firstName': _firstNameController.text.trim(),
-          'lastName': _lastNameController.text.trim(),
-          'email': _emailController.text.trim(),
-        },
-        'createdAt': FieldValue.serverTimestamp(),
-        'staffCount': 1,
-      };
-
-      // After successfully creating the user and storing supermarket data
-      await _firestore.collection('supermarkets').doc(uid).set(supermarketData);
-
-      // Store manager details under the supermarket's user subcollection
+      // 1. Create the Supermarket document (using manager's UID as Supermarket ID)
+      // This also stores some initial manager details nested.
       await _firestore
           .collection('supermarkets')
-          .doc(uid)
-          .collection('users')
-          .doc(uid)
+          .doc(uid) // The supermarket's ID is the manager's UID
           .set({
+            'name': _supermarketNameController.text.trim(),
+            'name_lower': _supermarketNameController.text.trim().toLowerCase(),
+            'location': _locationController.text.trim(),
+            'manager': {
+              'uid': uid, // Store manager's UID within the supermarket document
+              'firstName': _firstNameController.text.trim(),
+              'lastName': _lastNameController.text.trim(),
+              'email': _emailController.text.trim(),
+            },
+            'createdAt': FieldValue.serverTimestamp(),
+            'staffCount': 1,
+          });
+
+      // 2. Create the Manager's User Profile document under the 'users' subcollection
+      // This is the document that your LoginPage's collectionGroup query expects.
+      await _firestore
+          .collection('supermarkets')
+          .doc(uid) // Reference the created supermarket
+          .collection('users') // Access the 'users' subcollection
+          .doc(
+            uid,
+          ) // Set the manager's UID as the document ID for their profile
+          .set({
+            'uid':
+                uid, // <--- IMPORTANT: Explicitly add the UID field here for the collectionGroup query
             'firstName': _firstNameController.text.trim(),
             'lastName': _lastNameController.text.trim(),
             'email': _emailController.text.trim(),
-            'role': 'manager',
-            'supermarketId': uid, // This is already correctly storing the UID
+            'role': 'manager', // Crucial for role-based navigation
+            'supermarketId':
+                uid, // The ID of the supermarket this manager belongs to
             'supermarketName': _supermarketNameController.text.trim(),
             'createdAt': FieldValue.serverTimestamp(),
           });
 
       if (!mounted) return;
-      // Navigate and pass the actual supermarket ID (which is the UID)
+
+      // Navigate to the appropriate dashboard
       Navigator.pushReplacementNamed(
         context,
-        '/staff/managerHome', // Assuming this route eventually leads to ManageStaffPage or provides the ID to it
+        '/staff/managerHome',
         arguments: {
-          'supermarketId': uid, // <--- IMPORTANT: Pass the UID here!
+          'supermarketId':
+              uid, // Pass the supermarket ID (which is the manager's UID)
           'supermarketName': _supermarketNameController.text.trim(),
           'location': _locationController.text.trim(),
-          'uid': uid,
+          'uid':
+              uid, // Pass the manager's UID (same as supermarketId in this case)
         },
       );
     } on FirebaseAuthException catch (e) {
@@ -198,11 +228,15 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
       setState(() {
         _errorMessage = _getAuthErrorMessage(e.code);
       });
+      debugPrint(
+        'FirebaseAuthException during account creation: ${e.code} - ${e.message}',
+      );
     } catch (e) {
-      debugPrint('Error during account creation: $e');
+      debugPrint('Error during account creation (general catch): $e');
       if (!mounted) return;
       setState(() {
-        _errorMessage = 'An unexpected error occurred. Please try again.';
+        _errorMessage =
+            'An unexpected error occurred: ${e.toString()}'; // Show more specific error
       });
     } finally {
       if (mounted) {
@@ -274,10 +308,8 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
                   if (value == null || value.trim().isEmpty) {
                     return 'Supermarket name is required';
                   }
-                  if (!_isSupermarketValid &&
-                      _supermarketNameController.text.trim().isNotEmpty &&
-                      _locationController.text.trim().isNotEmpty) {
-                    return 'A supermarket with this name already exists at this location';
+                  if (_supermarketValidationError != null) {
+                    return _supermarketValidationError;
                   }
                   return null;
                 },
@@ -292,6 +324,9 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
                     return 'Location is required';
+                  }
+                  if (_supermarketValidationError != null) {
+                    return _supermarketValidationError;
                   }
                   return null;
                 },

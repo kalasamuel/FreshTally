@@ -60,19 +60,28 @@ class _RoleSelectionPageState extends State<RoleSelectionPage> {
         throw Exception("User not signed in. Please sign up or log in again.");
       }
 
-      // Update the staff document created previously in StaffVerificationPage
-      // This path is `supermarkets/{supermarketId}/staff/{user.uid}`
+      // Reference to the staff document: `supermarkets/{supermarketId}/staff/{user.uid}`
       final staffDocRef = FirebaseFirestore.instance
           .collection('supermarkets')
           .doc(widget.supermarketId!)
           .collection('staff')
           .doc(user.uid);
 
-      await staffDocRef.update({
-        'role': selectedRole,
-        // No need to set supermarketId, email, createdAt again as they are already there
-        // from StaffVerificationPage's creation logic.
-      });
+      // Use .set() with merge: true to create the document if it doesn't exist,
+      // or update it if it does, without overwriting other fields.
+      await staffDocRef.set(
+        {
+          'role': selectedRole,
+          // You might want to add other initial fields here if they are not guaranteed
+          // to be set by StaffVerificationPage or if this is the first time the document is created.
+          // For example:
+          // 'email': user.email,
+          // 'uid': user.uid,
+          // 'supermarketId': widget.supermarketId,
+          // 'createdAt': FieldValue.serverTimestamp(),
+        },
+        SetOptions(merge: true), // <--- IMPORTANT CHANGE HERE
+      );
 
       // Now that the document is updated, you can proceed with navigation
       if (!mounted) return; // Check if the widget is still mounted

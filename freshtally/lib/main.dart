@@ -1,12 +1,14 @@
+import 'package:Freshtally/pages/shelfStaff/settings/settings_page.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
 import 'package:Freshtally/pages/auth/staffcode.dart';
 import 'package:Freshtally/pages/customer/list/shopping_list_page.dart';
 import 'package:Freshtally/pages/manager/home/manager_home_screen.dart'; // Assuming ManagerDashboardPage is here
 import 'package:Freshtally/pages/shelfStaff/shelves/shelf_mapping_page.dart';
 import 'package:Freshtally/pages/shelfStaff/shelves/smart_suggestions_page.dart';
 import 'package:Freshtally/pages/auth/create_supermarket_page.dart';
-// import 'package:Freshtally/pages/auth/join_supermarket_page.dart';
 import 'package:Freshtally/pages/auth/role_selection_page.dart';
 import 'package:Freshtally/pages/shelfStaff/home/shelf_staff_home_screen.dart';
 import 'firebase_options.dart';
@@ -42,28 +44,56 @@ class FreshTallyApp extends StatelessWidget {
           ),
         ),
       ),
-      initialRoute: '/',
+      // Use a builder to handle initial routing based on auth state
+      home: StreamBuilder<User?>(
+        stream: FirebaseAuth.instance.authStateChanges(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            );
+          }
+          return const LoginPage();
+        },
+      ),
       onGenerateRoute: (settings) {
         switch (settings.name) {
-          case '/':
+          case '/login': // Explicitly add a route for login page
             return MaterialPageRoute(builder: (_) => const LoginPage());
           case '/customerHome':
+            final args = settings.arguments as Map<String, dynamic>? ?? {};
             return MaterialPageRoute(
-              builder: (_) => const CustomerHomePage(supermarketId: ''),
+              builder: (_) =>
+                  CustomerHomePage(supermarketId: args['supermarketId'] ?? ''),
             );
           case '/customerSearch':
-            return MaterialPageRoute(builder: (_) => const ProductSearchPage());
-          case '/shoppingList':
-            return MaterialPageRoute(builder: (_) => const ShoppingListPage());
-          case '/shelfMapping':
+            // Extract supermarketId from arguments
+            final args = settings.arguments as Map<String, dynamic>? ?? {};
+            final String supermarketId = args['supermarketId'] ?? '';
             return MaterialPageRoute(
-              builder: (_) => const ShelfMappingPage(supermarketId: ''),
+              builder: (_) => ProductSearchPage(supermarketId: supermarketId),
+            );
+          case '/shoppingList':
+            // Extract supermarketId from arguments
+            final args = settings.arguments as Map<String, dynamic>? ?? {};
+            final String supermarketId = args['supermarketId'] ?? '';
+            return MaterialPageRoute(
+              builder: (_) => ShoppingListPage(supermarketId: supermarketId),
+            );
+          case '/shelfMapping':
+            final args = settings.arguments as Map<String, dynamic>? ?? {};
+            return MaterialPageRoute(
+              builder: (_) =>
+                  ShelfMappingPage(supermarketId: args['supermarketId'] ?? ''),
             );
           case '/shelfStaffHome':
+            final args = settings.arguments as Map<String, dynamic>? ?? {};
             return MaterialPageRoute(
-              builder: (_) => const ShelfMappingPage(
-                supermarketId: '',
-              ), // This might be incorrect if it's meant to be ShelfStaffDashboard
+              builder: (_) => ShelfStaffDashboard(
+                supermarketName: args['supermarketName'] ?? '',
+                location: args['location'] ?? '',
+                supermarketId: args['supermarketId'] ?? '',
+              ),
             );
           case '/smartSuggestions':
             final args = settings.arguments as Map<String, dynamic>? ?? {};
@@ -72,10 +102,16 @@ class FreshTallyApp extends StatelessWidget {
                 supermarketId: args['supermarketId'] ?? '',
               ),
             );
-          case '/managerHome': // This route might be a duplicate or intended for a different purpose than '/staff/managerHome'
+          case '/managerHome':
+            final args = settings.arguments as Map<String, dynamic>? ?? {};
             return MaterialPageRoute(
               builder: (_) {
-                return const LoginPage(); // Revisit this route if it should lead to ManagerDashboardPage
+                return ManagerDashboardPage(
+                  supermarketName: args['supermarketName'],
+                  location: args['location'],
+                  supermarketId: args['supermarketId'] ?? '',
+                  managerId: args['managerId'] ?? '',
+                );
               },
             );
           case '/createSupermarket':
@@ -93,8 +129,6 @@ class FreshTallyApp extends StatelessWidget {
                   email: '',
                   password: '',
                   phone: '',
-                  supermarketName: '',
-                  location: '',
                 );
               },
             );
@@ -104,31 +138,13 @@ class FreshTallyApp extends StatelessWidget {
                 return const RoleSelectionPage(role: '');
               },
             );
-          case '/staffSignup':
-            final args = settings.arguments as Map<String, dynamic>? ?? {};
-            return MaterialPageRoute(
-              builder: (_) => ShelfStaffDashboard(
-                supermarketName: args['supermarketName'],
-                location: args['location'],
-                supermarketId:
-                    args['supermarketId'] ??
-                    '', // Added supermarketId here as well
-              ),
-            );
 
-          case '/staff/managerHome':
+          // /settings
+          case '/settings':
             final args = settings.arguments as Map<String, dynamic>? ?? {};
-            final String supermarketId =
-                args['supermarketId'] ?? ''; // Safely extract supermarketId
+            final String supermarketId = args['supermarketId'] ?? '';
             return MaterialPageRoute(
-              builder: (_) {
-                return ManagerDashboardPage(
-                  supermarketName: args['supermarketName'],
-                  location: args['location'],
-                  supermarketId: supermarketId,
-                  managerId: args['managerId'],
-                );
-              },
+              builder: (_) => SettingsPage(supermarketId: supermarketId),
             );
           default:
             return MaterialPageRoute(
@@ -141,5 +157,3 @@ class FreshTallyApp extends StatelessWidget {
     );
   }
 }
-
-

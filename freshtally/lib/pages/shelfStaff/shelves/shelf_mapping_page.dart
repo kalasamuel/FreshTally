@@ -8,7 +8,9 @@ import 'package:image_picker/image_picker.dart';
 enum ShelfPosition { top, middle, bottom }
 
 class ShelfMappingPage extends StatefulWidget {
-  const ShelfMappingPage({super.key, required String supermarketId});
+  final String supermarketId;
+
+  const ShelfMappingPage({super.key, required this.supermarketId});
 
   @override
   State<ShelfMappingPage> createState() => _ShelfMappingPageState();
@@ -16,34 +18,19 @@ class ShelfMappingPage extends StatefulWidget {
 
 class _ShelfMappingPageState extends State<ShelfMappingPage> {
   final _formKey = GlobalKey<FormState>();
-
   final TextEditingController _productController = TextEditingController();
   final TextEditingController _priceController = TextEditingController();
   final TextEditingController _categoryController = TextEditingController();
 
-  String? _selectedFloor; // Keep as String for dropdown value
-  String? _selectedShelf; // Keep as String for dropdown value
+  String? _selectedFloor;
+  String? _selectedShelf;
   ShelfPosition? _shelfPosition = ShelfPosition.top;
-
   DocumentSnapshot? _selectedProduct;
   File? _image;
   bool _isLoading = false;
 
-  // --- HARDCODED FLOOR AND SHELF OPTIONS ---
-  final List<String> _floors = [
-    '1',
-    '2',
-    '3',
-    '4',
-  ]; // Changed to strings to match dropdown value type
-  final List<String> _shelves = ['1', '2', '3', '4', '5']; // Changed to strings
-  // ------------------------------------------
-
-  @override
-  void initState() {
-    super.initState();
-    // Removed _loadFloorsAndShelves() as options are now hardcoded
-  }
+  final List<String> _floors = ['1', '2', '3', '4'];
+  final List<String> _shelves = ['1', '2', '3', '4', '5'];
 
   @override
   void dispose() {
@@ -55,6 +42,8 @@ class _ShelfMappingPageState extends State<ShelfMappingPage> {
 
   Future<List<DocumentSnapshot>> _searchProducts(String pattern) async {
     final snapshot = await FirebaseFirestore.instance
+        .collection('supermarkets')
+        .doc(widget.supermarketId)
         .collection('products')
         .where('name', isGreaterThanOrEqualTo: pattern)
         .where('name', isLessThanOrEqualTo: '$pattern\uf8ff')
@@ -81,34 +70,20 @@ class _ShelfMappingPageState extends State<ShelfMappingPage> {
       _priceController.text = data['price']?.toString() ?? '';
       _categoryController.text = data['category'] ?? '';
 
-      // Set selected floor and shelf if present in the product data
-      // Read floor and shelf as numbers from Firestore
       final productFloorNum = data['location']?['floor'];
       final productShelfNum = data['location']?['shelf'];
-
-      // Convert numbers to string for dropdown selection
       final String? productFloor = productFloorNum?.toString();
       final String? productShelf = productShelfNum?.toString();
 
-      // Now, check against the hardcoded lists
-      if (_floors.contains(productFloor)) {
-        _selectedFloor = productFloor;
-      } else {
-        _selectedFloor = null; // Reset if invalid or not in hardcoded list
-      }
-
-      if (_shelves.contains(productShelf)) {
-        _selectedShelf = productShelf;
-      } else {
-        _selectedShelf = null; // Reset if invalid or not in hardcoded list
-      }
+      _selectedFloor = _floors.contains(productFloor) ? productFloor : null;
+      _selectedShelf = _shelves.contains(productShelf) ? productShelf : null;
 
       final String? pos = data['location']?['position']
           ?.toString()
           .toLowerCase();
       _shelfPosition = ShelfPosition.values.firstWhere(
-        (e) => e.name.toLowerCase() == pos, // Compare lowercase names
-        orElse: () => ShelfPosition.top, // Default if not found
+        (e) => e.name.toLowerCase() == pos,
+        orElse: () => ShelfPosition.top,
       );
     });
   }
@@ -136,7 +111,6 @@ class _ShelfMappingPageState extends State<ShelfMappingPage> {
   Future<void> _saveProduct() async {
     if (!_formKey.currentState!.validate()) return;
 
-    // Added validation for hardcoded dropdowns
     if (_selectedFloor == null) {
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -160,42 +134,30 @@ class _ShelfMappingPageState extends State<ShelfMappingPage> {
         imageUrl = await _uploadImage(_productController.text.trim());
       }
 
-      // Convert selected floor and shelf from String to int for Firestore
-      final int? floorNumber = int.tryParse(_selectedFloor!);
-      final int? shelfNumber = int.tryParse(_selectedShelf!);
-
-      // Add null checks for safety, although the validator should catch this
-      if (floorNumber == null || shelfNumber == null) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Error: Floor or Shelf number could not be parsed.'),
-          ),
-        );
-        setState(() => _isLoading = false);
-        return;
-      }
-
       final productData = {
         'name': _productController.text.trim(),
         'price': double.tryParse(_priceController.text) ?? 0,
         'category': _categoryController.text.trim(),
         'location': {
-          'floor': floorNumber, // Store as int
-          'shelf': shelfNumber, // Store as int
-          'position': _shelfPosition
-              .toString()
-              .split('.')
-              .last, // Store as is (e.g., "top")
+          'floor': int.tryParse(_selectedFloor!),
+          'shelf': int.tryParse(_selectedShelf!),
+          'position': _shelfPosition.toString().split('.').last,
         },
         'updated_at': FieldValue.serverTimestamp(),
         if (imageUrl != null) 'image_url': imageUrl,
       };
 
       if (_selectedProduct != null) {
-        await _selectedProduct!.reference.update(productData);
+        await FirebaseFirestore.instance
+            .collection('supermarkets')
+            .doc(widget.supermarketId)
+            .collection('products')
+            .doc(_selectedProduct!.id)
+            .update(productData);
       } else {
         await FirebaseFirestore.instance
+            .collection('supermarkets')
+            .doc(widget.supermarketId)
             .collection('products')
             .add(productData);
       }
@@ -204,6 +166,7 @@ class _ShelfMappingPageState extends State<ShelfMappingPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('✅ Product saved successfully!')),
       );
+      _resetForm();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -214,19 +177,37 @@ class _ShelfMappingPageState extends State<ShelfMappingPage> {
     }
   }
 
+  void _resetForm() {
+    setState(() {
+      _productController.clear();
+      _priceController.clear();
+      _categoryController.clear();
+      _selectedFloor = null;
+      _selectedShelf = null;
+      _shelfPosition = ShelfPosition.top;
+      _image = null;
+      _selectedProduct = null;
+    });
+  }
+
   Future<void> _deleteProduct() async {
     if (_selectedProduct == null) return;
 
     setState(() => _isLoading = true);
 
     try {
-      await _selectedProduct!.reference.delete();
+      await FirebaseFirestore.instance
+          .collection('supermarkets')
+          .doc(widget.supermarketId)
+          .collection('products')
+          .doc(_selectedProduct!.id)
+          .delete();
 
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('🗑 Product deleted!')));
-      Navigator.pop(context);
+      _resetForm();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -240,9 +221,9 @@ class _ShelfMappingPageState extends State<ShelfMappingPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFFFFFF), // Set background color
+      backgroundColor: const Color(0xFFFFFFFF),
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFFFFFF), // AppBar background color
+        backgroundColor: const Color(0xFFFFFFFF),
         elevation: 0.0,
         title: const Text(
           'Shelf Mapping',
@@ -276,7 +257,6 @@ class _ShelfMappingPageState extends State<ShelfMappingPage> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Product Name Field with TypeAhead
                   TypeAheadField<DocumentSnapshot>(
                     controller: _productController,
                     builder: (context, controller, focusNode) {
@@ -301,13 +281,10 @@ class _ShelfMappingPageState extends State<ShelfMappingPage> {
                         subtitle: Text('${data['price']} UGX'),
                       );
                     },
-                    onSelected: (DocumentSnapshot product) {
-                      _selectProduct(product);
-                    },
+                    onSelected: _selectProduct,
                   ),
                   const SizedBox(height: 16),
 
-                  // Price Field
                   _buildStyledTextFormField(
                     controller: _priceController,
                     hintText: 'Enter price',
@@ -320,7 +297,6 @@ class _ShelfMappingPageState extends State<ShelfMappingPage> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Category Field with TypeAhead
                   TypeAheadField<String>(
                     controller: _categoryController,
                     builder: (context, controller, focusNode) {
@@ -340,13 +316,11 @@ class _ShelfMappingPageState extends State<ShelfMappingPage> {
                     suggestionsCallback: _fetchCategories,
                     itemBuilder: (context, String category) =>
                         ListTile(title: Text(category)),
-                    onSelected: (val) {
-                      setState(() => _categoryController.text = val);
-                    },
+                    onSelected: (val) =>
+                        setState(() => _categoryController.text = val),
                   ),
                   const SizedBox(height: 24),
 
-                  // Shelf Details Section Title
                   const Text(
                     'Shelf Details',
                     style: TextStyle(
@@ -357,31 +331,22 @@ class _ShelfMappingPageState extends State<ShelfMappingPage> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Floor Dropdown (now hardcoded)
                   _buildStyledDropdown(
                     value: _selectedFloor,
                     hint: 'Select Floor',
-                    items: _floors, // Using hardcoded _floors
-                    onChanged: (val) {
-                      print('DEBUG: Floor selected: $val');
-                      setState(() => _selectedFloor = val);
-                    },
+                    items: _floors,
+                    onChanged: (val) => setState(() => _selectedFloor = val),
                   ),
                   const SizedBox(height: 16),
 
-                  // Shelf Number Dropdown (now hardcoded)
                   _buildStyledDropdown(
                     value: _selectedShelf,
                     hint: 'Select Shelf Number',
-                    items: _shelves, // Using hardcoded _shelves
-                    onChanged: (val) {
-                      print('DEBUG: Shelf selected: $val');
-                      setState(() => _selectedShelf = val);
-                    },
+                    items: _shelves,
+                    onChanged: (val) => setState(() => _selectedShelf = val),
                   ),
                   const SizedBox(height: 24),
 
-                  // Shelf Position Radio Buttons
                   const Text(
                     'Shelf Position:',
                     style: TextStyle(
@@ -402,11 +367,8 @@ class _ShelfMappingPageState extends State<ShelfMappingPage> {
                         ),
                         value: pos,
                         groupValue: _shelfPosition,
-                        onChanged: (ShelfPosition? value) {
-                          setState(() {
-                            _shelfPosition = value;
-                          });
-                        },
+                        onChanged: (value) =>
+                            setState(() => _shelfPosition = value),
                         activeColor: const Color(0xFF4CAF50),
                         controlAffinity: ListTileControlAffinity.leading,
                       );
@@ -414,7 +376,6 @@ class _ShelfMappingPageState extends State<ShelfMappingPage> {
                   ),
                   const SizedBox(height: 24),
 
-                  // Product Image Section
                   const Text(
                     'Product Image:',
                     style: TextStyle(
@@ -434,24 +395,21 @@ class _ShelfMappingPageState extends State<ShelfMappingPage> {
                           style: TextStyle(color: Colors.black87),
                         ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(
-                            0xFFF5F6FA,
-                          ), // Match background
+                          backgroundColor: const Color(0xFFF5F6FA),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
-                            side: BorderSide.none, // No border
+                            side: BorderSide.none,
                           ),
-                          elevation: 0.1, // Slight elevation
+                          elevation: 0.1,
                           padding: const EdgeInsets.symmetric(
                             horizontal: 16,
                             vertical: 12,
                           ),
                         ),
                       ),
-                      const SizedBox(width: 16), // Increased spacing
+                      const SizedBox(width: 16),
                       if (_image != null)
                         ClipRRect(
-                          // Clip image to rounded rectangle
                           borderRadius: BorderRadius.circular(12),
                           child: Image.file(
                             _image!,
@@ -464,16 +422,13 @@ class _ShelfMappingPageState extends State<ShelfMappingPage> {
                   ),
                   const SizedBox(height: 32),
 
-                  // Action Buttons
                   SizedBox(
                     width: double.infinity,
                     height: 56,
                     child: ElevatedButton(
                       onPressed: _isLoading ? null : _saveProduct,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(
-                          0xFFC8E6C9,
-                        ), // Light green background
+                        backgroundColor: const Color(0xFFC8E6C9),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -509,7 +464,7 @@ class _ShelfMappingPageState extends State<ShelfMappingPage> {
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            elevation: 0.1, // Slight elevation
+                            elevation: 0.1,
                           ),
                           child: _isLoading
                               ? const CircularProgressIndicator(
@@ -534,8 +489,6 @@ class _ShelfMappingPageState extends State<ShelfMappingPage> {
     );
   }
 
-  // --- Helper Widgets for consistent styling ---
-
   InputDecoration _buildInputDecoration({
     required String hintText,
     required String labelText,
@@ -545,26 +498,23 @@ class _ShelfMappingPageState extends State<ShelfMappingPage> {
       labelText: labelText,
       floatingLabelBehavior: FloatingLabelBehavior.always,
       filled: true,
-      fillColor: const Color(0xFFF5F6FA), // Background color
+      fillColor: const Color(0xFFF5F6FA),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide.none, // No border
+        borderSide: BorderSide.none,
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide.none, // No border
+        borderSide: BorderSide.none,
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(
-          color: Color(0xFF4CAF50),
-          width: 1.5,
-        ), // Green border on focus
+        borderSide: const BorderSide(color: Color(0xFF4CAF50), width: 1.5),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       hintStyle: const TextStyle(
         fontWeight: FontWeight.w600,
-        color: Colors.black54, // Lighter hint text
+        color: Colors.black54,
       ),
       labelStyle: const TextStyle(
         fontWeight: FontWeight.bold,
@@ -603,8 +553,6 @@ class _ShelfMappingPageState extends State<ShelfMappingPage> {
     required List<String> items,
     required void Function(String?) onChanged,
   }) {
-    // If the current value is not in the items list, set it to null
-    // This is crucial for the dropdown to be functional if the value is invalid.
     String? displayValue = (value != null && items.contains(value))
         ? value
         : null;
@@ -613,14 +561,14 @@ class _ShelfMappingPageState extends State<ShelfMappingPage> {
       margin: const EdgeInsets.only(bottom: 16.0),
       padding: const EdgeInsets.symmetric(horizontal: 12.0),
       decoration: BoxDecoration(
-        color: const Color(0xFFF5F6FA), // Background color
+        color: const Color(0xFFF5F6FA),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.transparent), // No border
+        border: Border.all(color: Colors.transparent),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           isExpanded: true,
-          value: displayValue, // Use displayValue here
+          value: displayValue,
           hint: Text(
             hint,
             style: const TextStyle(

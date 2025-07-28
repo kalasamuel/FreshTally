@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ManagerNotificationCenterPage extends StatefulWidget {
   const ManagerNotificationCenterPage({
     super.key,
     required this.supermarketName,
+    required this.managerId,
   });
 
   final String supermarketName;
+  final String managerId;
 
   @override
   State<ManagerNotificationCenterPage> createState() =>
@@ -19,12 +22,51 @@ class _ManagerNotificationCenterPageState
     extends State<ManagerNotificationCenterPage> {
   bool _hasIndexError = false;
   bool _isLoading = true;
+  bool _showWelcomeMessage = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _isLoading = true;
+    _checkFirstTimeLogin();
+  }
+
+  Future<void> _checkFirstTimeLogin() async {
+    final prefs = await SharedPreferences.getInstance();
+    final isFirstTime = prefs.getBool('${widget.managerId}_first_time') ?? true;
+
+    if (isFirstTime) {
+      setState(() {
+        _showWelcomeMessage = true;
+      });
+      await prefs.setBool('${widget.managerId}_first_time', false);
+      await _createWelcomeNotification();
+    }
+  }
+
+  Future<void> _createWelcomeNotification() async {
+    try {
+      await FirebaseFirestore.instance.collection('notifications').add({
+        'title': 'Welcome to FreshTally!',
+        'message':
+            'Thank you for joining FreshTally. We hope you enjoy using our app to manage your supermarket.',
+        'type': 'welcome',
+        'supermarketName': widget.supermarketName,
+        'recipientId': widget.managerId,
+        'createdAt': Timestamp.now(),
+        'read': false,
+      });
+    } catch (e) {
+      debugPrint("Error creating welcome notification: $e");
+    }
+  }
 
   Stream<QuerySnapshot> _createStream() {
     try {
       Query query = FirebaseFirestore.instance
           .collection('notifications')
           .where('supermarketName', isEqualTo: widget.supermarketName)
+          .where('recipientId', isEqualTo: widget.managerId)
           .orderBy('createdAt', descending: true);
 
       return query.snapshots().handleError((error) {
@@ -32,7 +74,6 @@ class _ManagerNotificationCenterPageState
         if (mounted) {
           setState(() {
             _hasIndexError = error.toString().contains('index');
-            _isLoading = false;
           });
         }
         return Stream.error(error);
@@ -42,17 +83,10 @@ class _ManagerNotificationCenterPageState
       if (mounted) {
         setState(() {
           _hasIndexError = true;
-          _isLoading = false;
         });
       }
       return Stream.error(e);
     }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _isLoading = true;
   }
 
   @override
@@ -68,6 +102,58 @@ class _ManagerNotificationCenterPageState
         child: Column(
           children: [
             const SizedBox(height: 16),
+            if (_showWelcomeMessage)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Card(
+                  color: Colors.green[50],
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    side: BorderSide(color: Colors.green.shade200),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(Icons.celebration, color: Colors.green[800]),
+                            const SizedBox(width: 8),
+                            const Text(
+                              'Welcome to FreshTally!',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        const Text(
+                          '• Thank you for joining FreshTally',
+                          style: TextStyle(color: Colors.black87),
+                        ),
+                        const Text(
+                          '• We hope you enjoy using our app',
+                          style: TextStyle(color: Colors.black87),
+                        ),
+                        const SizedBox(height: 12),
+                        Align(
+                          alignment: Alignment.bottomRight,
+                          child: Text(
+                            'Just now',
+                            style: TextStyle(
+                              color: Colors.grey.shade600,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
             if (_isLoading && !_hasIndexError)
               const Expanded(child: Center(child: CircularProgressIndicator()))
             else if (_hasIndexError)
@@ -84,6 +170,17 @@ class _ManagerNotificationCenterPageState
                     if (snapshot.connectionState == ConnectionState.waiting &&
                         !snapshot.hasData) {
                       return const Center(child: CircularProgressIndicator());
+                    }
+
+                    // Stop loading when we have data
+                    if (_isLoading && snapshot.hasData) {
+                      WidgetsBinding.instance.addPostFrameCallback((_) {
+                        if (mounted) {
+                          setState(() {
+                            _isLoading = false;
+                          });
+                        }
+                      });
                     }
 
                     if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
@@ -440,6 +537,13 @@ NotificationStyle _getNotificationStyle(String type) {
         iconColor: Colors.blue,
         cardColor: const Color(0xFFE3F2FD),
         borderColor: const Color(0xFFBBDEFB),
+      );
+    case 'welcome':
+      return NotificationStyle(
+        icon: Icons.celebration,
+        iconColor: Colors.green,
+        cardColor: const Color(0xFFE8F5E9),
+        borderColor: const Color(0xFFC8E6C9),
       );
     default:
       return NotificationStyle(
