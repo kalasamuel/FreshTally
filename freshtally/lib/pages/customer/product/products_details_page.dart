@@ -1,13 +1,15 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class ProductDetailsPage extends StatefulWidget {
   final String productId;
+  final String supermarketId;
 
   const ProductDetailsPage({
     super.key,
     required this.productId,
-    required String supermarketId,
+    required this.supermarketId,
   });
 
   @override
@@ -16,19 +18,38 @@ class ProductDetailsPage extends StatefulWidget {
 
 class _ProductDetailsPageState extends State<ProductDetailsPage> {
   bool _isAdding = false;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
   Future<void> _addToShoppingList(Map<String, dynamic> product) async {
     setState(() => _isAdding = true);
 
     try {
-      await FirebaseFirestore.instance.collection('shopping_list').add({
-        'name': product['name'],
-        'price': product['price'],
-        'image_url': product['image_url'],
-        'location': product['location'],
-        'checked': false,
-        'added_at': FieldValue.serverTimestamp(),
-      });
+      final user = _auth.currentUser;
+      if (user == null) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('❌ Please sign in to add items')),
+        );
+        return;
+      }
+
+      await FirebaseFirestore.instance
+          .collection('customers')
+          .doc(user.uid)
+          .collection('shopping-list')
+          .add({
+            'productId': widget.productId,
+            'supermarketId': widget.supermarketId,
+            'name': product['name'] ?? 'Unknown Product',
+            'price': product['price'] ?? 0,
+            'discountedPrice':
+                product['discountedPrice'] ?? product['price'] ?? 0,
+            'image_url': product['image_url'] ?? '',
+            'location': product['location'] ?? {},
+            'description': product['description'] ?? '',
+            'checked': false,
+            'added_at': FieldValue.serverTimestamp(),
+          });
 
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -56,6 +77,8 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
       ),
       body: FutureBuilder<DocumentSnapshot>(
         future: FirebaseFirestore.instance
+            .collection('supermarkets')
+            .doc(widget.supermarketId)
             .collection('products')
             .doc(widget.productId)
             .get(),
@@ -70,22 +93,23 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
 
           final product = snapshot.data!.data() as Map<String, dynamic>? ?? {};
 
-          final name = product['name'] ?? '';
+          final name = product['name'] ?? 'Unknown Product';
           final price = (product['price'] ?? 0).toDouble();
-          final discountedPrice = (product['discountedPrice'] ?? 0).toDouble();
+          final discountedPrice = (product['discountedPrice'] ?? price)
+              .toDouble();
           final discount = (product['discountPercentage'] ?? 0).toDouble();
           final imageUrl = product['image_url'] ?? '';
           final description = product['description'] ?? '';
           final expiry = (product['discountExpiry'] as Timestamp?)?.toDate();
-          final location = product['location'] as Map<String, dynamic>?;
+          final location = product['location'] as Map<String, dynamic>? ?? {};
 
           String locationText = '';
-          if (location != null) {
+          if (location.isNotEmpty) {
             locationText =
-                'Floor: ${location['floor']}, Shelf: ${location['shelf']}, Position: ${location['position'].toString().toUpperCase()}';
+                'Floor: ${location['floor']}, Shelf: ${location['shelf']}, Position: ${location['position']?.toString().toUpperCase() ?? 'N/A'}';
           }
 
-          final isDiscounted = discount > 0 && discountedPrice > 0;
+          final isDiscounted = discount > 0 && discountedPrice < price;
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16),
@@ -140,15 +164,6 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                               'Discount: ${discount.toStringAsFixed(0)}%',
                               style: const TextStyle(fontSize: 16),
                             ),
-                            // if (expiry != null)
-                            //   Text(
-                            //     'Expires: ${DateFormat('yyyy-MM-dd').format(expiry)}',
-                            //     style: TextStyle(
-                            //       color: expiry.isBefore(DateTime.now())
-                            //           ? Colors.red
-                            //           : Colors.black87,
-                            //     ),
-                            //   ),
                           ],
                         )
                       : Text(

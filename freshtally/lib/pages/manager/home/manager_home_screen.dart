@@ -152,7 +152,9 @@ class ManagerDashboardPage extends StatelessWidget {
                           context,
                           MaterialPageRoute(
                             builder: (context) {
-                              return PromotionsPage();
+                              return PromotionsPage(
+                                supermarketId: supermarketId,
+                              );
                             },
                           ),
                         );
@@ -185,7 +187,9 @@ class ManagerDashboardPage extends StatelessWidget {
                           context,
                           MaterialPageRoute(
                             builder: (context) {
-                              return ProductAllocationView();
+                              return ProductAllocationView(
+                                supermarketId: supermarketId,
+                              );
                             },
                           ),
                         );
