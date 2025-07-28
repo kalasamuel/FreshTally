@@ -40,10 +40,13 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
           .add({
             'productId': widget.productId,
             'supermarketId': widget.supermarketId,
-            'name': product['name'],
-            'price': product['price'],
-            'image_url': product['image_url'],
-            'location': product['location'],
+            'name': product['name'] ?? 'Unknown Product',
+            'price': product['price'] ?? 0,
+            'discountedPrice':
+                product['discountedPrice'] ?? product['price'] ?? 0,
+            'image_url': product['image_url'] ?? '',
+            'location': product['location'] ?? {},
+            'description': product['description'] ?? '',
             'checked': false,
             'added_at': FieldValue.serverTimestamp(),
           });
@@ -74,6 +77,8 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
       ),
       body: FutureBuilder<DocumentSnapshot>(
         future: FirebaseFirestore.instance
+            .collection('supermarkets')
+            .doc(widget.supermarketId)
             .collection('products')
             .doc(widget.productId)
             .get(),
@@ -88,22 +93,23 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
 
           final product = snapshot.data!.data() as Map<String, dynamic>? ?? {};
 
-          final name = product['name'] ?? '';
+          final name = product['name'] ?? 'Unknown Product';
           final price = (product['price'] ?? 0).toDouble();
-          final discountedPrice = (product['discountedPrice'] ?? 0).toDouble();
+          final discountedPrice = (product['discountedPrice'] ?? price)
+              .toDouble();
           final discount = (product['discountPercentage'] ?? 0).toDouble();
           final imageUrl = product['image_url'] ?? '';
           final description = product['description'] ?? '';
           final expiry = (product['discountExpiry'] as Timestamp?)?.toDate();
-          final location = product['location'] as Map<String, dynamic>?;
+          final location = product['location'] as Map<String, dynamic>? ?? {};
 
           String locationText = '';
-          if (location != null) {
+          if (location.isNotEmpty) {
             locationText =
-                'Floor: ${location['floor']}, Shelf: ${location['shelf']}, Position: ${location['position'].toString().toUpperCase()}';
+                'Floor: ${location['floor']}, Shelf: ${location['shelf']}, Position: ${location['position']?.toString().toUpperCase() ?? 'N/A'}';
           }
 
-          final isDiscounted = discount > 0 && discountedPrice > 0;
+          final isDiscounted = discount > 0 && discountedPrice < price;
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16),
