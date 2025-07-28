@@ -23,6 +23,30 @@ class _ProductAllocationViewState extends State<ProductAllocationView> {
 
   @override
   Widget build(BuildContext context) {
+    // Defensive check: if supermarketId is empty, display an error message
+    if (widget.supermarketId.isEmpty) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Product Locations')),
+        body: const Center(
+          child: Padding(
+            padding: EdgeInsets.all(24.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.error_outline, color: Colors.red, size: 50),
+                SizedBox(height: 16),
+                Text(
+                  'Supermarket not selected or invalid. Please go back and select a supermarket.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 18, color: Colors.red),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(title: const Text('Product Locations')),
       body: Column(
@@ -32,7 +56,7 @@ class _ProductAllocationViewState extends State<ProductAllocationView> {
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                hintText: 'Search products...',
+                hintText: 'Search products by name...',
                 prefixIcon: const Icon(Icons.search),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -48,17 +72,28 @@ class _ProductAllocationViewState extends State<ProductAllocationView> {
                     : null,
               ),
               onChanged: (value) {
-                setState(() => _searchQuery = value.toLowerCase());
+                setState(() => _searchQuery = value.trim().toLowerCase());
               },
             ),
           ),
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
-              // Updated to use supermarket-specific products collection
+              // Adjusted stream to perform server-side search on 'name_lower'
               stream: _firestore
                   .collection('supermarkets')
                   .doc(widget.supermarketId)
                   .collection('products')
+                  .where(
+                    'name_lower', // Assuming 'name_lower' field exists for search
+                    isGreaterThanOrEqualTo: _searchQuery,
+                  )
+                  .where(
+                    'name_lower',
+                    isLessThanOrEqualTo: '$_searchQuery\uf8ff',
+                  )
+                  .orderBy(
+                    'name_lower',
+                  ) // Order by the field used for range query
                   .snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.hasError) {
@@ -69,15 +104,18 @@ class _ProductAllocationViewState extends State<ProductAllocationView> {
                   return const Center(child: CircularProgressIndicator());
                 }
 
-                final products = snapshot.data!.docs.where((doc) {
-                  if (_searchQuery.isEmpty) return true;
-                  final product = doc.data() as Map<String, dynamic>;
-                  final name = product['name']?.toString().toLowerCase() ?? '';
-                  return name.contains(_searchQuery.toLowerCase());
-                }).toList();
+                final products = snapshot.data!.docs;
 
                 if (products.isEmpty) {
-                  return const Center(child: Text('No products found'));
+                  return Center(
+                    child: Text(
+                      _searchQuery.isEmpty
+                          ? 'No products available in this supermarket.'
+                          : 'No products found matching "$_searchQuery".',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: Colors.grey, fontSize: 16),
+                    ),
+                  );
                 }
 
                 return ListView.builder(
@@ -98,9 +136,9 @@ class _ProductAllocationViewState extends State<ProductAllocationView> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Product Name
+                            // Product Name (Adjusted to 'productName' for consistency)
                             Text(
-                              product['name'] ?? 'Unnamed Product',
+                              product['productName'] ?? 'Unnamed Product',
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 18,
@@ -108,7 +146,7 @@ class _ProductAllocationViewState extends State<ProductAllocationView> {
                             ),
                             const SizedBox(height: 8),
 
-                            // Category
+                            // Category (Adjusted to 'category' for consistency)
                             if (product['category'] != null)
                               Padding(
                                 padding: const EdgeInsets.only(bottom: 4),
@@ -121,11 +159,11 @@ class _ProductAllocationViewState extends State<ProductAllocationView> {
                                 ),
                               ),
 
-                            // Price and Supplier
+                            // Price and Discount (Adjusted to 'price' and 'discountPercentage' for consistency)
                             Row(
                               children: [
                                 Text(
-                                  '${product['price']?.toStringAsFixed(2) ?? 'N/A'} UGX',
+                                  '${(product['price'] as num?)?.toStringAsFixed(0) ?? 'N/A'} UGX', // Adjusted to num? and toStringAsFixed(0) for consistency
                                   style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w500,
@@ -133,7 +171,8 @@ class _ProductAllocationViewState extends State<ProductAllocationView> {
                                 ),
                                 const Spacer(),
                                 if (product['discountPercentage'] != null &&
-                                    product['discountPercentage'] > 0)
+                                    (product['discountPercentage'] as num) >
+                                        0) // Cast to num for comparison
                                   Text(
                                     '${product['discountPercentage']}% OFF',
                                     style: const TextStyle(
@@ -155,8 +194,14 @@ class _ProductAllocationViewState extends State<ProductAllocationView> {
                             ),
                             const SizedBox(height: 4),
 
-                            if (location == null)
-                              const Text('No location data available')
+                            if (location == null ||
+                                (location['floor'] == null &&
+                                    location['shelf'] == null &&
+                                    location['position'] == null))
+                              const Text(
+                                'No location data available',
+                                style: TextStyle(color: Colors.grey),
+                              )
                             else
                               _buildLocationDetail(location),
                           ],
@@ -174,13 +219,16 @@ class _ProductAllocationViewState extends State<ProductAllocationView> {
   }
 
   Widget _buildLocationDetail(Map<String, dynamic> location) {
+    String floor = location['floor']?.toString() ?? 'N/A';
+    String shelf = location['shelf']?.toString() ?? 'N/A';
+    String position = _formatPosition(location['position']?.toString() ?? '');
+
     return Row(
       children: [
         const Icon(Icons.location_on, size: 16, color: Colors.blue),
         const SizedBox(width: 8),
         Text(
-          'Floor ${location['floor']}, Shelf ${location['shelf']}, '
-          '${_formatPosition(location['position'])}',
+          'Floor: $floor, Shelf: $shelf, Pos: $position', // More descriptive
           style: const TextStyle(fontSize: 14),
         ),
       ],
@@ -188,7 +236,7 @@ class _ProductAllocationViewState extends State<ProductAllocationView> {
   }
 
   String _formatPosition(String position) {
-    if (position.isEmpty) return position;
+    if (position.isEmpty) return 'N/A'; // Handle empty position more gracefully
     return position[0].toUpperCase() + position.substring(1).toLowerCase();
   }
 }

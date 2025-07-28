@@ -151,19 +151,13 @@ class _ProductSearchPageState extends State<ProductSearchPage> {
                     final productData = product.data() as Map<String, dynamic>;
                     final productId = product.id;
 
-                    final String name =
-                        productData['name'] ?? 'Unnamed Product';
+                    // Adjusted to use 'productName' and 'imageUrl' for consistency
+                    final String productName =
+                        productData['productName'] ?? 'Unnamed Product';
                     final num price =
                         productData['price'] ?? 0; // Use num for flexibility
                     final String imageUrl =
-                        productData['image_url'] ??
-                        ''; // Assuming 'image_url' field
-                    // Optional: Get location info if available
-                    // final Map<String, dynamic>? location = productData['location'] as Map<String, dynamic>?;
-                    // String locationText = '';
-                    // if (location != null) {
-                    //   locationText = 'Floor: ${location['floor']}, Shelf: ${location['shelf']}, Position: ${location['position'].toString().toUpperCase()}';
-                    // }
+                        productData['imageUrl'] ?? ''; // Adjusted to 'imageUrl'
 
                     return Card(
                       margin: const EdgeInsets.symmetric(
@@ -193,7 +187,7 @@ class _ProductSearchPageState extends State<ProductSearchPage> {
                                 color: Colors.grey,
                               ),
                         title: Text(
-                          name,
+                          productName, // Using productName
                           style: const TextStyle(fontWeight: FontWeight.w600),
                         ),
                         subtitle: Text(
