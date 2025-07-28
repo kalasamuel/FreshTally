@@ -220,7 +220,7 @@ class _StaffVerificationPageState extends State<StaffVerificationPage> {
         'type': 'staff_joined',
         'title': 'New Staff Member Joined',
         'message':
-            '${widget.firstName} ${widget.lastName} has joined your supermarket as staff.',
+            '${widget.firstName} ${widget.lastName} has joined your supermarket .',
         'staffId': staffUid,
         'staffName': '${widget.firstName} ${widget.lastName}',
         'staffEmail': widget.email,
