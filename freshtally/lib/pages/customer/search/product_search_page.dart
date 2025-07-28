@@ -92,11 +92,9 @@ class _ProductSearchPageState extends State<ProductSearchPage> {
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
+                  .collection('supermarkets')
+                  .doc(widget.supermarketId)
                   .collection('products')
-                  .where(
-                    'supermarketId',
-                    isEqualTo: widget.supermarketId,
-                  ) // Filter by supermarketId
                   .where(
                     'name_lower',
                     isGreaterThanOrEqualTo: _searchQuery,

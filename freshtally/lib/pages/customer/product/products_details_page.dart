@@ -1,13 +1,15 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class ProductDetailsPage extends StatefulWidget {
   final String productId;
+  final String supermarketId;
 
   const ProductDetailsPage({
     super.key,
     required this.productId,
-    required String supermarketId,
+    required this.supermarketId,
   });
 
   @override
@@ -16,19 +18,35 @@ class ProductDetailsPage extends StatefulWidget {
 
 class _ProductDetailsPageState extends State<ProductDetailsPage> {
   bool _isAdding = false;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
   Future<void> _addToShoppingList(Map<String, dynamic> product) async {
     setState(() => _isAdding = true);
 
     try {
-      await FirebaseFirestore.instance.collection('shopping_list').add({
-        'name': product['name'],
-        'price': product['price'],
-        'image_url': product['image_url'],
-        'location': product['location'],
-        'checked': false,
-        'added_at': FieldValue.serverTimestamp(),
-      });
+      final user = _auth.currentUser;
+      if (user == null) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('❌ Please sign in to add items')),
+        );
+        return;
+      }
+
+      await FirebaseFirestore.instance
+          .collection('customers')
+          .doc(user.uid)
+          .collection('shopping-list')
+          .add({
+            'productId': widget.productId,
+            'supermarketId': widget.supermarketId,
+            'name': product['name'],
+            'price': product['price'],
+            'image_url': product['image_url'],
+            'location': product['location'],
+            'checked': false,
+            'added_at': FieldValue.serverTimestamp(),
+          });
 
       if (!mounted) return;
       ScaffoldMessenger.of(
@@ -140,15 +158,6 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                               'Discount: ${discount.toStringAsFixed(0)}%',
                               style: const TextStyle(fontSize: 16),
                             ),
-                            // if (expiry != null)
-                            //   Text(
-                            //     'Expires: ${DateFormat('yyyy-MM-dd').format(expiry)}',
-                            //     style: TextStyle(
-                            //       color: expiry.isBefore(DateTime.now())
-                            //           ? Colors.red
-                            //           : Colors.black87,
-                            //     ),
-                            //   ),
                           ],
                         )
                       : Text(
