@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Freshtally Overview</title>
+  <link rel="stylesheet" href="custom.css">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f0f3f1;
+      color: #573f3f;
+      line-height: 1.8;
+      padding: 40px 20px;
+      max-width: 900px;
+      margin: auto;
+    }
+    h1, h2 {
+      color: #47c54d;
+    }
+    h1 {
+      font-size: 2.5em;
+      margin-bottom: 0.3em;
+    }
+    h2 {
+      margin-top: 2em;
+      font-size: 1.6em;
+    }
+    p {
+      margin-bottom: 1.5em;
+
+    }
+    /* Navbar styles */
+    .navbar {
+      background: #3e656e;
+      color: #dbeee2;
+      display: flex;
+      align-items: center;
+      padding: 0 2vw;
+      height: 56px;
+      justify-content: space-between;
+      margin: -40px -20px 40px -20px;
+      max-width: none;
+    }
+    .navbar h1 {
+      color: #50f58c;
+      font-size: 1.7em;
+      margin: 0;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    .nav-links {
+      display: flex;
+      gap: 2vw;
+    }
+    .nav-toggle {
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      width: 40px;
+      height: 40px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      margin-left: 10px;
+    }
+    .nav-toggle span {
+      display: block;
+      width: 28px;
+      height: 4px;
+      margin: 4px 0;
+      background: #fff;
+      border-radius: 2px;
+      transition: 0.3s;
+    }
+    .nav-links a {
+      color: #89fab2;
+      text-decoration: none;
+      font-size: 1.1em;
+      font-weight: 500;
+      padding: 0 0.2em;
+      transition: color 0.2s;
+      position: relative;
+    }
+    .nav-links a.active, .nav-links a:focus, .nav-links a:hover {
+      color: #fff;
+      font-weight: 700;
+    }
+    .nav-links a.active::after {
+      content: '';
+      display: block;
+      margin: 0 auto;
+      width: 70%;
+      border-bottom: 2.5px solid #dbeee2;
+      border-radius: 2px;
+      margin-top: 2px;
+    }
+    @media (max-width: 600px) {
+      .navbar {
+        flex-direction: row;
+        align-items: center;
+        height: auto;
+        padding: 10px 2vw;
+      }
+      .nav-links {
+        display: none;
+        flex-direction: column;
+        gap: 0.5em;
+        width: 100%;
+        margin-top: 0.5em;
+        background: #222;
+        position: absolute;
+        top: 56px;
+        left: 0;
+        z-index: 100;
+        padding: 10px 0 10px 20px;
+      }
+      .nav-links.open {
+        display: flex;
+      }
+      .nav-links a {
+        padding: 0.3em 0;
+        font-size: 1em;
+      }
+      .nav-toggle {
+        display: flex;
+      }
+    }
+  </style>
+</head>
+
+
+<div class="navbar">
+  <h1>FreshTally</h1>
+  <button class="nav-toggle" aria-label="Toggle navigation" onclick="document.querySelector('.nav-links').classList.toggle('open')">
+    <span></span>
+    <span></span>
+    <span></span>
+  </button>
+  <div class="nav-links">
+    <a class="active" href="index.html">Overview</a>
+    <a href="how_it_works.html">How it Works</a>
+    <a href="data.html">Data</a>
+    <a href="visualization.html">Visualization</a>
+    <a href="analysis.html">Analysis</a>
+  </div>
+</div>
+
+<div class="hero-section">
+  
+  <div class="store-buttons">
+
+    <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Google Play">
+  </div>
+</div>
+
+<body>
+  <h2><em>Freshtally: Smart Shopping, Smarter Sales. The Ultimate supermarket solution!</em></h2>
+
+  <p>
+    In today’s fast-paced world, supermarkets continue to operate using outdated, manual workflows — leading  poor stock rotation, unclear visibility into product performance, disorganized shelving, and most frustrating of all, wasted time searching for everyday products. These inefficiencies don’t just frustrate customers; they bleed revenue, hinder promotion strategies, and make daily operations for managers and attendants unnecessarily complex.
+  </p>
+
+  <p>
+    Freshtally is a digital solution designed to bring order, intelligence, and fluidity to the retail experience. Whether you’re a store manager handling inventory, a manager planning promotions, or a customer walking the aisles, Freshtally bridges the gap between product visibility and operational efficiency. It is not just a tool — it’s the entire supermarket experience reimagined.
+  </p>
+
+  <h2><em>A Smarter System for Everyone Involved</em></h2>
+
+  <p>
+    Freshtally was developed with a clear understanding of the unique roles and responsibilities in a modern supermarket. The app’s architecture supports multiple user roles — each tailored with features that enhance productivity and decision-making.
+  </p>
+
+  <p>
+    For store managers, the app provides seamless entry of new products into the system. Each item is tagged with its batch number, expiry date, and supplier details — ensuring precise inventory tracking and food safety compliance. Access control is tightly managed through user codes and expiration settings, so only authorized personnel make updates.
+  </p>
+
+  <p>
+    The manager's interface unlocks the full power of analytics and promotions. Managers can view current stock levels, update product information, and monitor items nearing expiry or being phased out. Freshtally offers smart promotional suggestions based on sales data and shelf behavior, helping managers make timely marketing decisions that actually work.
+  </p>
+
+  <p>
+    Customers benefit from a streamlined experience. They can search for products, view discounts and offers, and build personalized shopping lists before they even step into the store. Freshtally ensures that the right product is always in the right place — and easy to find.
+  </p>
+
+  <p>
+    Shelf attendants, often overlooked in system design, are fully empowered in Freshtally. They receive real-time notifications about shelf changes, price adjustments, and promotional shifts. Using smart shelf mapping, they know exactly where a product should go — and how to optimize shelf space to boost visibility and sales.
+  </p>
+
+  <h2><em>Designed with Precision and Vision</em></h2>
+
+  <p>
+    Unlike rigid legacy systems or generic retail apps, Freshtally is built to adapt. Its modular, role-based design ensures that updates don’t overwhelm users with irrelevant options. The interface is clean, modern, and consistent with your brand’s theme —  to invoke freshness, calm, and innovation.
+  </p>
+
+  <p>
+    Every action in the app is backed by logic and intelligence. Need to launch a time-limited promo for slow-moving stock? Freshtally tells you what’s moving slowly. Want to track what’s causing delays at checkout? Freshtally shows low stock, and visibility issues in real time.
+  </p>
+
+  <h2><em>Efficiency, Accuracy, Simplicity</em></h2>
+
+  <p>
+    Freshtally was not created just to digitize a process — it was designed to make that process meaningful. By reducing time spent searching for products, minimizing human error, and automating routine tasks, the app delivers measurable benefits across your supermarket’s operations.
+  </p>
+
+  <p>
+    With Freshtally, time is no longer wasted — it's optimized. Sales are no longer reactive — they’re strategic. And shopping is no longer a chore — it becomes effortless and smart.
+  </p>
+
+  <h2><em>Ready to Experience the Future of Retail?</em></h2>
+
+  <p>
+    Freshtally is the intelligent companion your store needs. Smart shopping meets smarter sales — all in one beautifully connected platform.
+  </p>
+
+  
+  <!--to add a video for a demo for the working of the app-->
+
+</body>
+</html>

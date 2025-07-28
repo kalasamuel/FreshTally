@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Freshtally - Analysis</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f0f3f1;
+      color: #573f3f;
+      line-height: 1.8;
+      padding: 40px 20px;
+      max-width: 900px;
+      margin: auto;
+    }
+    h1, h2 {
+      color: #47c54d;
+    }
+    h1 {
+      font-size: 2.5em;
+      margin-bottom: 0.3em;
+    }
+    h2 {
+      margin-top: 2em;
+      font-size: 1.6em;
+    }
+    p {
+      margin-bottom: 1.5em;
+
+    }
+    /* Navbar styles */
+    .navbar {
+      background: #3e656e;
+      color: #dbeee2;
+      display: flex;
+      align-items: center;
+      padding: 0 2vw;
+      height: 56px;
+      justify-content: space-between;
+      margin: -40px -20px 40px -20px;
+      max-width: none;
+    }
+    .navbar h1 {
+      color: #50f58c;
+      font-size: 1.7em;
+      margin: 0;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    .nav-links {
+      display: flex;
+      gap: 2vw;
+    }
+    .nav-toggle {
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      width: 40px;
+      height: 40px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      margin-left: 10px;
+    }
+    .nav-toggle span {
+      display: block;
+      width: 28px;
+      height: 4px;
+      margin: 4px 0;
+      background: #fff;
+      border-radius: 2px;
+      transition: 0.3s;
+    }
+    .nav-links a {
+      color: #89fab2;
+      text-decoration: none;
+      font-size: 1.1em;
+      font-weight: 500;
+      padding: 0 0.2em;
+      transition: color 0.2s;
+      position: relative;
+    }
+    .nav-links a.active, .nav-links a:focus, .nav-links a:hover {
+      color: #fff;
+      font-weight: 700;
+    }
+    .nav-links a.active::after {
+      content: '';
+      display: block;
+      margin: 0 auto;
+      width: 70%;
+      border-bottom: 2.5px solid #dbeee2;
+      border-radius: 2px;
+      margin-top: 2px;
+    }
+    @media (max-width: 600px) {
+      .navbar {
+        flex-direction: row;
+        align-items: center;
+        height: auto;
+        padding: 10px 2vw;
+      }
+      .nav-links {
+        display: none;
+        flex-direction: column;
+        gap: 0.5em;
+        width: 100%;
+        margin-top: 0.5em;
+        background: #222;
+        position: absolute;
+        top: 56px;
+        left: 0;
+        z-index: 100;
+        padding: 10px 0 10px 20px;
+      }
+      .nav-links.open {
+        display: flex;
+      }
+      .nav-links a {
+        padding: 0.3em 0;
+        font-size: 1em;
+      }
+      .nav-toggle {
+        display: flex;
+      }
+    }
+  </style>
+
+  <div class="navbar">
+    <h1>FreshTally</h1>
+    <button class="nav-toggle" aria-label="Toggle navigation" onclick="document.querySelector('.nav-links').classList.toggle('open')">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+    <div class="nav-links">
+      <a href="index.html">Overview</a>
+      <a href="how_it_works.html">How it Works</a>
+      <a href="data.html">Data</a>
+      <a href="visualization.html">Visualization</a>
+      <a class="active" href="analysis.html">Analysis</a>
+    </div>
+  </div>
+
+  <main class="container">
+    <section class="content-section">
+      <h2><em>Analysis: Unlocking Supermarket Potential with FreshTally</em></h2>
+      <p>
+        At FreshTally, we understand the complex interplay of supermarket operations. For too long, the industry has grappled with a core challenge: a rigid legacy of disconnected systems and manual processes that hinder growth, eat into profits, and obscure vital insights. We saw the frustration of managers operating in the dark, unable to pinpoint which products truly thrived or languished, leading to missed opportunities and wasted resources on misdirected promotions.
+      </p>
+
+      <h2><em> Summary of Findings</em></h2>
+      <p>
+        Invisible Product Performance: Managers lack real-time visibility into specific product sales, making it impossible to quickly identify top sellers or slow-moving inventory. This led to persistent issues like unnecessary stockouts for popular items and overstocking of stagnant goods, resulting in spoilage and financial loss.
+      </p>
+      <p>
+        Ineffective Promotions: Without precise data on product demand and performance, promotional efforts are often a shot in the dark. Resources are wasted on campaigns that don't resonate, failing to clear inventory or capitalize on true market opportunities.
+      </p>
+      <p>
+        Operational Bottlenecks: Manual inventory checks, price change updates, and shelf reorganizations consume valuable staff time. This not only drains efficiency but also very prone to errors, creating a disconnect between the store floor and the management office. Information silos mean that critical data rarely flows freely where it was needed most.
+      </p>
+      <p>
+        Shopper's Frustration:
+        Grocery shopping often feels like a treasure hunt with no map. Customers frequently face the frustration of searching endless aisles for specific items, only to discover they were out of stock. Missing out on elusive discounts, navigating confusing promotions, or forgetting essential items after leaving the store are common annoyances. The shopping experience is often reactive, leaving customers to fend for themselves in a constantly changing supermarket landscape.
+      </p>
+
+      <h2><em>FreshTally to the Rescue</em></h2>
+      <p>
+        FreshTally is born from a deep analysis of these industry pain points. Our app’s background is rooted in the conviction that modern supermarkets deserve modern, data-driven tools. We built FreshTally from the ground up to be your comprehensive command center, transforming chaos into clarity:
+      </p>
+
+      <p>
+        Centralized Real-time Data Hub: FreshTally seamlessly integrates data from every touchpoint – from point-of-sale systems and inventory records to supplier information and shelf-level updates. This creates a singular, living data stream, providing managers with an accurate, real-time snapshot of their entire operation. Our robust architecture ensures this data is not only current but also scalable to meet the demands of any supermarket, large or small.
+      </p>
+
+
+      <p>
+        Intelligent Analytics & Smart Suggestions: Beyond just reporting, FreshTally is powered by a sophisticated analytics engine. It continuously processes your store's data to:
+      </p>
+      <ul>
+        <li>Identify Product Performance: Instantly highlight which goods are flying off the shelves and which require immediate attention.</li>
+        <li>Propose Optimized Promotions: Our algorithms analyze sales patterns, seasonality, and stock levels to suggest targeted, high-impact promotions that drive genuine results and minimize waste. You'll move from reactive guessing to proactive strategy.</li>
+        <li>Predictive Insights: Gain foresight into potential stock issues or emerging trends, allowing you to act before problems arise.</li>
+      </ul>
+
+
+      <h2>Empowering all supermarket Stakeholders</h2>
+      <ul>
+        <li>For Managers: A holistic overview with actionable insights, providing the strategic foresight needed to boost profitability.</li>
+        <li>For Shelf Attendants: Intuitive tools and real-time alerts guiding efficient shelf mapping, inventory checks, and swift price updates, turning frontline staff into proactive operational assets.</li>
+        <li>For Customers: A streamlined shopping experience, directly benefiting the store through increased sales and loyalty.</li>
+      </ul>
+
+      <p><em>
+        FreshTally isn't just an app; it's a strategic partner that transforms your supermarket's operational challenges into clear competitive advantages. By providing unparalleled insights and empowering every stakeholder, we ensure your store not only adapts to the future of retail, but actively shapes it. Embrace FreshTally and step into an era of unmatched efficiency, profitability, and growth.
+
+      </em></p>
+    </section>
+  </main>
+
+</body>
+</html>

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Data</title>
+  <link rel="stylesheet" href="custom.css">
+   <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f0f3f1;
+      color: #573f3f;
+      line-height: 1.8;
+      padding: 40px 20px;
+      max-width: 900px;
+      margin: auto;
+    }
+    h1, h2 {
+      color: #47c54d;
+    }
+    h1 {
+      font-size: 2.5em;
+      margin-bottom: 0.3em;
+    }
+    h2 {
+      margin-top: 2em;
+      font-size: 1.6em;
+    }
+    p {
+      margin-bottom: 1.5em;
+
+    }
+    /* Navbar styles */
+    .navbar {
+      background: #3e656e;
+      color: #dbeee2;
+      display: flex;
+      align-items: center;
+      padding: 0 2vw;
+      height: 56px;
+      justify-content: space-between;
+      margin: -40px -20px 40px -20px;
+      max-width: none;
+    }
+    .navbar h1 {
+      color: #50f58c;
+      font-size: 1.7em;
+      margin: 0;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    .nav-links {
+      display: flex;
+      gap: 2vw;
+    }
+    .nav-toggle {
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      width: 40px;
+      height: 40px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      margin-left: 10px;
+    }
+    .nav-toggle span {
+      display: block;
+      width: 28px;
+      height: 4px;
+      margin: 4px 0;
+      background: #fff;
+      border-radius: 2px;
+      transition: 0.3s;
+    }
+    .nav-links a {
+      color: #89fab2;
+      text-decoration: none;
+      font-size: 1.1em;
+      font-weight: 500;
+      padding: 0 0.2em;
+      transition: color 0.2s;
+      position: relative;
+    }
+    .nav-links a.active, .nav-links a:focus, .nav-links a:hover {
+      color: #fff;
+      font-weight: 700;
+    }
+    .nav-links a.active::after {
+      content: '';
+      display: block;
+      margin: 0 auto;
+      width: 70%;
+      border-bottom: 2.5px solid #dbeee2;
+      border-radius: 2px;
+      margin-top: 2px;
+    }
+    @media (max-width: 600px) {
+      .navbar {
+        flex-direction: row;
+        align-items: center;
+        height: auto;
+        padding: 10px 2vw;
+      }
+      .nav-links {
+        display: none;
+        flex-direction: column;
+        gap: 0.5em;
+        width: 100%;
+        margin-top: 0.5em;
+        background: #222;
+        position: absolute;
+        top: 56px;
+        left: 0;
+        z-index: 100;
+        padding: 10px 0 10px 20px;
+      }
+      .nav-links.open {
+        display: flex;
+      }
+      .nav-links a {
+        padding: 0.3em 0;
+        font-size: 1em;
+      }
+      .nav-toggle {
+        display: flex;
+      }
+    }
+  </style>
+</head>
+
+
+<body>
+
+  <div class="navbar">
+    <h1>FreshTally</h1>
+    <button class="nav-toggle" aria-label="Toggle navigation" onclick="document.querySelector('.nav-links').classList.toggle('open')">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+    <div class="nav-links">
+      <a href="index.html">Overview</a>
+      <a href="how_it_works.html">How it Works</a>
+      <a href="data.html" class="active">Data</a>
+      <a href="visualization.html">Visualization</a>
+      <a href="analysis.html">Analysis</a>
+    </div>
+  </div>
+
+  <main class="container">
+    <section class="content-section">
+      <h2><em>Data: The Power Behind Freshtally</em></h2>
+      <p>
+        At the heart of Freshtally is data — the quiet force that makes smart shopping and smarter sales possible. The app securely collects real-time information from the supermarket’s Point of Sale (POS) system through a custom-built connector app. This data includes alot of information but only the information required for the app to function is collected and that is the product name and id, price, quantity purchased and timestamp. Once collected, it is sent to our central cloud database, where it fuels various intelligent features for especially. 
+        The data that powers up the most part of the app is input manually by the store manager and the shelf attendants. 
+      </p>
+      <p>
+        We understand that sales and inventory data is highly sensitive. That’s why our connector app is built with a strict <strong>read-only policy</strong>—it does not modify or alter the data in any way on the POS system. Its sole purpose is to securely read and sync this data to Freshtally, where it’s used to drive key app functionalities such as promotion suggestions, expiry notifications, customer browsing, and analytics for better stock placement.
+      </p>
+      <p>
+        Every role in the supermarket benefits from this data—supermarket managers can create targeted promotions, shelf attendants receive placement suggestions, and customers enjoy timely offers and accurate product information. Freshtally treats your data with integrity, ensuring privacy and reliability while delivering real-time intelligence for efficient supermarket operations.
+      </p>
+    </section>
+  </main>
+
+</body>
+</html>
