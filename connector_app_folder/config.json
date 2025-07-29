@@ -1,0 +1,14 @@
+{
+    "source_type": "CSV",
+    "store_id": "7Q8MfpFiGfOZY5zZzFYXae1JugE2",
+    "field_mapping": {
+        "productId": "ProductID",
+        "productName": "ProductName",
+        "quantity": "Quantity",
+        "unitPrice": "UnitPrice",
+        "timestamp": "transactionTime",
+        "sku": "SKU",
+        "transactionId": "TransactionID"
+    },
+    "csv_path": "C:/Users/user/Downloads/pos.csv"
+}

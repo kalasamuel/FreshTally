@@ -23,14 +23,20 @@ db = firestore.client()
 def send_sales_to_firebase(sales_data, store_id):
     """
     Uploads sales data to /supermarkets/{store_id}/pos_transactions in Firestore.
-    Each sale is stored as a document with store ID and upload timestamp.
+    Internally we use 'store_id', but treat it as 'supermarket_id' in Firestore.
     """
-    pos_collection = db.collection("supermarkets").document(store_id).collection("pos_transactions")
+    supermarket_id = store_id  # alias for clarity
+
+    pos_collection = (
+        db.collection("supermarkets")
+        .document(supermarket_id)
+        .collection("pos_transactions")
+    )
 
     for sale in sales_data:
         sale_doc = sale.copy()
-        sale_doc["store_id"] = store_id
+        sale_doc["supermarket_id"] = supermarket_id  # renamed for Firestore
         sale_doc["uploaded_at"] = datetime.datetime.now().isoformat()
         pos_collection.add(sale_doc)
 
-    print(f"✅ Uploaded {len(sales_data)} sales to /supermarkets/{store_id}/pos_transactions.")
+    print(f"✅ Uploaded {len(sales_data)} sales to /supermarkets/{supermarket_id}/pos_transactions.")

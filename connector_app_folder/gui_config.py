@@ -25,7 +25,7 @@ def launch_config_gui():
             messagebox.showerror("Missing Info", "Please select source type and enter Store ID.")
             return
         
-        if is_valid_store_id(store_id):
+        if not is_valid_store_id(store_id):
             messagebox.showerror("Invalid Store ID", "Store ID must be alphanumeric and non-empty.")
             return
 
