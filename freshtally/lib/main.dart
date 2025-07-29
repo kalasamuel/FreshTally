@@ -129,6 +129,7 @@ class FreshTallyApp extends StatelessWidget {
                   email: '',
                   password: '',
                   phone: '',
+                  userId: '',
                 );
               },
             );

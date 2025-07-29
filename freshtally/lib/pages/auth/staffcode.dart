@@ -65,6 +65,7 @@ class StaffVerificationPage extends StatefulWidget {
   final String email;
   final String password;
   final String phone;
+  final String userId;
 
   const StaffVerificationPage({
     super.key,
@@ -73,6 +74,7 @@ class StaffVerificationPage extends StatefulWidget {
     required this.email,
     required this.password,
     required this.phone,
+    required this.userId,
   });
 
   @override
