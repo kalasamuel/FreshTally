@@ -6,14 +6,10 @@ import 'package:Freshtally/pages/shelfStaff/home/shelf_staff_home_screen.dart';
 import 'package:Freshtally/pages/storeManager/home/home_screen.dart';
 
 class RoleSelectionPage extends StatefulWidget {
-  final String? supermarketId; // This is now correctly passed and used
-  final String role; // This 'role' is just a placeholder for the constructor
+  final String? supermarketId;
+  final String role;
 
-  const RoleSelectionPage({
-    super.key,
-    this.supermarketId,
-    required this.role, // Changed to 'this.role' to match field
-  });
+  const RoleSelectionPage({super.key, this.supermarketId, required this.role});
 
   @override
   State<RoleSelectionPage> createState() => _RoleSelectionPageState();
@@ -27,11 +23,9 @@ class _RoleSelectionPageState extends State<RoleSelectionPage> {
   @override
   void initState() {
     super.initState();
-    // No need to initialize selectedRole from widget.role here, as it's selected by user.
-    // The widget.role in constructor is just a dummy to satisfy the old StaffSignupPage nav.
   }
 
-  /// Update staff document with selected role & navigate
+  /// Update user document and staff document with selected role & navigate
   Future<void> joinRole() async {
     if (selectedRole == null) {
       setState(() {
@@ -40,7 +34,6 @@ class _RoleSelectionPageState extends State<RoleSelectionPage> {
       return;
     }
 
-    // Ensure you have a supermarketId before proceeding.
     if (widget.supermarketId == null) {
       setState(() {
         errorMessage =
@@ -60,31 +53,30 @@ class _RoleSelectionPageState extends State<RoleSelectionPage> {
         throw Exception("User not signed in. Please sign up or log in again.");
       }
 
-      // Reference to the staff document: `supermarkets/{supermarketId}/staff/{user.uid}`
+      // Update the user's document in the 'users' collection
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+        'role': selectedRole,
+        'supermarketId': widget.supermarketId,
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+
+      // Update the staff document in the supermarket's staff subcollection
       final staffDocRef = FirebaseFirestore.instance
           .collection('supermarkets')
           .doc(widget.supermarketId!)
           .collection('staff')
           .doc(user.uid);
 
-      // Use .set() with merge: true to create the document if it doesn't exist,
-      // or update it if it does, without overwriting other fields.
-      await staffDocRef.set(
-        {
-          'role': selectedRole,
-          // You might want to add other initial fields here if they are not guaranteed
-          // to be set by StaffVerificationPage or if this is the first time the document is created.
-          // For example:
-          // 'email': user.email,
-          // 'uid': user.uid,
-          // 'supermarketId': widget.supermarketId,
-          // 'createdAt': FieldValue.serverTimestamp(),
-        },
-        SetOptions(merge: true), // <--- IMPORTANT CHANGE HERE
-      );
+      await staffDocRef.set({
+        'role': selectedRole,
+        'userId': user.uid,
+        'email': user.email,
+        'supermarketId': widget.supermarketId,
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
 
-      // Now that the document is updated, you can proceed with navigation
-      if (!mounted) return; // Check if the widget is still mounted
+      // Navigate to the appropriate dashboard
+      if (!mounted) return;
 
       if (selectedRole == 'Store Manager') {
         Navigator.pushReplacement(
@@ -92,8 +84,7 @@ class _RoleSelectionPageState extends State<RoleSelectionPage> {
           MaterialPageRoute(
             builder: (_) => StoreManagerDashboard(
               supermarketId: widget.supermarketId!,
-              location:
-                  '', // Consider fetching actual location from the supermarket document
+              location: '',
             ),
           ),
         );
@@ -103,10 +94,8 @@ class _RoleSelectionPageState extends State<RoleSelectionPage> {
           MaterialPageRoute(
             builder: (_) => ShelfStaffDashboard(
               supermarketId: widget.supermarketId!,
-              supermarketName:
-                  null, // You'll need to fetch this from Firestore based on supermarketId
-              location:
-                  '', // Consider fetching actual location from the supermarket document
+              supermarketName: null,
+              location: '',
             ),
           ),
         );

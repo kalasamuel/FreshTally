@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-// Though not directly used in this snippet for Firestore operations, keeping it as it was in your original file.
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:Freshtally/pages/shelfStaff/settings/switch_accounts.dart';
 
 class SettingsPage extends StatelessWidget {
   final String supermarketId;
@@ -11,20 +12,16 @@ class SettingsPage extends StatelessWidget {
     try {
       await FirebaseAuth.instance.signOut();
       if (context.mounted) {
-        // After logout, navigate to the login screen.
-        // Ensure '/login' route is defined in your main.dart's onGenerateRoute or routes map.
         Navigator.pushReplacementNamed(context, '/login');
       }
     } on FirebaseAuthException catch (e) {
       if (context.mounted) {
-        // Provide user feedback on logout errors
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error logging out: ${e.message}')),
         );
       }
     } catch (e) {
       if (context.mounted) {
-        // Catch any other unexpected errors
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('An unexpected error occurred: $e')),
         );
@@ -32,12 +29,13 @@ class SettingsPage extends StatelessWidget {
     }
   }
 
-  void _switchAccount(BuildContext context) {
+  Future<void> _switchAccount(BuildContext context) async {
+    // Navigate to the account history page
     if (context.mounted) {
-      // Navigate to the role selection page. This typically means the user is still logged in
-      // but wants to switch their active "role" or associated supermarket without full logout.
-      // Ensure '/roleSelection' route is defined.
-      Navigator.pushReplacementNamed(context, '/roleSelection');
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const AccountHistoryPage()),
+      );
     }
   }
 
@@ -52,7 +50,7 @@ class SettingsPage extends StatelessWidget {
           ),
         );
       }
-      return; // Exit if no valid user or email
+      return;
     }
 
     final oldPasswordController = TextEditingController();
@@ -64,9 +62,8 @@ class SettingsPage extends StatelessWidget {
       builder: (context) => AlertDialog(
         title: const Text('Change Password'),
         content: SingleChildScrollView(
-          // Allows scrolling if the content (text fields) exceeds screen height
           child: Column(
-            mainAxisSize: MainAxisSize.min, // Make column take minimum space
+            mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
                 controller: oldPasswordController,
@@ -99,12 +96,11 @@ class SettingsPage extends StatelessWidget {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context), // Close the dialog
+            onPressed: () => Navigator.pop(context),
             child: const Text('Cancel'),
           ),
           TextButton(
             onPressed: () async {
-              // Basic input validation
               final oldPassword = oldPasswordController.text.trim();
               final newPassword = newPasswordController.text.trim();
               final confirmPassword = confirmPasswordController.text.trim();
@@ -142,25 +138,21 @@ class SettingsPage extends StatelessWidget {
                 return;
               }
 
-              // Proceed with Firebase password change
               try {
-                // Reauthenticate the user with their old password
                 final AuthCredential credential = EmailAuthProvider.credential(
-                  email: currentUser.email!, // Use the current user's email
-                  password: oldPassword, // Use the provided old password
+                  email: currentUser.email!,
+                  password: oldPassword,
                 );
 
                 await currentUser.reauthenticateWithCredential(credential);
-
-                // If reauthentication is successful, update the password
                 await currentUser.updatePassword(newPassword);
 
                 if (context.mounted) {
-                  Navigator.pop(context); // Close the dialog on success
+                  Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('Password updated successfully!'),
-                      backgroundColor: Colors.green, // Indicate success
+                      backgroundColor: Colors.green,
                     ),
                   );
                 }
@@ -197,7 +189,7 @@ class SettingsPage extends StatelessWidget {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(errorMessage),
-                      backgroundColor: Colors.red, // Indicate error
+                      backgroundColor: Colors.red,
                     ),
                   );
                 }
@@ -224,7 +216,6 @@ class SettingsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final User? user = FirebaseAuth.instance.currentUser;
-    // Fallback display name for users without one
     final String userName =
         user?.displayName ?? user?.email?.split('@')[0] ?? 'User';
     final String userEmail = user?.email ?? 'No email provided';
@@ -238,7 +229,6 @@ class SettingsPage extends StatelessWidget {
         titleSpacing: 0,
       ),
       body: SingleChildScrollView(
-        // Makes the entire body scrollable
         child: Padding(
           padding: const EdgeInsets.all(20),
           child: Column(
@@ -247,12 +237,12 @@ class SettingsPage extends StatelessWidget {
               Center(
                 child: photoUrl != null && photoUrl.isNotEmpty
                     ? CircleAvatar(
-                        radius: 40, // Slightly larger avatar
+                        radius: 40,
                         backgroundImage: NetworkImage(photoUrl),
                       )
                     : const CircleAvatar(
                         radius: 40,
-                        backgroundColor: Colors.grey, // A default background
+                        backgroundColor: Colors.grey,
                         child: Icon(
                           Icons.person,
                           size: 40,
@@ -265,7 +255,7 @@ class SettingsPage extends StatelessWidget {
                 child: Text(
                   userName,
                   style: const TextStyle(
-                    fontSize: 22, // Slightly larger font
+                    fontSize: 22,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -276,20 +266,14 @@ class SettingsPage extends StatelessWidget {
                   style: const TextStyle(fontSize: 16, color: Colors.grey),
                 ),
               ),
-              const Divider(height: 40, thickness: 1), // A clearer divider
+              const Divider(height: 40, thickness: 1),
               ListTile(
-                leading: const Icon(
-                  Icons.lock,
-                  color: Colors.blue,
-                ), // Add color
+                leading: const Icon(Icons.lock, color: Colors.blue),
                 title: const Text(
                   'Change Password',
                   style: TextStyle(fontSize: 16),
                 ),
-                trailing: const Icon(
-                  Icons.arrow_forward_ios,
-                  size: 16,
-                ), // Arrow indicator
+                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                 onTap: () {
                   _showChangePasswordDialog(context);
                 },
@@ -304,29 +288,11 @@ class SettingsPage extends StatelessWidget {
                 onTap: () => _switchAccount(context),
               ),
               ListTile(
-                leading: const Icon(
-                  Icons.logout,
-                  color: Colors.red,
-                ), // Distinct color for logout
+                leading: const Icon(Icons.logout, color: Colors.red),
                 title: const Text('Logout', style: TextStyle(fontSize: 16)),
                 trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                 onTap: () => _logout(context),
               ),
-              // Add more settings options here if needed, e.g.,
-              // ListTile(
-              //   leading: const Icon(Icons.notifications),
-              //   title: const Text('Notifications'),
-              //   onTap: () {
-              //     // Navigate to notification settings
-              //   },
-              // ),
-              // ListTile(
-              //   leading: const Icon(Icons.privacy_tip),
-              //   title: const Text('Privacy Policy'),
-              //   onTap: () {
-              //     // Navigate to privacy policy page
-              //   },
-              // ),
             ],
           ),
         ),
