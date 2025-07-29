@@ -39,7 +39,7 @@ class Product {
       productId: doc.id,
       productName: data['name'] ?? 'Unnamed Product',
       productImageUrl: data['imageUrl'],
-      productOriginalPrice: (data['price'] ?? 0.0).toDouble(),
+      productOriginalPrice: (data['current_price'] ?? 0.0).toDouble(),
       productExpiryDate: (data['expiryDate'] as Timestamp?)?.toDate(),
       productSku: data['sku'] ?? '',
       productDescription: data['description'] ?? '',
@@ -55,7 +55,7 @@ class Product {
     return {
       'name': productName,
       'imageUrl': productImageUrl,
-      'price': productOriginalPrice,
+      'current_price': productOriginalPrice,
       'expiryDate': productExpiryDate != null
           ? Timestamp.fromDate(productExpiryDate!)
           : null,
@@ -99,7 +99,7 @@ class Promotion {
     return Promotion(
       promotionId: doc.id,
       productId: data['productId'] ?? '',
-      productName: data['productName'] ?? 'Unnamed Promotion',
+      productName: data['name'] ?? 'Unnamed Promotion',
       productImageUrl: data['imageUrl'],
       originalPrice: (data['originalPrice'] ?? 0).toDouble(),
       discountPercentage: (data['discountPercentage'] ?? 0).toDouble(),
@@ -113,7 +113,7 @@ class Promotion {
   Map<String, dynamic> toFirestore() {
     return {
       'productId': productId,
-      'productName': productName,
+      'name': productName,
       'imageUrl': productImageUrl,
       'originalPrice': originalPrice,
       'discountPercentage': discountPercentage,
@@ -179,59 +179,113 @@ class _PromotionsPageState extends State<PromotionsPage> {
             itemBuilder: (context, index) {
               final promotion = promotions[index];
 
-              return Card(
-                margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: ListTile(
-                  leading:
-                      promotion.productImageUrl != null &&
-                          promotion.productImageUrl!.isNotEmpty
-                      ? Image.network(
-                          promotion.productImageUrl!,
-                          width: 50,
-                          height: 50,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => Image.asset(
+              return Dismissible(
+                key: Key(promotion.promotionId),
+                direction: DismissDirection.endToStart,
+                confirmDismiss: (direction) async {
+                  return await showDialog<bool>(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text('Confirm Deletion'),
+                      content: Text(
+                        'Delete the promotion for "${promotion.productName}"?',
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(false),
+                          child: const Text('Cancel'),
+                        ),
+                        ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red,
+                          ),
+                          onPressed: () => Navigator.of(context).pop(true),
+                          child: const Text('Delete'),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+                onDismissed: (direction) async {
+                  await FirebaseFirestore.instance
+                      .collection('supermarkets')
+                      .doc(widget.supermarketId)
+                      .collection('promotions')
+                      .doc(promotion.promotionId)
+                      .delete();
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'Deleted promotion for ${promotion.productName}',
+                      ),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                },
+                background: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  alignment: Alignment.centerRight,
+                  color: Colors.red,
+                  child: const Icon(Icons.delete, color: Colors.white),
+                ),
+                child: Card(
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  child: ListTile(
+                    leading:
+                        promotion.productImageUrl != null &&
+                            promotion.productImageUrl!.isNotEmpty
+                        ? Image.network(
+                            promotion.productImageUrl!,
+                            width: 50,
+                            height: 50,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Image.asset(
+                              'assets/images/placeholder.png',
+                              width: 50,
+                              height: 50,
+                            ),
+                          )
+                        : Image.asset(
                             'assets/images/placeholder.png',
                             width: 50,
                             height: 50,
                           ),
-                        )
-                      : Image.asset(
-                          'assets/images/placeholder.png',
-                          width: 50,
-                          height: 50,
+                    title: Text(
+                      promotion.productName,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Original Price: UGX ${promotion.originalPrice.toStringAsFixed(0)}',
                         ),
-                  title: Text(
-                    promotion.productName,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Original Price: UGX ${promotion.originalPrice.toStringAsFixed(0)}',
-                      ),
-                      Text(
-                        'Discount: ${promotion.discountPercentage.toStringAsFixed(0)}%',
-                      ),
-                      Text(
-                        'Discounted Price: UGX ${promotion.discountedPrice.toStringAsFixed(0)}',
-                      ),
-                      Text(
-                        'Expires: ${DateFormat('yyyy-MM-dd').format(promotion.discountExpiry)}',
-                      ),
-                      if (promotion.discountExpiry.isBefore(DateTime.now()))
-                        const Text(
-                          'EXPIRED',
-                          style: TextStyle(
-                            color: Colors.red,
-                            fontWeight: FontWeight.bold,
+                        Text(
+                          'Discount: ${promotion.discountPercentage.toStringAsFixed(0)}%',
+                        ),
+                        Text(
+                          'Discounted Price: UGX ${promotion.discountedPrice.toStringAsFixed(0)}',
+                        ),
+                        Text(
+                          'Expires: ${DateFormat('yyyy-MM-dd').format(promotion.discountExpiry)}',
+                        ),
+                        if (promotion.discountExpiry.isBefore(DateTime.now()))
+                          const Text(
+                            'EXPIRED',
+                            style: TextStyle(
+                              color: Colors.red,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
-                    ],
+                      ],
+                    ),
+                    trailing: const Icon(Icons.edit),
+                    onTap: () => _showEditDialog(context, promotion),
                   ),
-                  trailing: const Icon(Icons.edit),
-                  onTap: () => _showEditDialog(context, promotion),
                 ),
               );
             },

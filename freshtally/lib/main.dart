@@ -5,7 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 import 'package:Freshtally/pages/auth/staffcode.dart';
 import 'package:Freshtally/pages/customer/list/shopping_list_page.dart';
-import 'package:Freshtally/pages/manager/home/manager_home_screen.dart'; // Assuming ManagerDashboardPage is here
+import 'package:Freshtally/pages/manager/home/manager_home_screen.dart';
 import 'package:Freshtally/pages/shelfStaff/shelves/shelf_mapping_page.dart';
 import 'package:Freshtally/pages/shelfStaff/shelves/smart_suggestions_page.dart';
 import 'package:Freshtally/pages/auth/create_supermarket_page.dart';

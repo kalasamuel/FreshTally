@@ -43,7 +43,7 @@ class Promotion {
     return Promotion(
       promotionId: doc.id,
       productId: data['productId'] ?? '',
-      productName: data['productName'] ?? 'Unnamed Promotion',
+      productName: data['name'] ?? 'Unnamed Promotion',
       productImageUrl: data['imageUrl'], // Using 'imageUrl' from Promotion
       originalPrice: (data['originalPrice'] ?? 0).toDouble(),
       discountPercentage: (data['discountPercentage'] ?? 0).toDouble(),
@@ -220,7 +220,7 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
             false, // Ensures no back button is automatically added
         backgroundColor: const Color(0xFFFFFFFF),
         elevation: 0.0,
-        titleSpacing: 0, // Remove default spacing around title
+        titleSpacing: 0,
         title: Row(
           children: [
             // Supermarket Name and Location (Left side) - now tappable to switch

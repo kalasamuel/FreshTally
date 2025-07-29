@@ -36,7 +36,7 @@ class Promotion {
       productId:
           data['productId'] ??
           '', // Make sure this field exists in your promotion document
-      productName: data['productName'] ?? 'Unnamed Promotion',
+      productName: data['name'] ?? 'Unnamed Promotion',
       productImageUrl:
           data['imageUrl'], // Make sure this field exists in your promotion document
       originalPrice: (data['originalPrice'] ?? 0).toDouble(),
@@ -138,20 +138,6 @@ class _DiscountsAndPromotionsPageState
 
     return Scaffold(
       backgroundColor: const Color(0xFFFFFFFF),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFFFFFFFF),
-        elevation: 0.0,
-        title: const Text(
-          'Discounts & Promotions',
-          style: TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
-          ),
-        ),
-        centerTitle: true,
-        iconTheme: const IconThemeData(color: Colors.black87),
-      ),
       body: SafeArea(
         child: StreamBuilder<QuerySnapshot>(
           stream: _getSupermarketDiscountsStream(), // Use the stream method
@@ -251,7 +237,7 @@ class _DiscountsAndPromotionsPageState
                         title:
                             '${promotion.productName}: UGX ${promotion.discountedPrice.toStringAsFixed(0)}',
                         subtitle:
-                            'Was UGX ${promotion.originalPrice.toStringAsFixed(0)} • $expiryText',
+                            'Was UGX ${promotion.originalPrice.toStringAsFixed(0)}',
                         cardColor: daysLeft <= 0
                             ? Colors.red.shade50
                             : const Color(0xFFFFE0E6),

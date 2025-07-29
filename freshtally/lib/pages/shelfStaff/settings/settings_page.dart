@@ -233,9 +233,9 @@ class SettingsPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Settings'),
-        backgroundColor: Theme.of(
-          context,
-        ).colorScheme.inversePrimary, // Example color
+        backgroundColor: const Color(0xFFFFFFFF),
+        elevation: 0.0,
+        titleSpacing: 0,
       ),
       body: SingleChildScrollView(
         // Makes the entire body scrollable

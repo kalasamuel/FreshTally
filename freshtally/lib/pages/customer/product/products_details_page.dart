@@ -48,12 +48,11 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
             'productId': widget.productId,
             'supermarketId': widget
                 .supermarketId, // Redundant but good for quick querying if needed
-            'productName':
-                product['productName'] ??
-                'Unknown Product', // Adjusted to productName
-            'price': product['price'] ?? 0,
+            'name':
+                product['name'] ?? 'Unknown Product', // Adjusted to productName
+            'current_price': product['current_price'] ?? 0,
             'discountedPrice':
-                product['discountedPrice'] ?? product['price'] ?? 0,
+                product['discountedPrice'] ?? product['cuurent_price'] ?? 0,
             'imageUrl': product['imageUrl'] ?? '', // Adjusted to imageUrl
             'location': product['location'] ?? {},
             'description': product['description'] ?? '',
@@ -103,9 +102,9 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
 
           final product = snapshot.data!.data() as Map<String, dynamic>? ?? {};
 
-          // Adjusted variable names to be consistent with 'productName', 'imageUrl', 'isChecked', 'addedAt'
-          final productName = product['productName'] ?? 'Unknown Product';
-          final price = (product['price'] ?? 0).toDouble();
+          // Adjusted variable names to be consistent with 'name', 'imageUrl', 'isChecked', 'addedAt'
+          final productName = product['name'] ?? 'Unknown Product';
+          final price = (product['current_price'] ?? 0).toDouble();
           final discountedPrice = (product['discountedPrice'] ?? price)
               .toDouble();
           final discountPercentage = (product['discountPercentage'] ?? 0)

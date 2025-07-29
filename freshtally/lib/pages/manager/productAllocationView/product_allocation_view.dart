@@ -136,9 +136,9 @@ class _ProductAllocationViewState extends State<ProductAllocationView> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            // Product Name (Adjusted to 'productName' for consistency)
+                            // Product Name (Adjusted to 'name' for consistency)
                             Text(
-                              product['productName'] ?? 'Unnamed Product',
+                              product['name'] ?? 'Unnamed Product',
                               style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 18,
@@ -159,11 +159,11 @@ class _ProductAllocationViewState extends State<ProductAllocationView> {
                                 ),
                               ),
 
-                            // Price and Discount (Adjusted to 'price' and 'discountPercentage' for consistency)
+                            // Price and Discount (Adjusted to 'current_price' and 'discountPercentage' for consistency)
                             Row(
                               children: [
                                 Text(
-                                  '${(product['price'] as num?)?.toStringAsFixed(0) ?? 'N/A'} UGX', // Adjusted to num? and toStringAsFixed(0) for consistency
+                                  '${(product['current_price'] as num?)?.toStringAsFixed(0) ?? 'N/A'} UGX', // Adjusted to num? and toStringAsFixed(0) for consistency
                                   style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w500,
@@ -223,15 +223,31 @@ class _ProductAllocationViewState extends State<ProductAllocationView> {
     String shelf = location['shelf']?.toString() ?? 'N/A';
     String position = _formatPosition(location['position']?.toString() ?? '');
 
-    return Row(
-      children: [
-        const Icon(Icons.location_on, size: 16, color: Colors.blue),
-        const SizedBox(width: 8),
-        Text(
-          'Floor: $floor, Shelf: $shelf, Pos: $position', // More descriptive
-          style: const TextStyle(fontSize: 14),
-        ),
-      ],
+    return Container(
+      margin: const EdgeInsets.only(top: 4),
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.green.shade50,
+        border: Border.all(color: Colors.green),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          const Icon(Icons.location_on, size: 20, color: Colors.green),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'Floor: $floor | Shelf: $shelf | Position: $position',
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

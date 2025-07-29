@@ -61,8 +61,7 @@ class _ProductSearchPageState extends State<ProductSearchPage> {
             child: TextField(
               controller: _searchController, // Link controller to TextField
               decoration: InputDecoration(
-                hintText:
-                    'Search products in ${widget.supermarketId}...', // Dynamic hint
+                hintText: 'Search products...', // Dynamic hint
                 prefixIcon: const Icon(
                   Icons.search,
                   color: Colors.grey,
@@ -153,9 +152,10 @@ class _ProductSearchPageState extends State<ProductSearchPage> {
 
                     // Adjusted to use 'productName' and 'imageUrl' for consistency
                     final String productName =
-                        productData['productName'] ?? 'Unnamed Product';
+                        productData['name'] ?? 'Unnamed Product';
                     final num price =
-                        productData['price'] ?? 0; // Use num for flexibility
+                        productData['current_price'] ??
+                        0; // Use num for flexibility
                     final String imageUrl =
                         productData['imageUrl'] ?? ''; // Adjusted to 'imageUrl'
 

@@ -75,10 +75,11 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                 final productData = productDoc.data();
                 items.add({
                   'id': doc.id,
-                  'productName':
-                      productData?['productName'] ??
+                  'name':
+                      productData?['name'] ??
                       'Unknown Product', // Adjusted to productName
-                  'price': (productData?['price'] ?? 0).toDouble(),
+                  'current_price': (productData?['current_price'] ?? 0)
+                      .toDouble(),
                   'imageUrl':
                       productData?['imageUrl'] ?? '', // Adjusted to imageUrl
                   'quantity': quantity,
@@ -319,8 +320,8 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
               final item = items[index];
               final String docId = item['id'];
               // Using consistent naming
-              final String productName = item['productName'];
-              final double price = item['price'];
+              final String productName = item['name'];
+              final double price = item['current_price'];
               final String imageUrl = item['imageUrl'];
               final int quantity = item['quantity'];
               final bool isChecked = item['isChecked']; // Adjusted to isChecked
