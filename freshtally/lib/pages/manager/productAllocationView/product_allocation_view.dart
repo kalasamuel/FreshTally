@@ -1,3 +1,4 @@
+import 'package:Freshtally/pages/customer/product/products_details_page.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -126,85 +127,91 @@ class _ProductAllocationViewState extends State<ProductAllocationView> {
                     final location =
                         product['location'] as Map<String, dynamic>?;
 
-                    return Card(
-                      margin: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // Product Name (Adjusted to 'name' for consistency)
-                            Text(
-                              product['name'] ?? 'Unnamed Product',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 18,
-                              ),
+                    return InkWell(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ProductDetailsPage(
+                              productId: doc.id,
+                              supermarketId: widget.supermarketId,
+                              hideAddButton: true,
                             ),
-                            const SizedBox(height: 8),
-
-                            // Category (Adjusted to 'category' for consistency)
-                            if (product['category'] != null)
-                              Padding(
-                                padding: const EdgeInsets.only(bottom: 4),
-                                child: Text(
-                                  'Category: ${product['category']}',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey[700],
-                                  ),
+                          ),
+                        );
+                      },
+                      child: Card(
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                product['name'] ?? 'Unnamed Product',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18,
                                 ),
                               ),
-
-                            // Price and Discount (Adjusted to 'current_price' and 'discountPercentage' for consistency)
-                            Row(
-                              children: [
-                                Text(
-                                  '${(product['current_price'] as num?)?.toStringAsFixed(0) ?? 'N/A'} UGX', // Adjusted to num? and toStringAsFixed(0) for consistency
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                                const Spacer(),
-                                if (product['discountPercentage'] != null &&
-                                    (product['discountPercentage'] as num) >
-                                        0) // Cast to num for comparison
-                                  Text(
-                                    '${product['discountPercentage']}% OFF',
-                                    style: const TextStyle(
-                                      color: Colors.green,
-                                      fontWeight: FontWeight.bold,
+                              const SizedBox(height: 8),
+                              if (product['category'] != null)
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 4),
+                                  child: Text(
+                                    'Category: ${product['category']}',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.grey[700],
                                     ),
                                   ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-
-                            // Location Details
-                            const Text(
-                              'Location:',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
+                                ),
+                              Row(
+                                children: [
+                                  Text(
+                                    '${(product['current_price'] as num?)?.toStringAsFixed(0) ?? 'N/A'} UGX',
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  const Spacer(),
+                                  if (product['discountPercentage'] != null &&
+                                      (product['discountPercentage'] as num) >
+                                          0)
+                                    Text(
+                                      '${product['discountPercentage']}% OFF',
+                                      style: const TextStyle(
+                                        color: Colors.green,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                ],
                               ),
-                            ),
-                            const SizedBox(height: 4),
-
-                            if (location == null ||
-                                (location['floor'] == null &&
-                                    location['shelf'] == null &&
-                                    location['position'] == null))
+                              const SizedBox(height: 12),
                               const Text(
-                                'No location data available',
-                                style: TextStyle(color: Colors.grey),
-                              )
-                            else
-                              _buildLocationDetail(location),
-                          ],
+                                'Location:',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              if (location == null ||
+                                  (location['floor'] == null &&
+                                      location['shelf'] == null &&
+                                      location['position'] == null))
+                                const Text(
+                                  'No location data available',
+                                  style: TextStyle(color: Colors.grey),
+                                )
+                              else
+                                _buildLocationDetail(location),
+                            ],
+                          ),
                         ),
                       ),
                     );

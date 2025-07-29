@@ -166,7 +166,7 @@ class _ShelfMappingPageState extends State<ShelfMappingPage> {
         'name': productName,
         'name_lower': productName
             .toLowerCase(), // Store lowercase name for searching
-        'sku': _skuController.text.trim(), // Save SKU
+        // 'sku': _skuController.text.trim(), // Save SKU
         'supermarketId': widget.supermarketId, // Save supermarketId
         'category': _categoryController.text.trim(),
         'location': {
@@ -333,19 +333,17 @@ class _ShelfMappingPageState extends State<ShelfMappingPage> {
                         ? 'Enter valid price'
                         : null,
                   ),
-                  const SizedBox(height: 16),
 
-                  _buildStyledTextFormField(
-                    // Added SKU input
-                    controller: _skuController,
-                    hintText: 'Enter SKU',
-                    labelText: 'SKU',
-                    validator: (val) => val == null || val.isEmpty
-                        ? 'SKU cannot be empty'
-                        : null,
-                  ),
-                  const SizedBox(height: 16),
-
+                  // _buildStyledTextFormField(
+                  //   // Added SKU input
+                  //   controller: _skuController,
+                  //   hintText: 'Enter SKU',
+                  //   labelText: 'SKU',
+                  //   validator: (val) => val == null || val.isEmpty
+                  //       ? 'SKU cannot be empty'
+                  //       : null,
+                  // ),
+                  const SizedBox(height: 2),
                   TypeAheadField<String>(
                     controller: _categoryController,
                     builder: (context, controller, focusNode) {
