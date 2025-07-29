@@ -58,13 +58,15 @@ class CustomerHomePage extends StatefulWidget {
   // supermarketName and location are now optional as they will be fetched dynamically
   final String? supermarketName;
   final String? location;
-  final String supermarketId; // This is crucial and required for context
+  final String supermarketId;
+  final String userId; // This is crucial and required for context
 
   const CustomerHomePage({
     super.key,
     this.supermarketName,
     this.location,
     required this.supermarketId,
+    required this.userId, // Required to identify the user
   });
 
   @override
@@ -101,7 +103,10 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
       ProductSearchPage(supermarketId: widget.supermarketId),
       ShoppingListPage(supermarketId: widget.supermarketId),
       DiscountsAndPromotionsPage(supermarketId: widget.supermarketId),
-      NotificationsPage(supermarketId: widget.supermarketId),
+      NotificationsPage(
+        supermarketId: widget.supermarketId,
+        userId: widget.userId,
+      ),
     ];
   }
 
@@ -279,8 +284,10 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) =>
-                      NotificationsPage(supermarketId: widget.supermarketId),
+                  builder: (context) => NotificationsPage(
+                    supermarketId: widget.supermarketId,
+                    userId: widget.userId,
+                  ),
                 ),
               );
             },

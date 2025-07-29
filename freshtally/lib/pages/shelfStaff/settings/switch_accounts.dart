@@ -252,6 +252,7 @@ class _AccountHistoryPageState extends State<AccountHistoryPage> {
                   supermarketName: supermarketName,
                   location: location,
                   supermarketId: singleSupermarketId,
+                  userId: userId,
                 ),
               ),
             );

@@ -121,6 +121,7 @@ class _SupermarketSelectionPageState extends State<SupermarketSelectionPage> {
             supermarketName: supermarketName,
             location: location,
             supermarketId: supermarketId,
+            userId: FirebaseAuth.instance.currentUser?.uid ?? '',
           ),
         ),
       );

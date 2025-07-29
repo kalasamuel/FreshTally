@@ -63,8 +63,10 @@ class FreshTallyApp extends StatelessWidget {
           case '/customerHome':
             final args = settings.arguments as Map<String, dynamic>? ?? {};
             return MaterialPageRoute(
-              builder: (_) =>
-                  CustomerHomePage(supermarketId: args['supermarketId'] ?? ''),
+              builder: (_) => CustomerHomePage(
+                supermarketId: args['supermarketId'] ?? '',
+                userId: args['userId'] ?? '',
+              ),
             );
           case '/customerSearch':
             // Extract supermarketId from arguments

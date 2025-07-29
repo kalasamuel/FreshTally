@@ -302,6 +302,7 @@ class _LoginPageState extends State<LoginPage> {
                   supermarketName: supermarketName,
                   location: location,
                   supermarketId: singleSupermarketId,
+                  userId: userId,
                 ),
               ),
             );
