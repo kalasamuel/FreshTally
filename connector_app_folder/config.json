@@ -1,12 +1,14 @@
 {
     "source_type": "CSV",
-    "store_id": "Diamond Supermarket Kampala",
+    "store_id": "7Q8MfpFiGfOZY5zZzFYXae1JugE2",
     "field_mapping": {
-        "product_id": "id",
-        "name": "item",
-        "qty": "quantity",
-        "price": "price",
-        "timestamp": "timestamp"
+        "productId": "ProductID",
+        "productName": "ProductName",
+        "quantity": "Quantity",
+        "unitPrice": "UnitPrice",
+        "timestamp": "transactionTime",
+        "sku": "SKU",
+        "transactionId": "TransactionID"
     },
-    "csv_path": "C:/Users/user/Downloads/sales.csv"
+    "csv_path": "C:/Users/user/Downloads/pos.csv"
 }

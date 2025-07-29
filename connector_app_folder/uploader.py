@@ -7,7 +7,7 @@ import datetime
 def get_resource_path(relative_path):
     """Get absolute path to resource, works for dev and PyInstaller .exe"""
     try:
-        base_path = sys._MEIPASS  # PyInstaller temp directory
+        base_path = sys._MEIPASS
     except Exception:
         base_path = os.path.abspath(".")
     return os.path.join(base_path, relative_path)
@@ -20,24 +20,23 @@ if not firebase_admin._apps:
 
 db = firestore.client()
 
-def send_sales_to_firebase(sales_data, store_id="default_store"):
+def send_sales_to_firebase(sales_data, store_id):
     """
-    Uploads sales data to Firebase Firestore under a store's batches collection.
-    sales_data: List of dicts like:
-      [
-        {"product_id": "A123", "name": "Milk", "qty": 2, "price": 4500, "timestamp": "2024-07-07T13:00:00"},
-        ...
-      ]
-    store_id: Firestore document ID for the store.
+    Uploads sales data to /supermarkets/{store_id}/pos_transactions in Firestore.
+    Internally we use 'store_id', but treat it as 'supermarket_id' in Firestore.
     """
-    store_ref = db.collection("sales").document(store_id)
-    batch_ref = store_ref.collection("batches").document(datetime.datetime.now().isoformat())
-    batch_ref.set({"uploaded": True, "count": len(sales_data)})
+    supermarket_id = store_id  # alias for clarity
+
+    pos_collection = (
+        db.collection("supermarkets")
+        .document(supermarket_id)
+        .collection("pos_transactions")
+    )
 
     for sale in sales_data:
-        batch_ref.collection("items").add(sale)
+        sale_doc = sale.copy()
+        sale_doc["supermarket_id"] = supermarket_id  # renamed for Firestore
+        sale_doc["uploaded_at"] = datetime.datetime.now().isoformat()
+        pos_collection.add(sale_doc)
 
-    print(f"✅ Uploaded {len(sales_data)} sales to Firestore.")
-    
-
-
+    print(f"✅ Uploaded {len(sales_data)} sales to /supermarkets/{supermarket_id}/pos_transactions.")

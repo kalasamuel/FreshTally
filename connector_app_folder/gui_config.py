@@ -14,12 +14,19 @@ def launch_config_gui():
         entry.delete(0, tk.END)
         entry.insert(0, path)
 
+    def is_valid_store_id(store_id):
+        return store_id.isalnum() and len(store_id) > 0
+
     def save_config():
         source_type = source_var.get().upper()
         store_id = store_id_entry.get().strip()
 
         if not source_type or not store_id:
             messagebox.showerror("Missing Info", "Please select source type and enter Store ID.")
+            return
+        
+        if not is_valid_store_id(store_id):
+            messagebox.showerror("Invalid Store ID", "Store ID must be alphanumeric and non-empty.")
             return
 
         config = {
@@ -134,15 +141,15 @@ def launch_config_gui():
     root.title("Connector Configuration")
 
     # Source type and Store ID
+    tk.Label(root, text="Supermarket ID:").pack()
+    store_id_entry = tk.Entry(root)
+    store_id_entry.pack()
+
     tk.Label(root, text="POS Source Type:").pack()
     source_var = tk.StringVar()
     source_dropdown = ttk.Combobox(root, textvariable=source_var, values=["CSV", "SQLite", "MySQL", "API"])
     source_dropdown.bind("<<ComboboxSelected>>", show_fields)
     source_dropdown.pack()
-
-    tk.Label(root, text="Store ID:").pack()
-    store_id_entry = tk.Entry(root)
-    store_id_entry.pack()
 
     # Source-specific frames
     csv_frame = tk.Frame(root)
@@ -187,11 +194,14 @@ def launch_config_gui():
     mapping_frame.pack(padx=10, pady=5)
 
     field_labels = {
-        "product_id": "Product ID",
-        "name": "Product Name",
-        "qty": "Quantity",
-        "price": "Price",
-        "timestamp": "Timestamp"
+        "productId": "Product ID",
+        "productName": "Product Name",
+        "quantity": "Quantity",
+        "unitPrice": " Unit Price",
+        "timestamp": "Timestamp",
+        "sku": "SKU",
+        "transactionId" : "Transaction ID"
+
     }
 
     # Create field variables and dropdowns

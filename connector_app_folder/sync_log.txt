@@ -10,3 +10,11 @@
 [2025-07-29 16:17:40] STATUS: SUCCESS | Store: Diamond Supermarket Kampala | Records: 3
 [2025-07-29 17:00:28] STATUS: SUCCESS | Store: Diamond Supermarket Kampala | Records: 3
 [2025-07-29 17:29:49] STATUS: SUCCESS | Store: Kala supermarket | Records: 1848
+[2025-07-29 18:17:31] STATUS: FAILED | Store: kampala supermarket | Records: 0 | ERROR: Timeout of 60.0s exceeded, last exception: 503 failed to connect to all addresses; last error: UNKNOWN: ipv4:172.217.170.202:443: tcp handshaker shutdown
+[2025-07-29 19:42:51] STATUS: FAILED | Store: Kampala supermarket | Records: 0 | ERROR: 'transaction_timestamp'
+[2025-07-29 19:44:11] STATUS: FAILED | Store: Kampala supermarket | Records: 0 | ERROR: 'transaction_timestamp'
+[2025-07-29 19:46:06] STATUS: FAILED | Store: Kampala supermarket | Records: 0 | ERROR: 'transaction_timestamp'
+[2025-07-29 19:47:19] STATUS: FAILED | Store: Kampala supermarket | Records: 0 | ERROR: 'transaction_timestamp'
+[2025-07-29 19:48:45] STATUS: FAILED | Store: Kampala supermarket | Records: 0 | ERROR: 'transaction_timestamp'
+[2025-07-29 19:50:49] STATUS: FAILED | Store: kampala supermarket | Records: 0 | ERROR: 'transaction_timestamp'
+[2025-07-29 20:48:20] STATUS: SUCCESS | Store: 7Q8MfpFiGfOZY5zZzFYXae1JugE2 | Records: 1848
