@@ -213,13 +213,13 @@ class _CreateSupermarketPageState extends State<CreateSupermarketPage> {
       // Navigate to the appropriate dashboard
       Navigator.pushReplacementNamed(
         context,
-        '/staff/managerHome',
+        '/managerHome',
         arguments: {
           'supermarketId':
               uid, // Pass the supermarket ID (which is the manager's UID)
           'supermarketName': _supermarketNameController.text.trim(),
           'location': _locationController.text.trim(),
-          'uid':
+          'managerId':
               uid, // Pass the manager's UID (same as supermarketId in this case)
         },
       );
