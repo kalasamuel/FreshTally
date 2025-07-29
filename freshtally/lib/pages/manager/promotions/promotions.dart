@@ -147,6 +147,36 @@ class _PromotionsPageState extends State<PromotionsPage> {
     super.dispose();
   }
 
+  // Helper method to create a notification for promotions
+  Future<void> _createPromotionNotification({
+    required String productName,
+    required double discountPercentage,
+    required DateTime expiryDate,
+    required String promotionId,
+    required bool isNew,
+  }) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('supermarkets')
+          .doc(widget.supermarketId)
+          .collection('notifications')
+          .add({
+            'type': 'promotion',
+            'title': isNew ? 'New Promotion Added' : 'Promotion Updated',
+            'message':
+                '${isNew ? 'New' : 'Updated'} promotion for $productName - ${discountPercentage.toStringAsFixed(0)}% off',
+            'product_name': productName,
+            'discount_percentage': discountPercentage,
+            'expiry_date': Timestamp.fromDate(expiryDate),
+            'promotion_id': promotionId,
+            'timestamp': FieldValue.serverTimestamp(),
+            'read': false,
+          });
+    } catch (e) {
+      debugPrint('Error creating promotion notification: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -431,6 +461,15 @@ class _PromotionsPageState extends State<PromotionsPage> {
                             'discountedPrice': newDiscountedPrice,
                           });
 
+                      // Create notification for the updated promotion
+                      await _createPromotionNotification(
+                        productName: promotion.productName,
+                        discountPercentage: discountPercentage,
+                        expiryDate: discountExpiry,
+                        promotionId: promotion.promotionId,
+                        isNew: false,
+                      );
+
                       if (!mounted) return;
                       Navigator.of(context).pop();
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -709,6 +748,15 @@ class _PromotionsPageState extends State<PromotionsPage> {
                             discountExpiry: newDiscountExpiryDate!,
                             createdAt: DateTime.now(),
                           ).toFirestore(),
+                        );
+
+                        // Create notification for the new promotion
+                        await _createPromotionNotification(
+                          productName: selectedProductName,
+                          discountPercentage: newDiscountPercentage,
+                          expiryDate: newDiscountExpiryDate!,
+                          promotionId: promotionRef.id,
+                          isNew: true,
                         );
 
                         if (!mounted) return;

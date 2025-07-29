@@ -31,10 +31,32 @@ class _NotificationsPageState extends State<NotificationsPage> {
     final isFirstVisit = prefs.getBool('${widget.userId}_first_visit') ?? true;
 
     if (isFirstVisit) {
+      await _createWelcomeNotification();
       setState(() {
         _showWelcomeNotification = true;
       });
       await prefs.setBool('${widget.userId}_first_visit', false);
+    }
+  }
+
+  Future<void> _createWelcomeNotification() async {
+    try {
+      final notificationsRef = FirebaseFirestore.instance
+          .collection('supermarkets')
+          .doc(widget.supermarketId)
+          .collection('users')
+          .doc(widget.userId)
+          .collection('notifications');
+
+      await notificationsRef.add({
+        'type': 'welcome',
+        'message':
+            'Welcome to our supermarket! Enjoy your shopping experience.',
+        'timestamp': Timestamp.now(),
+        'read': false,
+      });
+    } catch (e) {
+      debugPrint('Error creating welcome notification: $e');
     }
   }
 
@@ -56,9 +78,12 @@ class _NotificationsPageState extends State<NotificationsPage> {
         Expanded(
           child: StreamBuilder<QuerySnapshot>(
             stream: FirebaseFirestore.instance
+                .collection('supermarkets')
+                .doc(widget.supermarketId)
+                .collection('users')
+                .doc(widget.userId)
                 .collection('notifications')
-                .where('supermarketId', isEqualTo: widget.supermarketId)
-                .where('targetAudience', isEqualTo: 'customers')
+                .where('type', whereIn: ['discount', 'welcome', 'promotion'])
                 .orderBy('timestamp', descending: true)
                 .snapshots(),
             builder: (context, snapshot) {
@@ -164,6 +189,8 @@ class _NotificationsPageState extends State<NotificationsPage> {
         (data['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now();
     final productId = data['productId'] as String?;
     final productName = data['productName'] as String? ?? 'product';
+    final promotionImage = data['imageUrl'] as String?;
+    final promotionTitle = data['title'] as String? ?? 'Special Promotion';
 
     if (type == 'discount') {
       return Card(
@@ -217,6 +244,96 @@ class _NotificationsPageState extends State<NotificationsPage> {
                 ],
               ],
             ),
+          ),
+        ),
+      );
+    } else if (type == 'promotion') {
+      return Card(
+        elevation: 2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        margin: const EdgeInsets.symmetric(vertical: 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (promotionImage != null)
+              ClipRRect(
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(12),
+                ),
+                child: Image.network(
+                  promotionImage,
+                  height: 150,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                ),
+              ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.local_offer, color: Colors.orange[700]),
+                      const SizedBox(width: 8),
+                      Text(
+                        promotionTitle.toUpperCase(),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.orange[700],
+                          fontSize: 14,
+                        ),
+                      ),
+                      const Spacer(),
+                      Text(
+                        _formatTime(timestamp),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(message, style: const TextStyle(fontSize: 14)),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    } else if (type == 'welcome') {
+      return Card(
+        elevation: 2,
+        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        color: Colors.blue[50],
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.emoji_emotions, color: Colors.blue),
+                  const SizedBox(width: 8),
+                  Text(
+                    'WELCOME!',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.blue[700],
+                    ),
+                  ),
+                  const Spacer(),
+                  Text(
+                    _formatTime(timestamp),
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(message, style: const TextStyle(fontSize: 14)),
+            ],
           ),
         ),
       );

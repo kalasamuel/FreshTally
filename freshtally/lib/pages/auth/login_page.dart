@@ -270,7 +270,7 @@ class _LoginPageState extends State<LoginPage> {
           );
           break;
 
-        case 'manager': // Combined staff cases
+        case 'manager':
           String supermarketName = 'Unknown';
           String location = 'Unknown';
           if (staffOrManagerSupermarketId != null) {
@@ -289,10 +289,37 @@ class _LoginPageState extends State<LoginPage> {
             context,
             MaterialPageRoute(
               builder: (_) => ManagerDashboardPage(
-                supermarketId: staffOrManagerSupermarketId!,
                 supermarketName: supermarketName,
                 location: location,
                 managerId: userId,
+                supermarketId: staffOrManagerSupermarketId!,
+              ),
+            ),
+          );
+          break;
+
+        case 'storeManager':
+          String supermarketName = 'Unknown';
+          String location = 'Unknown';
+          if (staffOrManagerSupermarketId != null) {
+            final supermarketDoc = await _firestore
+                .collection('supermarkets')
+                .doc(staffOrManagerSupermarketId)
+                .get();
+            if (supermarketDoc.exists) {
+              final supermarketData = supermarketDoc.data();
+              supermarketName =
+                  supermarketData?['name'] as String? ?? 'Unknown';
+              location = supermarketData?['location'] as String? ?? 'Unknown';
+            }
+          }
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) => StoreManagerDashboard(
+                supermarketId: staffOrManagerSupermarketId!,
+                supermarketName: supermarketName,
+                location: location,
               ),
             ),
           );

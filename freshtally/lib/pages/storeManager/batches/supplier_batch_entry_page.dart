@@ -296,16 +296,37 @@ class _SupplierBatchEntryPageState extends State<SupplierBatchEntryPage> {
         // 'supermarketId' is implicitly handled by the path here as well.
       };
 
+      DocumentReference batchRef;
       if (_isEditing && widget.batchToEdit != null) {
         // Update the existing batch document within its supermarket subcollection
         await widget.batchToEdit!.reference.update(batchData);
+        batchRef = widget.batchToEdit!.reference;
       } else {
         // Add a new batch document to the supermarket's batches subcollection
-        await FirebaseFirestore.instance
+        batchRef = await FirebaseFirestore.instance
             .collection('supermarkets')
             .doc(widget.supermarketId)
             .collection('batches') // Corrected path for new batch
             .add(batchData);
+
+        // Create notification only for new entries (not for edits)
+        final notificationData = {
+          'product_name': productNameController.text.trim(),
+          'quantity': int.tryParse(quantityController.text) ?? 0,
+          'supplier': supplierNameController.text.trim(),
+          'expiry_date': _selectedExpiryDate != null
+              ? Timestamp.fromDate(_selectedExpiryDate!)
+              : null,
+          'batch_ref': batchRef,
+          'timestamp': FieldValue.serverTimestamp(),
+          'read': false,
+        };
+
+        await FirebaseFirestore.instance
+            .collection('supermarkets')
+            .doc(widget.supermarketId)
+            .collection('notifications')
+            .add(notificationData);
       }
 
       if (!mounted) return;
