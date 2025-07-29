@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f0f3f1;
+      color: #573f3f;
+      line-height: 1.8;
+      padding: 40px 20px;
+      max-width: 900px;
+      margin: auto;
+    }
+    h1, h2 {
+      color: #47c54d;
+    }
+    h1 {
+      font-size: 2.5em;
+      margin-bottom: 0.3em;
+    }
+    h2 {
+      margin-top: 2em;
+      font-size: 1.6em;
+    }
+    p {
+      margin-bottom: 1.5em;
+
+    }
+    /* Navbar styles */
+    .navbar {
+      background: #3e656e;
+      color: #dbeee2;
+      display: flex;
+      align-items: center;
+      padding: 0 2vw;
+      height: 56px;
+      justify-content: space-between;
+      margin: -40px -20px 40px -20px;
+      max-width: none;
+    }
+    .navbar h1 {
+      color: #50f58c;
+      font-size: 1.7em;
+      margin: 0;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    .nav-links {
+      display: flex;
+      gap: 2vw;
+    }
+    .nav-toggle {
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      width: 40px;
+      height: 40px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      margin-left: 10px;
+    }
+    .nav-toggle span {
+      display: block;
+      width: 28px;
+      height: 4px;
+      margin: 4px 0;
+      background: #fff;
+      border-radius: 2px;
+      transition: 0.3s;
+    }
+    .nav-links a {
+      color: #89fab2;
+      text-decoration: none;
+      font-size: 1.1em;
+      font-weight: 500;
+      padding: 0 0.2em;
+      transition: color 0.2s;
+      position: relative;
+    }
+    .nav-links a.active, .nav-links a:focus, .nav-links a:hover {
+      color: #fff;
+      font-weight: 700;
+    }
+    .nav-links a.active::after {
+      content: '';
+      display: block;
+      margin: 0 auto;
+      width: 70%;
+      border-bottom: 2.5px solid #dbeee2;
+      border-radius: 2px;
+      margin-top: 2px;
+    }
+    @media (max-width: 600px) {
+      .navbar {
+        flex-direction: row;
+        align-items: center;
+        height: auto;
+        padding: 10px 2vw;
+      }
+      .nav-links {
+        display: none;
+        flex-direction: column;
+        gap: 0.5em;
+        width: 100%;
+        margin-top: 0.5em;
+        background: #222;
+        position: absolute;
+        top: 56px;
+        left: 0;
+        z-index: 100;
+        padding: 10px 0 10px 20px;
+      }
+      .nav-links.open {
+        display: flex;
+      }
+      .nav-links a {
+        padding: 0.3em 0;
+        font-size: 1em;
+      }
+      .nav-toggle {
+        display: flex;
+      }
+    }
+  </style>
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Freshtally - Visualization</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+
+  <div class="navbar">
+    <h1>FreshTally</h1>
+    <button class="nav-toggle" aria-label="Toggle navigation" onclick="document.querySelector('.nav-links').classList.toggle('open')">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+    <div class="nav-links">
+      <a href="index.html">Overview</a>
+      <a href="how_it_works.html">How it Works</a>
+      <a href="data.html">Data</a>
+      <a href="visualization.html" class="active" >Visualization</a>
+      <a href="analysis.html">Analysis</a>
+    </div>
+  </div>
+
+  <main class="container">
+    <section class="content-section">
+      <h2>Visualizing Supermarket Performance</h2>
+      <p>
+        Freshtally transforms supermarket operations by turning raw data into easy-to-understand visuals. Our system presents stock levels, product movement, expiry tracking, and sales performance using intuitive dashboards and visual summaries. This helps store personnel make quick decisions without needing to dig through spreadsheets or reports.
+      </p>
+      <p>
+        Managers can instantly see which products are underperforming or near expiry through color-coded charts and indicators. Shelf attendants can visualize where each product is placed using our built-in shelf mapping tool. These visuals not only guide daily tasks but also make long-term planning more efficient.
+      </p>
+      <p>
+        Our goal is to remove guesswork. Instead of reacting to issues, Freshtally enables proactive planning—managers receive alerts, trends are highlighted, and customer demand is forecasted. With clean visual tools, even non-technical users can interact with complex data confidently.
+      </p>
+    </section>
+    <section class="content-section">
+      <h2>See Freshtally in Action</h2>
+      <div style="display: flex; justify-content: center; margin: 40px 0;">
+        <video controls style="max-width: 100%; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.12); background: #222;">
+          <source src="videos/visualization.mp4" type="video/mp4">
+          Your browser does not support the video tag.
+        </video>
+      </div>
+      <p style="text-align: center;">Watch how Freshtally makes supermarket data visual and actionable for the manager.</p>
+
+    </section>
+        <section class="content-section">
+      <h2>Store manager</h2>
+      <div style="display: flex; justify-content: center; margin: 40px 0;">
+        <video controls style="max-width: 100%; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.12); background: #222;">
+          <source src="videos/store_manager.mp4" type="video/mp4">
+          Your browser does not support the video tag.
+        </video>
+      </div>
+      <p style="text-align: center;">Watch how Freshtally makes the supermarket store manager's job easier.</p>
+    </section>
+        <section class="content-section">
+      <h2>Shelf attendant</h2>
+      <div style="display: flex; justify-content: center; margin: 40px 0;">
+        <video controls style="max-width: 100%; border-radius: 16px; box-shadow: 0 4px 24px rgba(0,0,0,0.12); background: #222;">
+          <source src="videos/shelf_attendant.mp4" type="video/mp4">
+          Your browser does not support the video tag.
+        </video>
+      </div>
+      <p style="text-align: center;">The shelf-attendant dashboard</p>
+    </section>
+  </main>
+
+</body>
+</html>

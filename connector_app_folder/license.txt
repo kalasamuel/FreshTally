@@ -1,0 +1,9 @@
+FreshTally Connector - Terms of Use
+
+By installing this software, you agree to the following:
+    - This tool connects POS systems to FreshTally for automated sales sync.
+    - Your store credentials and file paths are stored locally.
+    - We do not collect personal data unless configured explicitly.
+    -All the data collected by this app is hightly secured and used only for the Freshtally app needs. 
+    -All data collected is not tempered with or modified and changed in any way and it is completely used as received.
+    -By aggreeing with these terms you agree to expose the supermarket's POS data for use by Freshtally. 
