@@ -141,7 +141,7 @@ def launch_config_gui():
     root.title("Connector Configuration")
 
     # Source type and Store ID
-    tk.Label(root, text="Store ID:").pack()
+    tk.Label(root, text="Supermarket ID:").pack()
     store_id_entry = tk.Entry(root)
     store_id_entry.pack()
 
