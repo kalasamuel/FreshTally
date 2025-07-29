@@ -500,7 +500,7 @@ class _HomeBody extends StatelessWidget {
                   title:
                       '${promotion.productName}: UGX ${promotion.discountedPrice.toStringAsFixed(0)}',
                   subtitle:
-                      'Was UGX ${promotion.originalPrice.toStringAsFixed(0)} • Expires: ${DateFormat('yyyy-MM-dd').format(promotion.discountExpiry)}',
+                      'Was UGX ${promotion.originalPrice.toStringAsFixed(0)}',
                   cardColor: const Color(0xFFFFE0E6),
                   iconColor: const Color(0xFFE91E63),
                   onTap: onNavigateToOffers, // Still navigate to the offers tab

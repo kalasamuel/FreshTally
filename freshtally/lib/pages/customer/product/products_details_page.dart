@@ -5,11 +5,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 class ProductDetailsPage extends StatefulWidget {
   final String productId;
   final String supermarketId;
+  final bool hideAddButton;
 
   const ProductDetailsPage({
     super.key,
     required this.productId,
     required this.supermarketId,
+    this.hideAddButton = false,
   });
 
   @override
@@ -243,30 +245,31 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                   const Text('Location not specified.'),
 
                 const SizedBox(height: 24),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    ElevatedButton.icon(
-                      onPressed: _isAdding
-                          ? null
-                          : () => _addToShoppingList(product),
-                      icon: const Icon(Icons.add_shopping_cart),
-                      label: _isAdding
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Text('Add to Shopping List'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
+                if (!widget.hideAddButton)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      ElevatedButton.icon(
+                        onPressed: _isAdding
+                            ? null
+                            : () => _addToShoppingList(product),
+                        icon: const Icon(Icons.add_shopping_cart),
+                        label: _isAdding
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Text('Add to Shopping List'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
               ],
             ),
           );
