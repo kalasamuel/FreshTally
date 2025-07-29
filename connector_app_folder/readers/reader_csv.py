@@ -9,7 +9,7 @@ def read_sales_from_csv(path, field_map):
                 "productName": row.get(field_map["productName"], ""),
                 "quantity": int(row.get(field_map["quantity"], 0)),
                 "unitPrice": float(row.get(field_map["unitPrice"], 0)),
-                "transaction_timestamp": row.get(field_map["transaction_timestamp"], ""),
+                "timestamp": row.get(field_map["transaction_timestamp"], ""),
                 "sku": row.get(field_map["sku"], ""),
                 "productId": row.get(field_map["productId"], ""),
                 "transactionId": row.get(field_map["transactionId"], ""),

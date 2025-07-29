@@ -1,0 +1,14 @@
+{
+    "source_type": "CSV",
+    "store_id": "Kampala supermarket",
+    "field_mapping": {
+        "productId": "ProductID",
+        "productName": "ProductName",
+        "quantity": "Quantity",
+        "unitPrice": "UnitPrice",
+        "timestamp": "transactionTime",
+        "sku": "sku",
+        "transactionId": "TransactionID"
+    },
+    "csv_path": "C:/Users/user/Downloads/pos.csv"
+}

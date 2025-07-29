@@ -23,7 +23,7 @@ def read_sales_from_mysql(mysql_config, field_map):
             "productName": row[0],
             "quantity": int(row[1]),
             "unitPrice": float(row[2]),
-            "transaction_timestamp": row[3],
+            "timestamp": row[3],
             "productId": row[4],
             "sku": row[5],
             "transactionId" : row[6]
