@@ -134,15 +134,15 @@ def launch_config_gui():
     root.title("Connector Configuration")
 
     # Source type and Store ID
+    tk.Label(root, text="Store ID:").pack()
+    store_id_entry = tk.Entry(root)
+    store_id_entry.pack()
+
     tk.Label(root, text="POS Source Type:").pack()
     source_var = tk.StringVar()
     source_dropdown = ttk.Combobox(root, textvariable=source_var, values=["CSV", "SQLite", "MySQL", "API"])
     source_dropdown.bind("<<ComboboxSelected>>", show_fields)
     source_dropdown.pack()
-
-    tk.Label(root, text="Store ID:").pack()
-    store_id_entry = tk.Entry(root)
-    store_id_entry.pack()
 
     # Source-specific frames
     csv_frame = tk.Frame(root)
@@ -187,11 +187,14 @@ def launch_config_gui():
     mapping_frame.pack(padx=10, pady=5)
 
     field_labels = {
-        "product_id": "Product ID",
-        "name": "Product Name",
-        "qty": "Quantity",
-        "price": "Price",
-        "timestamp": "Timestamp"
+        "productId": "Product ID",
+        "productName": "Product Name",
+        "quantity": "Quantity",
+        "unitPrice": " Unit Price",
+        "timestamp": "Timestamp",
+        "sku": "SKU",
+        "transactionId" : "Transaction ID"
+
     }
 
     # Create field variables and dropdowns

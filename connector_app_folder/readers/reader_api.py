@@ -6,14 +6,17 @@ def read_sales_from_api(api_url, field_map, token=None):
 
     if response.status_code == 200:
         data = response.json()
-        sales = []
+        sales = []  
 
         for item in data:
             sales.append({
-                "name": item.get(field_map["name"], ""),
-                "qty": int(item.get(field_map["qty"], 0)),
-                "price": float(item.get(field_map["price"], 0)),
-                "timestamp": item.get(field_map["timestamp"], "")
+                "productName": item.get(field_map["productName"], ""),
+                "quantity": int(item.get(field_map["quantity"], 0)),
+                "unitPrice": float(item.get(field_map["unitPrice"], 0)),
+                "transaction_timestamp": item.get(field_map["transaction_timestamp"], ""),
+                "sku": item.get(field_map["sku"], ""),
+                "productId": item.get(field_map["productId"], ""),
+                "transactionId": item.get(field_map["transactionId"], ""),
             })
 
         return sales
