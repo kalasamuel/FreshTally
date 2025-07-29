@@ -53,27 +53,46 @@ class _RoleSelectionPageState extends State<RoleSelectionPage> {
         throw Exception("User not signed in. Please sign up or log in again.");
       }
 
-      // Update the user's document in the 'users' collection
-      await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
-        'role': selectedRole,
+      // First, get the supermarket name from the supermarkets collection
+      final supermarketDoc = await FirebaseFirestore.instance
+          .collection('supermarkets')
+          .doc(widget.supermarketId!)
+          .get();
+
+      if (!supermarketDoc.exists) {
+        throw Exception("Supermarket not found");
+      }
+
+      final supermarketName = supermarketDoc.data()?['name'] ?? 'Unknown';
+
+      // Prepare the user data
+      final userData = {
+        'createdAt':
+            FieldValue.serverTimestamp(), // Will be stored as a timestamp
+        'email': user.email,
+        'firstName': '', // You should get these from user input or profile
+        'lastName': '', // You should get these from user input or profile
+        'location': '', // You should get this from user input or profile
+        'role': selectedRole!.toLowerCase(), // Store as lowercase
         'supermarketId': widget.supermarketId,
+        'supermarketName': supermarketName,
+        'uid': user.uid,
         'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+      };
+
+      // Update the user's document in the 'users' collection
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .set(userData);
 
       // Update the staff document in the supermarket's staff subcollection
-      final staffDocRef = FirebaseFirestore.instance
+      await FirebaseFirestore.instance
           .collection('supermarkets')
           .doc(widget.supermarketId!)
           .collection('staff')
-          .doc(user.uid);
-
-      await staffDocRef.set({
-        'role': selectedRole,
-        'userId': user.uid,
-        'email': user.email,
-        'supermarketId': widget.supermarketId,
-        'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
+          .doc(user.uid)
+          .set(userData);
 
       // Navigate to the appropriate dashboard
       if (!mounted) return;
@@ -84,7 +103,7 @@ class _RoleSelectionPageState extends State<RoleSelectionPage> {
           MaterialPageRoute(
             builder: (_) => StoreManagerDashboard(
               supermarketId: widget.supermarketId!,
-              location: '',
+              location: userData['location'] ?? '',
             ),
           ),
         );
@@ -94,8 +113,8 @@ class _RoleSelectionPageState extends State<RoleSelectionPage> {
           MaterialPageRoute(
             builder: (_) => ShelfStaffDashboard(
               supermarketId: widget.supermarketId!,
-              supermarketName: null,
-              location: '',
+              supermarketName: supermarketName,
+              location: userData['location'] ?? '',
             ),
           ),
         );
