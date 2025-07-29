@@ -5,9 +5,7 @@ a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=[],
-    datas=[('serviceAccountKey.json', '.'),
-     ('config.json', '.')
-     ],
+    datas=[('serviceAccountKey.json', '.')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},
@@ -21,7 +19,6 @@ pyz = PYZ(a.pure)
 exe = EXE(
     pyz,
     a.scripts,
-    [],
     a.binaries,
     a.datas,
     [],
@@ -31,6 +28,11 @@ exe = EXE(
     strip=False,
     upx=True,
     upx_exclude=[],
+    runtime_tmpdir=None,
     console=False,
-    icon=['icon.ico'],
+    disable_windowed_traceback=False,
+    argv_emulation=False,
+    target_arch=None,
+    codesign_identity=None,
+    entitlements_file=None,
 )
