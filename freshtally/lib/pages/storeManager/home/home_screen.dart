@@ -1,10 +1,11 @@
-import 'package:Freshtally/pages/customer/customerNotifications/customer_notifications.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:Freshtally/pages/shelfStaff/settings/settings_page.dart';
 import 'package:Freshtally/pages/storeManager/batches/supplier_batch_entry_page.dart';
 import 'package:Freshtally/pages/storeManager/sync/sync_status_page.dart';
+import 'package:Freshtally/pages/storeManager/notifications/notification_center_page.dart';
+import 'package:Freshtally/pages/shelfStaff/home/shelf_staff_home_screen.dart';
 
 // The StoreManagerDashboard is now a StatefulWidget to manage fetching user and supermarket data.
 class StoreManagerDashboard extends StatefulWidget {

@@ -12,17 +12,61 @@ import 'package:Freshtally/pages/auth/login_page.dart';
 import 'package:Freshtally/pages/auth/supermarket_selection_page.dart';
 import 'package:intl/intl.dart';
 
+// --- Re-include the Promotion model if not globally available ---
+// This is important for consistency and type safety.
+// If you have a shared models file, ensure it's imported.
+class Promotion {
+  final String promotionId;
+  final String productId;
+  final String productName;
+  final String? productImageUrl;
+  final double originalPrice;
+  final double discountPercentage;
+  final double discountedPrice;
+  final DateTime discountExpiry;
+  final DateTime createdAt;
+
+  Promotion({
+    required this.promotionId,
+    required this.productId,
+    required this.productName,
+    this.productImageUrl,
+    required this.originalPrice,
+    required this.discountPercentage,
+    required this.discountedPrice,
+    required this.discountExpiry,
+    required this.createdAt,
+  });
+
+  factory Promotion.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    return Promotion(
+      promotionId: doc.id,
+      productId: data['productId'] ?? '',
+      productName: data['name'] ?? 'Unnamed Promotion',
+      productImageUrl: data['imageUrl'], // Using 'imageUrl' from Promotion
+      originalPrice: (data['originalPrice'] ?? 0).toDouble(),
+      discountPercentage: (data['discountPercentage'] ?? 0).toDouble(),
+      discountedPrice: (data['discountedPrice'] ?? 0).toDouble(),
+      discountExpiry: (data['discountExpiry'] as Timestamp).toDate(),
+      createdAt: (data['createdAt'] as Timestamp).toDate(),
+    );
+  }
+}
+
 class CustomerHomePage extends StatefulWidget {
   // supermarketName and location are now optional as they will be fetched dynamically
   final String? supermarketName;
   final String? location;
-  final String supermarketId; // This is crucial and required for context
+  final String supermarketId;
+  final String userId; // This is crucial and required for context
 
   const CustomerHomePage({
     super.key,
     this.supermarketName,
     this.location,
     required this.supermarketId,
+    required this.userId, // Required to identify the user
   });
 
   @override
@@ -59,7 +103,10 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
       ProductSearchPage(supermarketId: widget.supermarketId),
       ShoppingListPage(supermarketId: widget.supermarketId),
       DiscountsAndPromotionsPage(supermarketId: widget.supermarketId),
-      NotificationsPage(supermarketId: widget.supermarketId),
+      NotificationsPage(
+        supermarketId: widget.supermarketId,
+        userId: widget.userId,
+      ),
     ];
   }
 
@@ -178,7 +225,7 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
             false, // Ensures no back button is automatically added
         backgroundColor: const Color(0xFFFFFFFF),
         elevation: 0.0,
-        titleSpacing: 0, // Remove default spacing around title
+        titleSpacing: 0,
         title: Row(
           children: [
             // Supermarket Name and Location (Left side) - now tappable to switch
@@ -237,8 +284,10 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) =>
-                      NotificationsPage(supermarketId: widget.supermarketId),
+                  builder: (context) => NotificationsPage(
+                    supermarketId: widget.supermarketId,
+                    userId: widget.userId,
+                  ),
                 ),
               );
             },
@@ -282,7 +331,7 @@ class _CustomerHomePageState extends State<CustomerHomePage> {
   }
 }
 
-// --- _HomeBody remains the same as its logic depends on supermarketId passed from CustomerHomePage ---
+// --- MODIFIED _HomeBody Widget ---
 class _HomeBody extends StatelessWidget {
   final VoidCallback onNavigateToOffers;
   final String supermarketId;
@@ -321,7 +370,7 @@ class _HomeBody extends StatelessWidget {
           suggestionsCallback: (pattern) async {
             if (pattern.isEmpty) return [];
             final querySnapshot = await FirebaseFirestore.instance
-                .collection('products')
+                .collection('products') // Still search general products here
                 .where('supermarketId', isEqualTo: supermarketId)
                 .where('name', isGreaterThanOrEqualTo: pattern)
                 .where('name', isLessThanOrEqualTo: '$pattern\uf8ff')
@@ -409,14 +458,27 @@ class _HomeBody extends StatelessWidget {
         ),
         const SizedBox(height: 12),
 
-        /// Hot Discounts
+        /// Hot Discounts - MODIFIED STREAM
         StreamBuilder<QuerySnapshot>(
           stream: FirebaseFirestore.instance
-              .collection('products')
-              .where('supermarketId', isEqualTo: supermarketId)
-              .where('discountPercentage', isGreaterThan: 0)
-              .orderBy('discountPercentage', descending: true)
-              .limit(4)
+              .collection('supermarkets')
+              .doc(supermarketId)
+              .collection(
+                'promotions',
+              ) // Correctly fetch from 'promotions' subcollection
+              .where(
+                'discountPercentage',
+                isGreaterThan: 0,
+              ) // Filter for actual discounts
+              .where(
+                'discountExpiry',
+                isGreaterThanOrEqualTo: Timestamp.fromDate(DateTime.now()),
+              ) // Only show active promotions
+              .orderBy(
+                'discountPercentage',
+                descending: true,
+              ) // Order by highest discount
+              .limit(4) // Limit to top 4 hot discounts
               .snapshots(),
           builder: (context, snapshot) {
             if (snapshot.hasError) {
@@ -428,30 +490,27 @@ class _HomeBody extends StatelessWidget {
               return const Center(child: CircularProgressIndicator());
             }
 
-            final docs = snapshot.data!.docs;
+            final promotions = snapshot.data!.docs
+                .map((doc) => Promotion.fromFirestore(doc))
+                .toList();
 
-            if (docs.isEmpty) {
+            if (promotions.isEmpty) {
               return const Center(
-                child: Text('No active discounts for this supermarket.'),
+                child: Text('No active hot discounts for this supermarket.'),
               );
             }
 
             return Column(
-              children: docs.map((doc) {
-                final data = doc.data() as Map<String, dynamic>;
-                final name = data['name'] ?? '';
-                final discountedPrice = (data['discountedPrice'] ?? 0)
-                    .toDouble();
-                final originalPrice = (data['price'] ?? 0).toDouble();
-                final expiry = (data['discountExpiry'] as Timestamp?)?.toDate();
-
+              children: promotions.map((promotion) {
+                // Use the Promotion object's properties
                 return DiscountCard(
-                  title: '$name: UGX ${discountedPrice.toStringAsFixed(0)}',
+                  title:
+                      '${promotion.productName}: UGX ${promotion.discountedPrice.toStringAsFixed(0)}',
                   subtitle:
-                      'Was UGX ${originalPrice.toStringAsFixed(0)} • Expires: ${expiry != null ? DateFormat('yyyy-MM-dd').format(expiry) : 'N/A'}',
+                      'Was UGX ${promotion.originalPrice.toStringAsFixed(0)}',
                   cardColor: const Color(0xFFFFE0E6),
                   iconColor: const Color(0xFFE91E63),
-                  onTap: onNavigateToOffers,
+                  onTap: onNavigateToOffers, // Still navigate to the offers tab
                 );
               }).toList(),
             );

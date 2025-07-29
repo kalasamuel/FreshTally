@@ -5,11 +5,13 @@ import 'package:firebase_auth/firebase_auth.dart';
 class ProductDetailsPage extends StatefulWidget {
   final String productId;
   final String supermarketId;
+  final bool hideAddButton;
 
   const ProductDetailsPage({
     super.key,
     required this.productId,
     required this.supermarketId,
+    this.hideAddButton = false,
   });
 
   @override
@@ -33,22 +35,31 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
         return;
       }
 
+      // Adjusted Firestore path to include supermarketId
       await FirebaseFirestore.instance
           .collection('customers')
           .doc(user.uid)
-          .collection('shopping-list')
+          .collection(
+            'supermarkets',
+          ) // New collection for supermarkets under customer
+          .doc(widget.supermarketId) // Specific supermarket document
+          .collection(
+            'shopping-list',
+          ) // Shopping list specific to this supermarket
           .add({
             'productId': widget.productId,
-            'supermarketId': widget.supermarketId,
-            'name': product['name'] ?? 'Unknown Product',
-            'price': product['price'] ?? 0,
+            'supermarketId': widget
+                .supermarketId, // Redundant but good for quick querying if needed
+            'name':
+                product['name'] ?? 'Unknown Product', // Adjusted to productName
+            'current_price': product['current_price'] ?? 0,
             'discountedPrice':
-                product['discountedPrice'] ?? product['price'] ?? 0,
-            'image_url': product['image_url'] ?? '',
+                product['discountedPrice'] ?? product['cuurent_price'] ?? 0,
+            'imageUrl': product['imageUrl'] ?? '', // Adjusted to imageUrl
             'location': product['location'] ?? {},
             'description': product['description'] ?? '',
-            'checked': false,
-            'added_at': FieldValue.serverTimestamp(),
+            'isChecked': false, // Adjusted to isChecked for consistency
+            'addedAt': FieldValue.serverTimestamp(), // Adjusted to addedAt
           });
 
       if (!mounted) return;
@@ -93,14 +104,17 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
 
           final product = snapshot.data!.data() as Map<String, dynamic>? ?? {};
 
-          final name = product['name'] ?? 'Unknown Product';
-          final price = (product['price'] ?? 0).toDouble();
+          // Adjusted variable names to be consistent with 'name', 'imageUrl', 'isChecked', 'addedAt'
+          final productName = product['name'] ?? 'Unknown Product';
+          final price = (product['current_price'] ?? 0).toDouble();
           final discountedPrice = (product['discountedPrice'] ?? price)
               .toDouble();
-          final discount = (product['discountPercentage'] ?? 0).toDouble();
-          final imageUrl = product['image_url'] ?? '';
+          final discountPercentage = (product['discountPercentage'] ?? 0)
+              .toDouble(); // Adjusted to discountPercentage
+          final imageUrl = product['imageUrl'] ?? '';
           final description = product['description'] ?? '';
-          final expiry = (product['discountExpiry'] as Timestamp?)?.toDate();
+          final discountExpiry = (product['discountExpiry'] as Timestamp?)
+              ?.toDate(); // Adjusted to discountExpiry
           final location = product['location'] as Map<String, dynamic>? ?? {};
 
           String locationText = '';
@@ -109,7 +123,8 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                 'Floor: ${location['floor']}, Shelf: ${location['shelf']}, Position: ${location['position']?.toString().toUpperCase() ?? 'N/A'}';
           }
 
-          final isDiscounted = discount > 0 && discountedPrice < price;
+          final isDiscounted =
+              discountPercentage > 0 && discountedPrice < price;
 
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16),
@@ -129,7 +144,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                 const SizedBox(height: 16),
                 Center(
                   child: Text(
-                    name,
+                    productName, // Used productName
                     style: const TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
@@ -161,7 +176,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Discount: ${discount.toStringAsFixed(0)}%',
+                              'Discount: ${discountPercentage.toStringAsFixed(0)}%', // Used discountPercentage
                               style: const TextStyle(fontSize: 16),
                             ),
                           ],
@@ -230,30 +245,31 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                   const Text('Location not specified.'),
 
                 const SizedBox(height: 24),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    ElevatedButton.icon(
-                      onPressed: _isAdding
-                          ? null
-                          : () => _addToShoppingList(product),
-                      icon: const Icon(Icons.add_shopping_cart),
-                      label: _isAdding
-                          ? const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Text('Add to Shopping List'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
+                if (!widget.hideAddButton)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      ElevatedButton.icon(
+                        onPressed: _isAdding
+                            ? null
+                            : () => _addToShoppingList(product),
+                        icon: const Icon(Icons.add_shopping_cart),
+                        label: _isAdding
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : const Text('Add to Shopping List'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
               ],
             ),
           );

@@ -19,8 +19,11 @@ class ShelfMappingPage extends StatefulWidget {
 class _ShelfMappingPageState extends State<ShelfMappingPage> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _productController = TextEditingController();
-  final TextEditingController _priceController = TextEditingController();
+  final TextEditingController _currentPriceController =
+      TextEditingController(); // Renamed from _priceController
   final TextEditingController _categoryController = TextEditingController();
+  final TextEditingController _skuController =
+      TextEditingController(); // Added SKU controller
 
   String? _selectedFloor;
   String? _selectedShelf;
@@ -35,18 +38,26 @@ class _ShelfMappingPageState extends State<ShelfMappingPage> {
   @override
   void dispose() {
     _productController.dispose();
-    _priceController.dispose();
+    _currentPriceController.dispose(); // Disposing renamed controller
     _categoryController.dispose();
+    _skuController.dispose(); // Dispose SKU controller
     super.dispose();
   }
 
+  // --- Adjusted _searchProducts to match the new path ---
   Future<List<DocumentSnapshot>> _searchProducts(String pattern) async {
     final snapshot = await FirebaseFirestore.instance
         .collection('supermarkets')
         .doc(widget.supermarketId)
         .collection('products')
-        .where('name', isGreaterThanOrEqualTo: pattern)
-        .where('name', isLessThanOrEqualTo: '$pattern\uf8ff')
+        .where(
+          'name_lower',
+          isGreaterThanOrEqualTo: pattern.toLowerCase(),
+        ) // Search by name_lower
+        .where(
+          'name_lower',
+          isLessThanOrEqualTo: '${pattern.toLowerCase()}\uf8ff',
+        )
         .limit(5)
         .get();
     return snapshot.docs;
@@ -62,13 +73,16 @@ class _ShelfMappingPageState extends State<ShelfMappingPage> {
         .toList();
   }
 
+  // --- Adjusted _selectProduct to handle new fields ---
   void _selectProduct(DocumentSnapshot product) {
     final data = product.data() as Map<String, dynamic>;
     setState(() {
       _selectedProduct = product;
       _productController.text = data['name'] ?? '';
-      _priceController.text = data['price']?.toString() ?? '';
+      _currentPriceController.text =
+          data['current_price']?.toString() ?? ''; // Use current_price
       _categoryController.text = data['category'] ?? '';
+      _skuController.text = data['sku'] ?? ''; // Set SKU
 
       final productFloorNum = data['location']?['floor'];
       final productShelfNum = data['location']?['shelf'];
@@ -108,6 +122,7 @@ class _ShelfMappingPageState extends State<ShelfMappingPage> {
     return await ref.getDownloadURL();
   }
 
+  // --- Adjusted _saveProduct to handle new fields and path ---
   Future<void> _saveProduct() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -134,9 +149,25 @@ class _ShelfMappingPageState extends State<ShelfMappingPage> {
         imageUrl = await _uploadImage(_productController.text.trim());
       }
 
+      final String productName = _productController.text.trim();
       final productData = {
-        'name': _productController.text.trim(),
-        'price': double.tryParse(_priceController.text) ?? 0,
+        'created_at': _selectedProduct != null
+            ? (_selectedProduct!.data()
+                  as Map<
+                    String,
+                    dynamic
+                  >)['created_at'] // Keep existing created_at if updating
+            : FieldValue.serverTimestamp(), // Set created_at only on new products
+        'current_price':
+            double.tryParse(_currentPriceController.text) ??
+            0, // Use current_price
+        'last_sold_at':
+            FieldValue.serverTimestamp(), // Update last_sold_at on save (can be adjusted based on actual sales)
+        'name': productName,
+        'name_lower': productName
+            .toLowerCase(), // Store lowercase name for searching
+        // 'sku': _skuController.text.trim(), // Save SKU
+        'supermarketId': widget.supermarketId, // Save supermarketId
         'category': _categoryController.text.trim(),
         'location': {
           'floor': int.tryParse(_selectedFloor!),
@@ -148,18 +179,20 @@ class _ShelfMappingPageState extends State<ShelfMappingPage> {
       };
 
       if (_selectedProduct != null) {
+        // If updating an existing product
         await FirebaseFirestore.instance
             .collection('supermarkets')
             .doc(widget.supermarketId)
             .collection('products')
-            .doc(_selectedProduct!.id)
+            .doc(_selectedProduct!.id) // Use the existing document ID
             .update(productData);
       } else {
+        // If adding a new product
         await FirebaseFirestore.instance
             .collection('supermarkets')
             .doc(widget.supermarketId)
             .collection('products')
-            .add(productData);
+            .add(productData); // Firestore will generate a new document ID
       }
 
       if (!mounted) return;
@@ -180,8 +213,9 @@ class _ShelfMappingPageState extends State<ShelfMappingPage> {
   void _resetForm() {
     setState(() {
       _productController.clear();
-      _priceController.clear();
+      _currentPriceController.clear(); // Clear renamed controller
       _categoryController.clear();
+      _skuController.clear(); // Clear SKU controller
       _selectedFloor = null;
       _selectedShelf = null;
       _shelfPosition = ShelfPosition.top;
@@ -190,6 +224,7 @@ class _ShelfMappingPageState extends State<ShelfMappingPage> {
     });
   }
 
+  // --- Adjusted _deleteProduct to match the new path ---
   Future<void> _deleteProduct() async {
     if (_selectedProduct == null) return;
 
@@ -200,7 +235,7 @@ class _ShelfMappingPageState extends State<ShelfMappingPage> {
           .collection('supermarkets')
           .doc(widget.supermarketId)
           .collection('products')
-          .doc(_selectedProduct!.id)
+          .doc(_selectedProduct!.id) // Use the existing document ID
           .delete();
 
       if (!mounted) return;
@@ -278,7 +313,9 @@ class _ShelfMappingPageState extends State<ShelfMappingPage> {
                       final data = product.data() as Map<String, dynamic>;
                       return ListTile(
                         title: Text(data['name'] ?? ''),
-                        subtitle: Text('${data['price']} UGX'),
+                        subtitle: Text(
+                          '${data['current_price']} UGX',
+                        ), // Display current_price
                       );
                     },
                     onSelected: _selectProduct,
@@ -286,17 +323,27 @@ class _ShelfMappingPageState extends State<ShelfMappingPage> {
                   const SizedBox(height: 16),
 
                   _buildStyledTextFormField(
-                    controller: _priceController,
-                    hintText: 'Enter price',
-                    labelText: 'Price',
+                    controller:
+                        _currentPriceController, // Use current_price controller
+                    hintText: 'Enter current price',
+                    labelText: 'Current Price',
                     keyboardType: TextInputType.number,
                     validator: (val) =>
                         val == null || double.tryParse(val) == null
                         ? 'Enter valid price'
                         : null,
                   ),
-                  const SizedBox(height: 16),
 
+                  // _buildStyledTextFormField(
+                  //   // Added SKU input
+                  //   controller: _skuController,
+                  //   hintText: 'Enter SKU',
+                  //   labelText: 'SKU',
+                  //   validator: (val) => val == null || val.isEmpty
+                  //       ? 'SKU cannot be empty'
+                  //       : null,
+                  // ),
+                  const SizedBox(height: 2),
                   TypeAheadField<String>(
                     controller: _categoryController,
                     builder: (context, controller, focusNode) {

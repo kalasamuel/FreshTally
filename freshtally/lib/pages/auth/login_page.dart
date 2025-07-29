@@ -11,7 +11,6 @@ import 'package:Freshtally/pages/shelfStaff/home/shelf_staff_home_screen.dart';
 import 'package:Freshtally/pages/storeManager/home/home_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-// --- IconTextField (Fixed) ---
 class IconTextField extends StatefulWidget {
   final String hintText;
   final IconData icon;
@@ -50,7 +49,6 @@ class _IconTextFieldState extends State<IconTextField> {
           borderRadius: BorderRadius.circular(10.0),
           borderSide: BorderSide.none,
         ),
-        // Moved contentPadding and suffixIcon directly under InputDecoration
         contentPadding: const EdgeInsets.symmetric(
           vertical: 16.0,
           horizontal: 16.0,
@@ -73,7 +71,6 @@ class _IconTextFieldState extends State<IconTextField> {
   }
 }
 
-// --- LoginPage (Unchanged, provided for completeness) ---
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -122,6 +119,24 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
+  Future<void> _addToAccountHistory(String email) async {
+    final prefs = await SharedPreferences.getInstance();
+    final accounts = prefs.getStringList('previous_accounts') ?? [];
+
+    // Remove if already exists (to avoid duplicates)
+    accounts.remove(email);
+
+    // Add to beginning of list (most recent first)
+    accounts.insert(0, email);
+
+    // Limit to last 5 accounts (adjust as needed)
+    if (accounts.length > 5) {
+      accounts.removeLast();
+    }
+
+    await prefs.setStringList('previous_accounts', accounts);
+  }
+
   Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -136,11 +151,16 @@ class _LoginPageState extends State<LoginPage> {
         password: _passwordController.text.trim(),
       );
 
+      // Add to account history
+      final userEmail = userCredential.user?.email;
+      if (userEmail != null) {
+        await _addToAccountHistory(userEmail);
+      }
+
       final userId = userCredential.user?.uid;
       if (userId == null) throw Exception("User ID not found after login.");
 
-      // --- NEW CUSTOMER LOGIN FLOW LOGIC ---
-      // First, try to find the user in the central 'customers' collection
+      // --- CUSTOMER LOGIN FLOW LOGIC ---
       final customerDoc = await _firestore
           .collection('customers')
           .doc(userId)
@@ -148,14 +168,11 @@ class _LoginPageState extends State<LoginPage> {
 
       String role;
       List<String> associatedSupermarketIds = [];
-      String? staffOrManagerSupermarketId; // For staff/manager roles
+      String? staffOrManagerSupermarketId;
 
       if (customerDoc.exists) {
-        // User is a customer (document found in top-level 'customers' collection)
         final customerData = customerDoc.data();
-        role =
-            customerData?['role'] as String? ??
-            'customer'; // Should be 'customer'
+        role = customerData?['role'] as String? ?? 'customer';
         associatedSupermarketIds = List<String>.from(
           customerData?['associatedSupermarketIds'] ?? [],
         );
@@ -163,46 +180,42 @@ class _LoginPageState extends State<LoginPage> {
           'Customer logged in: $userId, Role: $role, Supermarkets: $associatedSupermarketIds',
         );
       } else {
-        // User is not in 'customers' collection, so they must be staff or manager
-        // Check 'supermarkets/{id}/users' subcollections using collectionGroup
         final userQuery = await _firestore
-            .collectionGroup('users')
-            .where('uid', isEqualTo: userId)
-            .limit(1)
+            .collection(
+              'users',
+            ) // Changed from collectionGroup to direct collection
+            .doc(userId)
             .get();
 
-        if (userQuery.docs.isEmpty) {
+        if (!userQuery.exists) {
           throw Exception(
             'User document not found in Firestore for UID: $userId. Contact support.',
           );
         }
 
-        final userDoc = userQuery.docs.first;
-        final userData = userDoc.data();
-        role = userData['role'] as String? ?? 'unknown';
-        // Extract supermarketId from the path for staff/managers
-        staffOrManagerSupermarketId = userDoc.reference.parent.parent?.id;
+        final userData = userQuery.data();
+        role =
+            userData?['role'] as String? ??
+            'staff'; // Default to staff if role missing
+        staffOrManagerSupermarketId = userData?['supermarketId'];
 
         if (staffOrManagerSupermarketId == null) {
-          throw Exception(
-            'Supermarket ID not found for staff/manager user: $userId.',
-          );
+          throw Exception('Supermarket ID not found for staff user: $userId.');
         }
         debugPrint(
-          'Staff/Manager logged in: $userId, Role: $role, Supermarket: $staffOrManagerSupermarketId',
+          'Staff logged in: $userId, Role: $role, Supermarket: $staffOrManagerSupermarketId',
         );
       }
-      // --- END NEW CUSTOMER LOGIN FLOW LOGIC ---
 
       await _saveRememberMePreferences(_emailController.text.trim());
 
       if (!mounted) return;
 
       // Navigate based on role
-      switch (role) {
-        case 'manager':
-        case 'storeManager':
-        case 'staff':
+      switch (role.toLowerCase()) {
+        // Changed to lowercase comparison
+
+        case 'store manager': // Combined manager cases
           String supermarketName = 'Unknown';
           String location = 'Unknown';
           if (staffOrManagerSupermarketId != null) {
@@ -217,47 +230,76 @@ class _LoginPageState extends State<LoginPage> {
               location = supermarketData?['location'] as String? ?? 'Unknown';
             }
           }
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) => StoreManagerDashboard(
+                supermarketId: staffOrManagerSupermarketId!,
+                supermarketName: supermarketName,
+                location: location,
+              ),
+            ),
+          );
+          break;
 
-          if (role == 'manager') {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (_) => ManagerDashboardPage(
-                  supermarketName: supermarketName,
-                  location: location,
-                  managerId: userId,
-                  supermarketId: staffOrManagerSupermarketId!,
-                ),
-              ),
-            );
-          } else if (role == 'storeManager') {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (_) => StoreManagerDashboard(
-                  supermarketId: staffOrManagerSupermarketId!,
-                  supermarketName: supermarketName,
-                  location: location,
-                ),
-              ),
-            );
-          } else if (role == 'staff') {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (_) => ShelfStaffDashboard(
-                  supermarketId: staffOrManagerSupermarketId!,
-                  supermarketName: supermarketName,
-                  location: location,
-                ),
-              ),
-            );
+        case 'staff':
+        case 'shelf staff': // Combined staff cases
+          String supermarketName = 'Unknown';
+          String location = 'Unknown';
+          if (staffOrManagerSupermarketId != null) {
+            final supermarketDoc = await _firestore
+                .collection('supermarkets')
+                .doc(staffOrManagerSupermarketId)
+                .get();
+            if (supermarketDoc.exists) {
+              final supermarketData = supermarketDoc.data();
+              supermarketName =
+                  supermarketData?['name'] as String? ?? 'Unknown';
+              location = supermarketData?['location'] as String? ?? 'Unknown';
+            }
           }
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) => ShelfStaffDashboard(
+                supermarketId: staffOrManagerSupermarketId!,
+                supermarketName: supermarketName,
+                location: location,
+              ),
+            ),
+          );
+          break;
+
+        case 'manager': // Combined staff cases
+          String supermarketName = 'Unknown';
+          String location = 'Unknown';
+          if (staffOrManagerSupermarketId != null) {
+            final supermarketDoc = await _firestore
+                .collection('supermarkets')
+                .doc(staffOrManagerSupermarketId)
+                .get();
+            if (supermarketDoc.exists) {
+              final supermarketData = supermarketDoc.data();
+              supermarketName =
+                  supermarketData?['name'] as String? ?? 'Unknown';
+              location = supermarketData?['location'] as String? ?? 'Unknown';
+            }
+          }
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) => ManagerDashboardPage(
+                supermarketId: staffOrManagerSupermarketId!,
+                supermarketName: supermarketName,
+                location: location,
+                managerId: userId,
+              ),
+            ),
+          );
           break;
 
         case 'customer':
           if (associatedSupermarketIds.isEmpty) {
-            // Customer has no associated supermarkets, direct to selection/joining
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
@@ -269,7 +311,6 @@ class _LoginPageState extends State<LoginPage> {
               ),
             );
           } else if (associatedSupermarketIds.length == 1) {
-            // Customer has only one associated supermarket, go directly to it
             final String singleSupermarketId = associatedSupermarketIds.first;
             final supermarketDoc = await _firestore
                 .collection('supermarkets')
@@ -290,11 +331,11 @@ class _LoginPageState extends State<LoginPage> {
                   supermarketName: supermarketName,
                   location: location,
                   supermarketId: singleSupermarketId,
+                  userId: userId,
                 ),
               ),
             );
           } else {
-            // Customer has multiple associated supermarkets, show selection page
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
@@ -308,25 +349,19 @@ class _LoginPageState extends State<LoginPage> {
           break;
 
         default:
-          // This will catch any roles not explicitly handled
           throw Exception("Unknown user role: $role. Contact support.");
       }
     } on FirebaseAuthException catch (e) {
-      // Catch specific Firebase Auth exceptions
       setState(() {
         _errorMessage = _getAuthErrorMessage(e.code);
         debugPrint(
           'FirebaseAuthException: Code: ${e.code}, Message: ${e.message}',
-        ); // Log the Firebase Auth error
+        );
       });
     } catch (e) {
-      // Catch any other unexpected errors
       setState(() {
-        _errorMessage =
-            'An unexpected error occurred: ${e.toString()}'; // Include the actual error message
-        debugPrint(
-          'General Login Error: ${e.toString()}',
-        ); // Log the general error
+        _errorMessage = 'An unexpected error occurred: ${e.toString()}';
+        debugPrint('General Login Error: ${e.toString()}');
       });
     } finally {
       if (mounted) {

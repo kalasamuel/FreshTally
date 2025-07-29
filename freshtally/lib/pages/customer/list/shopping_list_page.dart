@@ -32,30 +32,42 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
     );
   }
 
-  // Updated to use shopping-list subcollection
+  // Adjusted to use the new shopping-list path under specific supermarket
   Stream<List<Map<String, dynamic>>> _getShoppingListItems() {
     final String userId = _currentUser!.uid;
 
     return _firestore
         .collection('customers')
         .doc(userId)
-        .collection('shopping-list') // Changed to shopping-list
-        .where(
-          'supermarketId',
-          isEqualTo: widget.supermarketId,
-        ) // Filter by supermarket
+        .collection(
+          'supermarkets',
+        ) // Navigate into the supermarkets subcollection
+        .doc(
+          widget.supermarketId,
+        ) // Reference the specific supermarket document
+        .collection(
+          'shopping-list',
+        ) // Access the shopping-list subcollection for this supermarket
         .snapshots()
         .asyncMap((snapshot) async {
           List<Map<String, dynamic>> items = [];
           for (var doc in snapshot.docs) {
             final itemData = doc.data();
             final productId = itemData['productId'];
+            // Using consistent naming for quantity and checked
             final quantity = itemData['quantity'] ?? 1;
-            final checked = itemData['checked'] ?? false;
+            final isChecked =
+                itemData['isChecked'] ?? false; // Adjusted to isChecked
 
             if (productId != null && productId.isNotEmpty) {
               final productDoc = await _firestore
-                  .collection('products')
+                  .collection(
+                    'supermarkets',
+                  ) // Products are global under 'supermarkets'
+                  .doc(
+                    widget.supermarketId,
+                  ) // Specific supermarket for the product
+                  .collection('products') // Specific products collection
                   .doc(productId)
                   .get();
 
@@ -63,17 +75,21 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                 final productData = productDoc.data();
                 items.add({
                   'id': doc.id,
-                  'productName': productData?['name'] ?? 'Unknown Product',
-                  'price': (productData?['price'] ?? 0).toDouble(),
-                  'imageUrl': productData?['image_url'] ?? '',
+                  'name':
+                      productData?['name'] ??
+                      'Unknown Product', // Adjusted to productName
+                  'current_price': (productData?['current_price'] ?? 0)
+                      .toDouble(),
+                  'imageUrl':
+                      productData?['imageUrl'] ?? '', // Adjusted to imageUrl
                   'quantity': quantity,
-                  'checked': checked,
+                  'isChecked': isChecked, // Adjusted to isChecked
                   'location': productData?['location'],
                   'productId': productId,
                 });
               } else {
                 debugPrint(
-                  'Product $productId not found in "products" collection.',
+                  'Product $productId not found in "products" collection of supermarket ${widget.supermarketId}.',
                 );
               }
             }
@@ -95,7 +111,7 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
         return AlertDialog(
           title: const Text('Confirm Deletion'),
           content: const Text(
-            'Are you sure you want to delete all items from your shopping list? This action cannot be undone.',
+            'Are you sure you want to delete all items from your shopping list for this supermarket? This action cannot be undone.',
           ),
           actions: <Widget>[
             TextButton(
@@ -114,11 +130,13 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
 
     if (confirmDelete == true) {
       try {
+        // Adjusted Firestore path for clearing all items
         final shoppingListItemsSnapshot = await _firestore
             .collection('customers')
             .doc(userId)
+            .collection('supermarkets')
+            .doc(widget.supermarketId)
             .collection('shopping-list')
-            .where('supermarketId', isEqualTo: widget.supermarketId)
             .get();
 
         final writeBatch = _firestore.batch();
@@ -128,7 +146,9 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
         await writeBatch.commit();
 
         if (!mounted) return;
-        _showSnackBar('✅ All items cleared from your shopping list.');
+        _showSnackBar(
+          '✅ All items cleared from your shopping list for this supermarket.',
+        );
       } catch (e) {
         if (!mounted) return;
         _showSnackBar('❌ Failed to clear all items: $e', isError: true);
@@ -137,19 +157,23 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
     }
   }
 
-  Future<void> _updateChecked(String docId, bool checked) async {
+  Future<void> _updateChecked(String docId, bool isChecked) async {
+    // Adjusted parameter name
     if (_currentUser == null) {
       _showSnackBar('Login required to update item status.', isError: true);
       return;
     }
     final String userId = _currentUser!.uid;
     try {
+      // Adjusted Firestore path for updating item status
       await _firestore
           .collection('customers')
           .doc(userId)
+          .collection('supermarkets')
+          .doc(widget.supermarketId)
           .collection('shopping-list')
           .doc(docId)
-          .update({'checked': checked});
+          .update({'isChecked': isChecked}); // Adjusted field name
     } catch (e) {
       if (!mounted) return;
       _showSnackBar('Failed to update item status: $e', isError: true);
@@ -164,9 +188,12 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
     }
     final String userId = _currentUser!.uid;
     try {
+      // Adjusted Firestore path for deleting an item
       await _firestore
           .collection('customers')
           .doc(userId)
+          .collection('supermarkets')
+          .doc(widget.supermarketId)
           .collection('shopping-list')
           .doc(docId)
           .delete();
@@ -292,11 +319,12 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
             itemBuilder: (context, index) {
               final item = items[index];
               final String docId = item['id'];
-              final String productName = item['productName'];
-              final double price = item['price'];
+              // Using consistent naming
+              final String productName = item['name'];
+              final double price = item['current_price'];
               final String imageUrl = item['imageUrl'];
               final int quantity = item['quantity'];
-              final bool checked = item['checked'];
+              final bool isChecked = item['isChecked']; // Adjusted to isChecked
               final Map<String, dynamic>? productLocation = item['location'];
 
               String locationText = '';
@@ -358,13 +386,17 @@ class _ShoppingListPageState extends State<ShoppingListPage> {
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: CheckboxListTile(
-                    value: checked,
+                    value: isChecked, // Using isChecked
                     onChanged: (val) => _updateChecked(docId, val ?? false),
                     title: Text(
                       '$productName (x$quantity)',
                       style: TextStyle(
-                        decoration: checked ? TextDecoration.lineThrough : null,
-                        color: checked ? Colors.grey : Colors.black87,
+                        decoration: isChecked
+                            ? TextDecoration.lineThrough
+                            : null, // Using isChecked
+                        color: isChecked
+                            ? Colors.grey
+                            : Colors.black87, // Using isChecked
                         fontWeight: FontWeight.w600,
                       ),
                     ),

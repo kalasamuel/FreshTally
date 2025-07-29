@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:Freshtally/pages/auth/staffcode.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class StaffSignupPage extends StatefulWidget {
   const StaffSignupPage({super.key});
@@ -10,7 +11,7 @@ class StaffSignupPage extends StatefulWidget {
 
 class _StaffSignupPageState extends State<StaffSignupPage> {
   final _formKey = GlobalKey<FormState>();
-  final bool _isLoading = false;
+  bool _isLoading = false;
   String? _errorMessage;
 
   final TextEditingController _firstNameController = TextEditingController();
@@ -34,7 +35,7 @@ class _StaffSignupPageState extends State<StaffSignupPage> {
     super.dispose();
   }
 
-  void _navigateToVerification() {
+  Future<void> _navigateToVerification() async {
     if (!_formKey.currentState!.validate()) {
       setState(() {
         _errorMessage = 'Please correct the errors in the form.';
@@ -42,20 +43,48 @@ class _StaffSignupPageState extends State<StaffSignupPage> {
       return;
     }
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => StaffVerificationPage(
-          firstName: _firstNameController.text.trim(),
-          lastName: _lastNameController.text.trim(),
-          email: _emailController.text.trim(),
-          password: _passwordController.text,
-          phone: _phoneController.text.trim(),
-          // supermarketName: _supermarketController.text.trim(),
-          // location: '',
-        ),
-      ),
-    );
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      UserCredential userCredential = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(
+            email: _emailController.text.trim(),
+            password: _passwordController.text,
+          );
+
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => StaffVerificationPage(
+              firstName: _firstNameController.text.trim(),
+              lastName: _lastNameController.text.trim(),
+              email: _emailController.text.trim(),
+              password: _passwordController.text,
+              phone: _phoneController.text.trim(),
+              userId: userCredential.user!.uid, // Only added this line
+            ),
+          ),
+        );
+      }
+    } on FirebaseAuthException catch (e) {
+      setState(() {
+        _errorMessage = e.message ?? 'Signup failed. Please try again.';
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'An unexpected error occurred. Please try again.';
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -178,19 +207,6 @@ class _StaffSignupPageState extends State<StaffSignupPage> {
                       return null;
                     },
                   ),
-                  const SizedBox(height: 16.0),
-
-                  // IconTextField(
-                  //   hintText: 'Supermarket Name',
-                  //   icon: Icons.store,
-                  //   controller: _supermarketController,
-                  //   validator: (value) {
-                  //     if (value == null || value.trim().isEmpty) {
-                  //       return 'Supermarket name is required';
-                  //     }
-                  //     return null;
-                  //   },
-                  // ),
                   const SizedBox(height: 16.0),
 
                   IconTextField(
