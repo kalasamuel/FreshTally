@@ -38,5 +38,6 @@ def send_sales_to_firebase(sales_data, store_id="default_store"):
         batch_ref.collection("items").add(sale)
 
     print(f"✅ Uploaded {len(sales_data)} sales to Firestore.")
+    
 
 

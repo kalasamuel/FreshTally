@@ -1,4 +1,5 @@
-('C:\\Users\\user\\Desktop\\freshtally_connector\\build\\main\\PYZ-00.pyz',
+('C:\\Users\\user\\Desktop\\Old '
+ 'PC\\DSAA\\FreshTally\\connector_app_folder\\build\\main\\PYZ-00.pyz',
  [('__future__',
    'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\__future__.py',
    'PYMODULE'),
@@ -450,7 +451,8 @@
    'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\concurrent\\futures\\thread.py',
    'PYMODULE'),
   ('config_manager',
-   'C:\\Users\\user\\Desktop\\freshtally_connector\\config_manager.py',
+   'C:\\Users\\user\\Desktop\\Old '
+   'PC\\DSAA\\FreshTally\\connector_app_folder\\config_manager.py',
    'PYMODULE'),
   ('configparser',
    'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\configparser.py',
@@ -1469,7 +1471,8 @@
    'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\site-packages\\grpc_status\\rpc_status.py',
    'PYMODULE'),
   ('gui_config',
-   'C:\\Users\\user\\Desktop\\freshtally_connector\\gui_config.py',
+   'C:\\Users\\user\\Desktop\\Old '
+   'PC\\DSAA\\FreshTally\\connector_app_folder\\gui_config.py',
    'PYMODULE'),
   ('gzip',
    'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\gzip.py',
@@ -1869,7 +1872,8 @@
    'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\json\\scanner.py',
    'PYMODULE'),
   ('logger',
-   'C:\\Users\\user\\Desktop\\freshtally_connector\\logger.py',
+   'C:\\Users\\user\\Desktop\\Old '
+   'PC\\DSAA\\FreshTally\\connector_app_folder\\logger.py',
    'PYMODULE'),
   ('logging',
    'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\logging\\__init__.py',
@@ -2364,20 +2368,25 @@
    'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\random.py',
    'PYMODULE'),
   ('reader_dispatcher',
-   'C:\\Users\\user\\Desktop\\freshtally_connector\\reader_dispatcher.py',
+   'C:\\Users\\user\\Desktop\\Old '
+   'PC\\DSAA\\FreshTally\\connector_app_folder\\reader_dispatcher.py',
    'PYMODULE'),
   ('readers', '-', 'PYMODULE'),
   ('readers.reader_api',
-   'C:\\Users\\user\\Desktop\\freshtally_connector\\readers\\reader_api.py',
+   'C:\\Users\\user\\Desktop\\Old '
+   'PC\\DSAA\\FreshTally\\connector_app_folder\\readers\\reader_api.py',
    'PYMODULE'),
   ('readers.reader_csv',
-   'C:\\Users\\user\\Desktop\\freshtally_connector\\readers\\reader_csv.py',
+   'C:\\Users\\user\\Desktop\\Old '
+   'PC\\DSAA\\FreshTally\\connector_app_folder\\readers\\reader_csv.py',
    'PYMODULE'),
   ('readers.reader_mysql',
-   'C:\\Users\\user\\Desktop\\freshtally_connector\\readers\\reader_mysql.py',
+   'C:\\Users\\user\\Desktop\\Old '
+   'PC\\DSAA\\FreshTally\\connector_app_folder\\readers\\reader_mysql.py',
    'PYMODULE'),
   ('readers.reader_sqlite',
-   'C:\\Users\\user\\Desktop\\freshtally_connector\\readers\\reader_sqlite.py',
+   'C:\\Users\\user\\Desktop\\Old '
+   'PC\\DSAA\\FreshTally\\connector_app_folder\\readers\\reader_sqlite.py',
    'PYMODULE'),
   ('requests',
    'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\site-packages\\requests\\__init__.py',
@@ -3092,7 +3101,8 @@
    'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\unittest\\util.py',
    'PYMODULE'),
   ('uploader',
-   'C:\\Users\\user\\Desktop\\freshtally_connector\\uploader.py',
+   'C:\\Users\\user\\Desktop\\Old '
+   'PC\\DSAA\\FreshTally\\connector_app_folder\\uploader.py',
    'PYMODULE'),
   ('urllib',
    'C:\\Users\\user\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\urllib\\__init__.py',
