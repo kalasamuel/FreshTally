@@ -13,7 +13,7 @@ def read_sales_from_api(api_url, field_map, token=None):
                 "productName": item.get(field_map["productName"], ""),
                 "quantity": int(item.get(field_map["quantity"], 0)),
                 "unitPrice": float(item.get(field_map["unitPrice"], 0)),
-                "timestamp": item.get(field_map["transaction_timestamp"], ""),
+                "timestamp": item.get(field_map["timestamp"], ""),
                 "sku": item.get(field_map["sku"], ""),
                 "productId": item.get(field_map["productId"], ""),
                 "transactionId": item.get(field_map["transactionId"], ""),

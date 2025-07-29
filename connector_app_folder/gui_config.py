@@ -14,12 +14,19 @@ def launch_config_gui():
         entry.delete(0, tk.END)
         entry.insert(0, path)
 
+    def is_valid_store_id(store_id):
+        return store_id.isalnum() and len(store_id) > 0
+
     def save_config():
         source_type = source_var.get().upper()
         store_id = store_id_entry.get().strip()
 
         if not source_type or not store_id:
             messagebox.showerror("Missing Info", "Please select source type and enter Store ID.")
+            return
+        
+        if is_valid_store_id(store_id):
+            messagebox.showerror("Invalid Store ID", "Store ID must be alphanumeric and non-empty.")
             return
 
         config = {

@@ -15,3 +15,5 @@
 [2025-07-29 19:44:11] STATUS: FAILED | Store: Kampala supermarket | Records: 0 | ERROR: 'transaction_timestamp'
 [2025-07-29 19:46:06] STATUS: FAILED | Store: Kampala supermarket | Records: 0 | ERROR: 'transaction_timestamp'
 [2025-07-29 19:47:19] STATUS: FAILED | Store: Kampala supermarket | Records: 0 | ERROR: 'transaction_timestamp'
+[2025-07-29 19:48:45] STATUS: FAILED | Store: Kampala supermarket | Records: 0 | ERROR: 'transaction_timestamp'
+[2025-07-29 19:50:49] STATUS: FAILED | Store: kampala supermarket | Records: 0 | ERROR: 'transaction_timestamp'
