@@ -8,8 +8,14 @@ import 'package:Freshtally/pages/storeManager/home/home_screen.dart';
 class RoleSelectionPage extends StatefulWidget {
   final String? supermarketId;
   final String role;
+  final String? userId; // Added userId parameter
 
-  const RoleSelectionPage({super.key, this.supermarketId, required this.role});
+  const RoleSelectionPage({
+    super.key,
+    this.supermarketId,
+    required this.role,
+    this.userId, // Added to constructor
+  });
 
   @override
   State<RoleSelectionPage> createState() => _RoleSelectionPageState();
@@ -23,6 +29,8 @@ class _RoleSelectionPageState extends State<RoleSelectionPage> {
   @override
   void initState() {
     super.initState();
+    // Initialize selectedRole with the passed role if needed
+    selectedRole = widget.role;
   }
 
   /// Update user document and staff document with selected role & navigate
@@ -49,7 +57,10 @@ class _RoleSelectionPageState extends State<RoleSelectionPage> {
 
     try {
       final user = FirebaseAuth.instance.currentUser;
-      if (user == null) {
+      final userId =
+          user?.uid ?? widget.userId; // Use current user or passed userId
+
+      if (userId == null) {
         throw Exception("User not signed in. Please sign up or log in again.");
       }
 
@@ -67,32 +78,33 @@ class _RoleSelectionPageState extends State<RoleSelectionPage> {
 
       // Prepare the user data
       final userData = {
-        'createdAt':
-            FieldValue.serverTimestamp(), // Will be stored as a timestamp
-        'email': user.email,
-        'firstName': '', // You should get these from user input or profile
-        'lastName': '', // You should get these from user input or profile
-        'location': '', // You should get this from user input or profile
-        'role': selectedRole!.toLowerCase(), // Store as lowercase
+        'createdAt': FieldValue.serverTimestamp(),
+        'email': user?.email ?? '', // Use current user email or empty
+        'firstName': '', // These should come from previous steps
+        'lastName': '', // These should come from previous steps
+        'location': '', // These should come from previous steps
+        'role': selectedRole!.toLowerCase(),
         'supermarketId': widget.supermarketId,
         'supermarketName': supermarketName,
-        'uid': user.uid,
+        'uid': userId,
         'updatedAt': FieldValue.serverTimestamp(),
       };
 
       // Update the user's document in the 'users' collection
       await FirebaseFirestore.instance
           .collection('users')
-          .doc(user.uid)
-          .set(userData);
+          .doc(userId)
+          .set(
+            userData,
+            SetOptions(merge: true),
+          ); // Use merge to preserve existing fields
 
-      // Update the staff document in the supermarket's staff subcollection
       await FirebaseFirestore.instance
           .collection('supermarkets')
           .doc(widget.supermarketId!)
           .collection('staff')
-          .doc(user.uid)
-          .set(userData);
+          .doc(userId)
+          .set(userData, SetOptions(merge: true));
 
       // Navigate to the appropriate dashboard
       if (!mounted) return;

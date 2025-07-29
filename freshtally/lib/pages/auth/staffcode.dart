@@ -5,7 +5,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
-// Re-using IconTextField from your other files
 class IconTextField extends StatelessWidget {
   final String hintText;
   final IconData icon;
@@ -110,7 +109,6 @@ class _StaffVerificationPageState extends State<StaffVerificationPage> {
     super.dispose();
   }
 
-  // --- Supermarket Search Logic ---
   Future<void> _onSearchChanged() async {
     final searchText = _searchController.text.trim();
     if (searchText.isEmpty) {
@@ -169,7 +167,6 @@ class _StaffVerificationPageState extends State<StaffVerificationPage> {
     FocusScope.of(context).unfocus();
   }
 
-  // --- Join Code Verification and Account Creation Logic ---
   Future<void> _verifyJoinCodeAndCreateStaffAccount() async {
     if (_selectedSupermarketId == null) {
       setState(() {
@@ -216,26 +213,28 @@ class _StaffVerificationPageState extends State<StaffVerificationPage> {
         throw Exception("Join code has expired.");
       }
 
-      final UserCredential userCredential = await _auth
-          .createUserWithEmailAndPassword(
-            email: widget.email,
-            password: widget.password,
-          );
-      final user = userCredential.user;
+      // Create user document in the main users collection
+      await _firestore.collection('users').doc(widget.userId).set({
+        'uid': widget.userId,
+        'firstName': widget.firstName,
+        'lastName': widget.lastName,
+        'email': widget.email,
+        'phone': widget.phone,
+        'role': 'unassigned',
+        'supermarketId': _selectedSupermarketId!,
+        'supermarketName': _selectedSupermarketName,
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
 
-      if (user == null) {
-        throw Exception("User creation failed. No user object returned.");
-      }
-
-      final String uid = user.uid;
-
+      // Also create document in the supermarket's staff subcollection
       await _firestore
           .collection('supermarkets')
           .doc(_selectedSupermarketId!)
-          .collection('users')
-          .doc(uid)
+          .collection('staff')
+          .doc(widget.userId)
           .set({
-            'uid': uid,
+            'uid': widget.userId,
             'firstName': widget.firstName,
             'lastName': widget.lastName,
             'email': widget.email,
@@ -266,9 +265,8 @@ class _StaffVerificationPageState extends State<StaffVerificationPage> {
         MaterialPageRoute(
           builder: (context) => RoleSelectionPage(
             supermarketId: _selectedSupermarketId!,
-            // The role passed here is just a placeholder, the actual role
-            // selection happens inside RoleSelectionPage.
             role: 'unassigned',
+            userId: widget.userId, // Pass the userId to RoleSelectionPage
           ),
         ),
       );
@@ -309,10 +307,9 @@ class _StaffVerificationPageState extends State<StaffVerificationPage> {
     }
   }
 
-  // --- QR Code Scanning Logic ---
   Future<void> _scanQrCode() async {
     setState(() {
-      _errorMessage = null; // Clear previous errors
+      _errorMessage = null;
     });
     final result = await Navigator.push<String?>(
       context,
@@ -339,8 +336,7 @@ class _StaffVerificationPageState extends State<StaffVerificationPage> {
                 doc.id == result ||
                 (doc.data() as Map<String, dynamic>?)?['name']?.toLowerCase() ==
                     result.toLowerCase(),
-            orElse: () => _supermarketSearchResults
-                .first, // Fallback to first if exact ID/name not found
+            orElse: () => _supermarketSearchResults.first,
           );
           _selectSupermarket(matchedDoc);
           ScaffoldMessenger.of(context).showSnackBar(
@@ -398,7 +394,6 @@ class _StaffVerificationPageState extends State<StaffVerificationPage> {
               ),
               const SizedBox(height: 30.0),
 
-              // --- Supermarket Search Field ---
               IconTextField(
                 hintText: 'Search Supermarket Name',
                 icon: Icons.store,
@@ -407,7 +402,6 @@ class _StaffVerificationPageState extends State<StaffVerificationPage> {
               ),
               const SizedBox(height: 10),
 
-              // --- Supermarket Search Results (dynamic height) ---
               if (_supermarketSearchResults.isNotEmpty)
                 Container(
                   constraints: BoxConstraints(
@@ -449,7 +443,6 @@ class _StaffVerificationPageState extends State<StaffVerificationPage> {
 
               const SizedBox(height: 20),
 
-              // --- Display Selected Supermarket & Join Code Input ---
               if (_selectedSupermarketId != null)
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -549,7 +542,6 @@ class _StaffVerificationPageState extends State<StaffVerificationPage> {
   }
 }
 
-// --- New QRScannerPage for the QR code functionality ---
 class QRScannerPage extends StatefulWidget {
   const QRScannerPage({super.key});
 
@@ -559,38 +551,13 @@ class QRScannerPage extends StatefulWidget {
 
 class _QRScannerPageState extends State<QRScannerPage> {
   MobileScannerController cameraController = MobileScannerController();
-
-  // We need to store the current state of torch and camera facing locally
-  // and update them after each toggle operation.
-  // Initialize with reasonable defaults.
   bool _isTorchOn = false;
   CameraFacing _currentCameraFacing = CameraFacing.back;
-
-  // This flag helps prevent multiple pop calls if a barcode is detected rapidly
   bool _isScanCompleted = false;
 
   @override
   void initState() {
     super.initState();
-    // It's good practice to try and get the initial state,
-    // though cameraController.start() might be required first.
-    // For this use case, we'll assume default off and back.
-    // The state will primarily be updated by calling toggleTorch/switchCamera.
-    _initializeCameraState();
-  }
-
-  Future<void> _initializeCameraState() async {
-    // This part is tricky with mobile_scanner 7.x.x
-    // There isn't a direct way to *read* the current torchState or cameraFacingState
-    // from the controller *before* an event or interaction.
-    // The most reliable way is to track it ourselves based on button presses
-    // and rely on the default initial states of the camera.
-    // We'll update the local state when the user toggles.
-
-    // A more robust solution for getting initial state might involve
-    // checking permissions and then starting the camera,
-    // then potentially querying internal camera properties if exposed by the plugin.
-    // For now, we'll assume default starting states.
   }
 
   @override
@@ -612,7 +579,6 @@ class _QRScannerPageState extends State<QRScannerPage> {
               color: _isTorchOn ? Colors.yellow : Colors.grey,
             ),
             onPressed: () async {
-              // Toggle torch and update local state
               await cameraController.toggleTorch();
               setState(() {
                 _isTorchOn = !_isTorchOn;
@@ -627,7 +593,6 @@ class _QRScannerPageState extends State<QRScannerPage> {
                   : Icons.camera_rear,
             ),
             onPressed: () async {
-              // Switch camera and update local state
               await cameraController.switchCamera();
               setState(() {
                 _currentCameraFacing =
@@ -643,23 +608,13 @@ class _QRScannerPageState extends State<QRScannerPage> {
         children: [
           MobileScanner(
             controller: cameraController,
-            // onStart: (arguments) {
-            //   // Use onStart to get the initial camera facing if needed,
-            //   // but torch state is not part of MobileScannerArguments.
-            //   if (mounted) {
-            //     setState(() {
-            //       _currentCameraFacing = arguments.cameraFacing;
-            //       // _isTorchOn cannot be directly read here.
-            //     });
-            //   }
-            // },
             onDetect: (capture) {
               if (!_isScanCompleted) {
                 final List<Barcode> barcodes = capture.barcodes;
                 if (barcodes.isNotEmpty) {
                   final barcode = barcodes.first;
                   if (barcode.rawValue != null) {
-                    _isScanCompleted = true; // Prevent multiple detections
+                    _isScanCompleted = true;
                     Navigator.pop(context, barcode.rawValue);
                   }
                 }

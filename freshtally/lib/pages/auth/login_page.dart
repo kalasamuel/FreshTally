@@ -181,29 +181,29 @@ class _LoginPageState extends State<LoginPage> {
         );
       } else {
         final userQuery = await _firestore
-            .collectionGroup('users')
-            .where('uid', isEqualTo: userId)
-            .limit(1)
+            .collection(
+              'users',
+            ) // Changed from collectionGroup to direct collection
+            .doc(userId)
             .get();
 
-        if (userQuery.docs.isEmpty) {
+        if (!userQuery.exists) {
           throw Exception(
             'User document not found in Firestore for UID: $userId. Contact support.',
           );
         }
 
-        final userDoc = userQuery.docs.first;
-        final userData = userDoc.data();
-        role = userData['role'] as String? ?? 'unknown';
-        staffOrManagerSupermarketId = userDoc.reference.parent.parent?.id;
+        final userData = userQuery.data();
+        role =
+            userData?['role'] as String? ??
+            'staff'; // Default to staff if role missing
+        staffOrManagerSupermarketId = userData?['supermarketId'];
 
         if (staffOrManagerSupermarketId == null) {
-          throw Exception(
-            'Supermarket ID not found for staff/manager user: $userId.',
-          );
+          throw Exception('Supermarket ID not found for staff user: $userId.');
         }
         debugPrint(
-          'Staff/Manager logged in: $userId, Role: $role, Supermarket: $staffOrManagerSupermarketId',
+          'Staff logged in: $userId, Role: $role, Supermarket: $staffOrManagerSupermarketId',
         );
       }
 
@@ -212,10 +212,10 @@ class _LoginPageState extends State<LoginPage> {
       if (!mounted) return;
 
       // Navigate based on role
-      switch (role) {
+      switch (role.toLowerCase()) {
+        // Changed to lowercase comparison
         case 'manager':
-        case 'storeManager':
-        case 'staff':
+        case 'storemanager': // Combined manager cases
           String supermarketName = 'Unknown';
           String location = 'Unknown';
           if (staffOrManagerSupermarketId != null) {
@@ -230,42 +230,44 @@ class _LoginPageState extends State<LoginPage> {
               location = supermarketData?['location'] as String? ?? 'Unknown';
             }
           }
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) => StoreManagerDashboard(
+                supermarketId: staffOrManagerSupermarketId!,
+                supermarketName: supermarketName,
+                location: location,
+              ),
+            ),
+          );
+          break;
 
-          if (role == 'manager') {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (_) => ManagerDashboardPage(
-                  supermarketName: supermarketName,
-                  location: location,
-                  managerId: userId,
-                  supermarketId: staffOrManagerSupermarketId!,
-                ),
-              ),
-            );
-          } else if (role == 'storeManager') {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (_) => StoreManagerDashboard(
-                  supermarketId: staffOrManagerSupermarketId!,
-                  supermarketName: supermarketName,
-                  location: location,
-                ),
-              ),
-            );
-          } else if (role == 'staff') {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (_) => ShelfStaffDashboard(
-                  supermarketId: staffOrManagerSupermarketId!,
-                  supermarketName: supermarketName,
-                  location: location,
-                ),
-              ),
-            );
+        case 'staff':
+        case 'shelfstaff': // Combined staff cases
+          String supermarketName = 'Unknown';
+          String location = 'Unknown';
+          if (staffOrManagerSupermarketId != null) {
+            final supermarketDoc = await _firestore
+                .collection('supermarkets')
+                .doc(staffOrManagerSupermarketId)
+                .get();
+            if (supermarketDoc.exists) {
+              final supermarketData = supermarketDoc.data();
+              supermarketName =
+                  supermarketData?['name'] as String? ?? 'Unknown';
+              location = supermarketData?['location'] as String? ?? 'Unknown';
+            }
           }
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) => ShelfStaffDashboard(
+                supermarketId: staffOrManagerSupermarketId!,
+                supermarketName: supermarketName,
+                location: location,
+              ),
+            ),
+          );
           break;
 
         case 'customer':
