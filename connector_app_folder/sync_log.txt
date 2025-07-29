@@ -18,3 +18,7 @@
 [2025-07-29 19:48:45] STATUS: FAILED | Store: Kampala supermarket | Records: 0 | ERROR: 'transaction_timestamp'
 [2025-07-29 19:50:49] STATUS: FAILED | Store: kampala supermarket | Records: 0 | ERROR: 'transaction_timestamp'
 [2025-07-29 20:48:20] STATUS: SUCCESS | Store: 7Q8MfpFiGfOZY5zZzFYXae1JugE2 | Records: 1848
+[2025-07-29 22:00:30] STATUS: FAILED | Store: 7Q8MfpFiGfOZY5zZzFYXae1JugE2 | Records: 0 | ERROR: Timeout of 60.0s exceeded, last exception: 503 failed to connect to all addresses; last error: UNAVAILABLE: ipv4:172.217.170.170:443: IOCP/Socket: Connection reset (An existing connection was forcibly closed by the remote host.
+ -- 10054)
+[2025-07-29 22:03:20] STATUS: FAILED | Store: 7Q8MfpFiGfOZY5zZzFYXae1JugE2 | Records: 0 | ERROR: Timeout of 60.0s exceeded, last exception: 503 failed to connect to all addresses; last error: UNAVAILABLE: ipv4:172.217.170.170:443: IOCP/Socket: Connection reset (An existing connection was forcibly closed by the remote host.
+ -- 10054)

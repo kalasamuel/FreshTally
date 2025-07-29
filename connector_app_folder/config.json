@@ -8,7 +8,7 @@
         "unitPrice": "UnitPrice",
         "timestamp": "transactionTime",
         "sku": "SKU",
-        "transactionId": "TransactionID"
+        "transactionId": "TransactionTime"
     },
     "csv_path": "C:/Users/user/Downloads/pos.csv"
 }
