@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:intl/intl.dart'; // For formatting dates
+import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-// The NotificationsPage needs to be a StatefulWidget to manage its state,
-// including the selected filter and the list of notifications.
 class NotificationsPage extends StatefulWidget {
   final String supermarketId;
 
@@ -14,15 +13,58 @@ class NotificationsPage extends StatefulWidget {
 }
 
 class _NotificationsPageState extends State<NotificationsPage> {
-  // Only include the relevant filters for the manager
-  // Added 'Promotions' to the available filters
   final List<String> _availableFilters = [
     'All',
     'Expiry',
     'Sync',
     'Promotions',
+    'Customers', // Added customers filter
   ];
-  String _selectedFilter = 'All'; // State for the selected filter chip
+  String _selectedFilter = 'All';
+  bool _showNewCustomerWelcome = false;
+  String? _newCustomerName;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkForNewCustomers();
+  }
+
+  Future<void> _checkForNewCustomers() async {
+    final prefs = await SharedPreferences.getInstance();
+    final lastChecked = prefs.getString('lastCustomerCheck') ?? '';
+
+    final newCustomers = await FirebaseFirestore.instance
+        .collection('customers')
+        .where('supermarketId', isEqualTo: widget.supermarketId)
+        .where('createdAt', isGreaterThan: lastChecked)
+        .orderBy('createdAt', descending: true)
+        .limit(1)
+        .get();
+
+    if (newCustomers.docs.isNotEmpty) {
+      final newCustomer = newCustomers.docs.first;
+      setState(() {
+        _showNewCustomerWelcome = true;
+        _newCustomerName = newCustomer['name'] ?? 'a new customer';
+      });
+
+      await prefs.setString(
+        'lastCustomerCheck',
+        DateTime.now().toIso8601String(),
+      );
+
+      await FirebaseFirestore.instance.collection('notifications').add({
+        'type': 'new_customer',
+        'title': 'New Customer Joined',
+        'description': '$_newCustomerName has joined your supermarket!',
+        'supermarketId': widget.supermarketId,
+        'timestamp': Timestamp.now(),
+        'isRead': false,
+        'priority': 'low',
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,9 +72,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black87),
-          onPressed: () {
-            Navigator.pop(context); // Go back to the previous screen
-          },
+          onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
           'Notifications',
@@ -47,21 +87,17 @@ class _NotificationsPageState extends State<NotificationsPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Filter Chips - now uses the limited _availableFilters
+            if (_showNewCustomerWelcome && _newCustomerName != null)
+              _buildNewCustomerNotification(),
             FilterChips(
-              filters: _availableFilters, // Pass only the relevant filters
+              filters: _availableFilters,
               selectedFilter: _selectedFilter,
-              onFilterSelected: (filter) {
-                setState(() {
-                  _selectedFilter = filter;
-                });
-              },
+              onFilterSelected: (filter) =>
+                  setState(() => _selectedFilter = filter),
             ),
             const SizedBox(height: 16),
-            // Notifications List
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
-                // Fetch notifications for the specific supermarket
                 stream: _getNotificationsStream(),
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
@@ -76,44 +112,31 @@ class _NotificationsPageState extends State<NotificationsPage> {
                     );
                   }
 
-                  // Filter notifications based on selected chip and allowed types
                   final filteredNotifications = snapshot.data!.docs.where((
                     doc,
                   ) {
                     final data = doc.data() as Map<String, dynamic>;
-                    final type =
-                        data['type'] as String? ?? 'general'; // Default type
+                    final type = data['type'] as String? ?? 'general';
 
-                    // Define the types relevant for the manager, including 'promotion'
-                    const managerRelevantTypes = {
-                      'expiry_warning',
-                      'expired_product',
-                      'sync_reminder',
-                      'sync_error',
-                      'promotion', // Added promotion type
-                    };
-
-                    // First, filter by manager-relevant types
-                    if (!managerRelevantTypes.contains(type)) {
-                      return false; // Exclude types not relevant to manager
-                    }
-
-                    // Then, apply the selected filter chip
-                    if (_selectedFilter == 'All') {
-                      return true;
-                    } else if (_selectedFilter == 'Expiry' &&
+                    if (_selectedFilter == 'All') return true;
+                    if (_selectedFilter == 'Expiry' &&
                         (type == 'expiry_warning' ||
                             type == 'expired_product')) {
                       return true;
-                    } else if (_selectedFilter == 'Sync' &&
+                    }
+                    if (_selectedFilter == 'Sync' &&
                         (type == 'sync_reminder' || type == 'sync_error')) {
                       return true;
-                    } else if (_selectedFilter == 'Promotions' &&
+                    }
+                    if (_selectedFilter == 'Promotions' &&
                         type == 'promotion') {
-                      // Filter for promotions
                       return true;
                     }
-                    return false; // Should not be reached if logic is sound
+                    if (_selectedFilter == 'Customers' &&
+                        type == 'new_customer') {
+                      return true;
+                    }
+                    return false;
                   }).toList();
 
                   if (filteredNotifications.isEmpty) {
@@ -130,7 +153,6 @@ class _NotificationsPageState extends State<NotificationsPage> {
                       final doc = filteredNotifications[index];
                       final data = doc.data() as Map<String, dynamic>;
 
-                      // Parse notification data
                       final String title = data['title'] ?? 'No Title';
                       final String description =
                           data['description'] ?? 'No Description';
@@ -145,7 +167,6 @@ class _NotificationsPageState extends State<NotificationsPage> {
                       final String priority = data['priority'] ?? 'medium';
                       final bool isRead = data['isRead'] ?? false;
 
-                      // Determine icon, color based on type and priority
                       IconData icon;
                       Color iconColor;
                       Color cardColor;
@@ -223,7 +244,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                             ),
                           );
                           break;
-                        case 'sync_error': // New case for sync errors
+                        case 'sync_error':
                           icon = Icons.cloud_off;
                           iconColor = Colors.deepOrange;
                           cardColor = Colors.deepOrange[50]!;
@@ -242,18 +263,16 @@ class _NotificationsPageState extends State<NotificationsPage> {
                             ),
                           );
                           break;
-                        case 'promotion': // New case for promotional notifications
-                          icon = Icons.local_offer; // Icon for promotions
-                          iconColor = Colors.purple; // Color for promotions
+                        case 'promotion':
+                          icon = Icons.local_offer;
+                          iconColor = Colors.purple;
                           cardColor = Colors.purple[50]!;
                           buttons.add(
                             ActionButton(
                               label: 'View Deal',
                               color: Colors.blue[100]!,
-                              onPressed: () => _viewPromotion(
-                                doc.id,
-                                data['productId'],
-                              ), // Assuming productId is available
+                              onPressed: () =>
+                                  _viewPromotion(doc.id, data['productId']),
                             ),
                           );
                           buttons.add(
@@ -264,7 +283,29 @@ class _NotificationsPageState extends State<NotificationsPage> {
                             ),
                           );
                           break;
-                        default: // Fallback for any unexpected types (though filtered out by `where` clause)
+                        case 'new_customer':
+                          icon = Icons.person_add;
+                          iconColor = Colors.blue;
+                          cardColor = Colors.blue[50]!;
+                          buttons.add(
+                            ActionButton(
+                              label: 'View Profile',
+                              color: Colors.blue[100]!,
+                              onPressed: () => _viewCustomerProfile(
+                                doc.id,
+                                data['customerId'],
+                              ),
+                            ),
+                          );
+                          buttons.add(
+                            ActionButton(
+                              label: 'Dismiss',
+                              color: Colors.green[100]!,
+                              onPressed: () => _dismissNotification(doc.id),
+                            ),
+                          );
+                          break;
+                        default:
                           icon = Icons.notifications;
                           iconColor = Colors.grey;
                           cardColor = Colors.grey[50]!;
@@ -285,17 +326,17 @@ class _NotificationsPageState extends State<NotificationsPage> {
                           break;
                       }
 
-                      // Override color for high priority
                       if (priority == 'high' &&
-                          type != 'expired_product' &&
-                          type != 'sync_error' &&
-                          type != 'promotion') {
-                        // Ensure promotion doesn't override its specific high priority
+                          ![
+                            'expired_product',
+                            'sync_error',
+                            'promotion',
+                            'new_customer',
+                          ].contains(type)) {
                         cardColor = Colors.red[100]!;
                         iconColor = Colors.red;
                       }
 
-                      // If already read, make it visually distinct
                       if (isRead) {
                         cardColor = Colors.grey[200]!;
                         iconColor = Colors.grey;
@@ -325,9 +366,59 @@ class _NotificationsPageState extends State<NotificationsPage> {
     );
   }
 
-  // Firestore stream for notifications, filtered by supermarketId and sorted by timestamp.
+  Widget _buildNewCustomerNotification() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16.0),
+      child: Card(
+        color: Colors.blue[50],
+        elevation: 2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.person_add, color: Colors.blue[700]),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'NEW CUSTOMER',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.blue,
+                    ),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    icon: const Icon(Icons.close, size: 20),
+                    onPressed: () =>
+                        setState(() => _showNewCustomerWelcome = false),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '$_newCustomerName has joined your supermarket!',
+                style: const TextStyle(fontSize: 14),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Welcome them with special offers to build loyalty.',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.blue[700],
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Stream<QuerySnapshot> _getNotificationsStream() {
-    // Only query for the specific types the manager should receive, including 'promotion'
     return FirebaseFirestore.instance
         .collection('notifications')
         .where('supermarketId', isEqualTo: widget.supermarketId)
@@ -338,14 +429,13 @@ class _NotificationsPageState extends State<NotificationsPage> {
             'expired_product',
             'sync_reminder',
             'sync_error',
-            'promotion', // Added 'promotion' to the query filter
+            'promotion',
+            'new_customer',
           ],
-        ) // Filter by allowed types
-        .orderBy('timestamp', descending: true) // Show newest first
+        )
+        .orderBy('timestamp', descending: true)
         .snapshots();
   }
-
-  // --- Notification Actions (Firebase Update Logic) ---
 
   Future<void> _updateNotificationStatus(
     String notificationId,
@@ -357,17 +447,12 @@ class _NotificationsPageState extends State<NotificationsPage> {
           .doc(notificationId)
           .update(updates);
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Notification updated.')));
+        _showSnackBar('Notification updated.');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to update notification: $e')),
-        );
+        _showSnackBar('Failed to update notification: $e', isError: true);
       }
-      debugPrint('Error updating notification $notificationId: $e');
     }
   }
 
@@ -383,11 +468,10 @@ class _NotificationsPageState extends State<NotificationsPage> {
   }
 
   void _snoozeNotification(String notificationId) {
-    final snoozeUntil = Timestamp.fromDate(
-      DateTime.now().add(const Duration(days: 1)),
-    );
     _updateNotificationStatus(notificationId, {
-      'snoozeUntil': snoozeUntil,
+      'snoozeUntil': Timestamp.fromDate(
+        DateTime.now().add(const Duration(days: 1)),
+      ),
       'isRead': false,
     });
   }
@@ -395,25 +479,20 @@ class _NotificationsPageState extends State<NotificationsPage> {
   void _triggerSync(String notificationId) {
     _showSnackBar('Initiating sync process...');
     _markNotificationAsRead(notificationId);
-    // Add actual sync logic here if needed
   }
 
-  // New method to handle 'View Deal' for promotion notifications
   void _viewPromotion(String notificationId, String? productId) {
-    _showSnackBar('Navigating to product details for deal...');
+    _showSnackBar('Navigating to product details...');
     _markNotificationAsRead(notificationId);
-    // Implement navigation to a product detail page or promotion page
-    // if (productId != null) {
-    //   Navigator.push(
-    //     context,
-    //     MaterialPageRoute(builder: (context) => ProductDetailPage(productId: productId)),
-    //   );
-    // }
   }
 
-  // Define _showSnackBar here within _NotificationsPageState
+  void _viewCustomerProfile(String notificationId, String? customerId) {
+    _showSnackBar('Navigating to customer profile...');
+    _markNotificationAsRead(notificationId);
+  }
+
   void _showSnackBar(String message, {bool isError = false}) {
-    if (!mounted) return; // Ensure widget is still in the tree
+    if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
@@ -425,8 +504,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
   }
 }
 
-// --- FilterChips Widget ---
-class FilterChips extends StatefulWidget {
+class FilterChips extends StatelessWidget {
   final List<String> filters;
   final String selectedFilter;
   final ValueChanged<String> onFilterSelected;
@@ -439,18 +517,13 @@ class FilterChips extends StatefulWidget {
   });
 
   @override
-  State<FilterChips> createState() => _FilterChipsState();
-}
-
-class _FilterChipsState extends State<FilterChips> {
-  @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Wrap(
         spacing: 8.0,
-        children: widget.filters.map((filter) {
-          final isSelected = filter == widget.selectedFilter;
+        children: filters.map((filter) {
+          final isSelected = filter == selectedFilter;
           return ChoiceChip(
             label: Text(filter),
             selected: isSelected,
@@ -460,11 +533,8 @@ class _FilterChipsState extends State<FilterChips> {
               color: isSelected ? Colors.white : Colors.black87,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
             ),
-            onSelected: (selected) {
-              if (selected) {
-                widget.onFilterSelected(filter);
-              }
-            },
+            onSelected: (selected) =>
+                selected ? onFilterSelected(filter) : null,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(20),
               side: BorderSide(
@@ -481,7 +551,6 @@ class _FilterChipsState extends State<FilterChips> {
   }
 }
 
-// --- NotificationCard Widget ---
 class NotificationCard extends StatelessWidget {
   final String title;
   final String description;
@@ -512,22 +581,9 @@ class NotificationCard extends StatelessWidget {
         color: color ?? Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.grey[300]!),
-        boxShadow:
-            isRead // Less prominent shadow for read notifications
-            ? [
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.1),
-                  blurRadius: 2,
-                  offset: const Offset(0, 1),
-                ),
-              ]
-            : [
-                BoxShadow(
-                  color: Colors.grey.withOpacity(0.2),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
+        boxShadow: isRead
+            ? [BoxShadow(color: Colors.grey.withOpacity(0.1), blurRadius: 2)]
+            : [BoxShadow(color: Colors.grey.withOpacity(0.2), blurRadius: 4)],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -565,27 +621,29 @@ class NotificationCard extends StatelessWidget {
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   child: Row(
-                    children: buttons.map((btn) {
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 6.0),
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: btn.color,
-                            foregroundColor: Colors.black,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 8,
-                            ),
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
+                    children: buttons
+                        .map(
+                          (btn) => Padding(
+                            padding: const EdgeInsets.only(right: 6.0),
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: btn.color,
+                                foregroundColor: Colors.black,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                              ),
+                              onPressed: isRead ? null : btn.onPressed,
+                              child: Text(btn.label),
                             ),
                           ),
-                          onPressed: isRead ? null : btn.onPressed,
-                          child: Text(btn.label),
-                        ),
-                      );
-                    }).toList(),
+                        )
+                        .toList(),
                   ),
                 ),
               ),
@@ -601,7 +659,6 @@ class NotificationCard extends StatelessWidget {
   }
 }
 
-// --- ActionButton Class ---
 class ActionButton {
   final String label;
   final Color color;

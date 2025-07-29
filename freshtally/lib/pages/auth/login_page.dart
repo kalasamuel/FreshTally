@@ -214,8 +214,8 @@ class _LoginPageState extends State<LoginPage> {
       // Navigate based on role
       switch (role.toLowerCase()) {
         // Changed to lowercase comparison
-        case 'manager':
-        case 'store manager':
+
+        case 'store manager': // Combined manager cases
           String supermarketName = 'Unknown';
           String location = 'Unknown';
           if (staffOrManagerSupermarketId != null) {
@@ -242,7 +242,8 @@ class _LoginPageState extends State<LoginPage> {
           );
           break;
 
-        case 'shelf staff':
+        case 'staff':
+        case 'shelf staff': // Combined staff cases
           String supermarketName = 'Unknown';
           String location = 'Unknown';
           if (staffOrManagerSupermarketId != null) {
@@ -264,6 +265,34 @@ class _LoginPageState extends State<LoginPage> {
                 supermarketId: staffOrManagerSupermarketId!,
                 supermarketName: supermarketName,
                 location: location,
+              ),
+            ),
+          );
+          break;
+
+        case 'manager': // Combined staff cases
+          String supermarketName = 'Unknown';
+          String location = 'Unknown';
+          if (staffOrManagerSupermarketId != null) {
+            final supermarketDoc = await _firestore
+                .collection('supermarkets')
+                .doc(staffOrManagerSupermarketId)
+                .get();
+            if (supermarketDoc.exists) {
+              final supermarketData = supermarketDoc.data();
+              supermarketName =
+                  supermarketData?['name'] as String? ?? 'Unknown';
+              location = supermarketData?['location'] as String? ?? 'Unknown';
+            }
+          }
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) => ManagerDashboardPage(
+                supermarketId: staffOrManagerSupermarketId!,
+                supermarketName: supermarketName,
+                location: location,
+                managerId: userId,
               ),
             ),
           );
