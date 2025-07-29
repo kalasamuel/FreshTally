@@ -215,7 +215,7 @@ class _LoginPageState extends State<LoginPage> {
       switch (role.toLowerCase()) {
         // Changed to lowercase comparison
         case 'manager':
-        case 'storemanager': // Combined manager cases
+        case 'store manager':
           String supermarketName = 'Unknown';
           String location = 'Unknown';
           if (staffOrManagerSupermarketId != null) {
@@ -242,8 +242,7 @@ class _LoginPageState extends State<LoginPage> {
           );
           break;
 
-        case 'staff':
-        case 'shelfstaff': // Combined staff cases
+        case 'shelf staff':
           String supermarketName = 'Unknown';
           String location = 'Unknown';
           if (staffOrManagerSupermarketId != null) {
