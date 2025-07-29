@@ -1,0 +1,45 @@
+# FreshTally .gitignore file
+
+# Ignore Python cache and compiled files
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Ignore environment and virtualenv folders
+env/
+venv/
+
+# Ignore system and IDE files
+.DS_Store
+*.swp
+*.swo
+*.bak
+*.tmp
+*.log
+
+# Ignore logs and sync files
+app_log.txt
+sync_log.txt
+
+# Ignore credentials and config files
+connector_app_folder/serviceAccountKey.json
+config.json
+
+# Ignore build/output folders
+build/
+dist/
+*.spec
+
+# Ignore installer and packaging files
+*.exe
+*.msi
+*.deb
+*.rpm
+
+# Ignore test results
+*.coverage
+coverage.xml
+htmlcov/
+
+# Ignore node_modules just in case
+node_modules/
