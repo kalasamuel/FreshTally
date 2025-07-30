@@ -131,7 +131,7 @@ class NotificationsPage extends StatelessWidget {
                   NotificationCard(
                     title: 'Fresh Milk 500ml',
                     description:
-                        'Expires in 1 day. Qty: 15 units\nRecovery: UGX 25,000',
+                        'Expires in 1 day. Qty: 15 units\nRecovery: UGX 26,000',
                     time: 'Today, 8:30 AM',
                     color: Colors.red[50],
                     icon: Icons.error_outline,
@@ -303,3 +303,4 @@ class ActionButton {
 
   ActionButton({required this.label, required this.color});
 }
+//notifications
