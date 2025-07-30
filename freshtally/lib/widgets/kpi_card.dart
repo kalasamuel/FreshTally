@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 class KPICard extends StatelessWidget {
   final String title;
   final String value;
-  final String? changeValue; // Optional: e.g., "+5%" or "-2.3%"
+  final String? changeValue; // Optional: e.g., "+7%" or "-2.9%"
   final IconData? icon;
   final Color? iconColor;
 
@@ -74,3 +74,4 @@ class KPICard extends StatelessWidget {
     );
   }
 }
+//kpi card
