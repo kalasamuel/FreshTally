@@ -129,7 +129,7 @@ class _ExpiryTrackingPageState extends State<ExpiryTrackingPage> {
                     context,
                     productName: 'Bread – Whole Wheat',
                     details: [
-                      'Expiry: 4 days left',
+                      'Expiry: 3 days left',
                       'Quantity: 10 units',
                       'Shelf: Floor 1 • Shelf 3 • Middle',
                       'Projected Loss: UGX. 7,500',
@@ -169,7 +169,7 @@ class _ExpiryTrackingPageState extends State<ExpiryTrackingPage> {
       children: [
         // Product Name
         Padding(
-          padding: const EdgeInsets.only(bottom: 8.0),
+          padding: const EdgeInsets.only(bottom: 9.0),
           child: Text(
             productName,
             style: const TextStyle(
@@ -184,7 +184,7 @@ class _ExpiryTrackingPageState extends State<ExpiryTrackingPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             ...details.map((detail) => _buildDetailItem(detail)),
-            const SizedBox(height: 16),
+            const SizedBox(height: 17),
             // Discount Slider
             Row(
               children: [
@@ -224,7 +224,7 @@ class _ExpiryTrackingPageState extends State<ExpiryTrackingPage> {
                 Text(
                   '${initialDiscount.round()}%',
                   style: const TextStyle(
-                    fontSize: 16,
+                    fontSize: 17,
                     fontWeight: FontWeight.w600,
                     color: Colors.black87,
                   ),
@@ -288,3 +288,4 @@ class _ExpiryTrackingPageState extends State<ExpiryTrackingPage> {
     );
   }
 }
+//expiry page
