@@ -23,7 +23,7 @@ class _PriceEntryPageState extends State<PriceEntryPage> {
     super.dispose();
   }
 
-  // Function to handle price update.
+  // Here is the function to handle price update.
   void _updatePrice() {
     // Check if controllers have text before attempting to update.
     if (productIdController.text.isEmpty || priceController.text.isEmpty) {
@@ -35,7 +35,7 @@ class _PriceEntryPageState extends State<PriceEntryPage> {
       return;
     }
 
-    // Parse the price input, defaulting to 0 if invalid.
+    // Parses the price input, defaulting to 0 if invalid.
     final newPrice = double.tryParse(priceController.text) ?? 0.0;
 
     // Simulate saving to Firestore (keep this logic if Firestore is actually used).
