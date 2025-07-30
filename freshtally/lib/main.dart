@@ -6,7 +6,7 @@ import 'package:freshtally/pages/shelfStaff/shelves/shelf_mapping_page.dart';
 import 'package:freshtally/pages/shelfStaff/shelves/smart_suggestions_page.dart';
 import 'package:freshtally/pages/auth/create_supermarket_page.dart';
 import 'package:freshtally/pages/auth/join_supermarket_page.dart';
-import 'package:freshtally/pages/auth/role_selection_page.dart';
+import 'package:freshtally/pages/auth/role_selection_page.dart'; //packages
 import 'package:freshtally/pages/auth/customer_signup_page.dart';
 import 'package:freshtally/pages/shelfStaff/home/shelf_staff_home_screen.dart';
 import 'firebase_options.dart';
