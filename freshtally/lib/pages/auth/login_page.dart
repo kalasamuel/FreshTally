@@ -320,8 +320,8 @@ class _LoginPageState extends State<LoginPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Center(child: Image.asset('assets/images/logo.jpg', height: 200)),
-              const SizedBox(height: 24.0),
+              Center(child: Image.asset('assets/images/logo.png', height: 100)),
+              const SizedBox(height: 27.0),
               Center(
                 child: Text(
                   "Welcome to FreshTally!",
